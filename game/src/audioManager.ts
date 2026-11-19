@@ -26,7 +26,7 @@ class AudioManager {
     this.sharedAudioElement = new Audio();
     this.sharedAudioElement.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
     try {
-      this.sharedAudioElement.play();
+      this.sharedAudioElement.play().catch(() => { /* priming only */ });
       this.sharedAudioElement.pause();
       this.sharedAudioElement.currentTime = 0;
     } catch (e) {
@@ -215,7 +215,7 @@ class AudioManager {
         }
         audio.removeEventListener('ended', onEnded);
         audio.removeEventListener('error', onError);
-        audio.removeEventListener('loadedmetadata', onLoaded);
+        audio.removeEventListener('playing', onLoaded);
         resolve(line.text);
       };
       
@@ -234,20 +234,26 @@ class AudioManager {
         }
       };
 
-      const onLoaded = () => {
-        // Start timeout based on actual duration
-        const actualDuration = audio.duration > 0 ? (audio.duration * 1000 + 500) : (this.getLineDuration(lineId) + 500);
+      // Safety timeout, (re)armed whenever playback actually starts, so slow
+      // loading never cuts the end of a line. Falls back to a fixed cap.
+      const arm = (ms: number) => {
+        if (timeoutId !== null) clearTimeout(timeoutId);
         timeoutId = window.setTimeout(() => {
           if (token === this.speechToken) {
             audio.pause();
             finish();
           }
-        }, actualDuration);
+        }, ms);
       };
+      const onLoaded = () => {
+        const d = audio.duration > 0 ? audio.duration : this.getLineDuration(lineId) / 1000;
+        arm(Math.max(0, d - audio.currentTime) * 1000 + 1500);
+      };
+      arm(this.getLineDuration(lineId) + 8000);
       
       audio.addEventListener('ended', onEnded);
       audio.addEventListener('error', onError);
-      audio.addEventListener('loadedmetadata', onLoaded);
+      audio.addEventListener('playing', onLoaded);
       
       audio.play().catch(() => finish());
     });

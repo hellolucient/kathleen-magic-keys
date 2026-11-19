@@ -36,6 +36,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const longPressTimerRef = useRef<number | null>(null);
   const introAbortedRef = useRef(false);
   const introRunningRef = useRef(false);
+  const unlockingRef = useRef(false);
+  const completedRef = useRef(false);
+  const pendingDoorRef = useRef(false);
+  const keysInFlightRef = useRef(0);
+  const doorGlowStartedRef = useRef(false);
 
   useEffect(() => {
     progressRef.current = progress;
@@ -55,8 +60,14 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     saveProgress(progress);
     
     // Check if all keys found
-    if (progress.keysFound.length === 5 && !doorGlowing && !unlocking) {
+    if (progress.keysFound.length === 5 && !doorGlowStartedRef.current) {
+      doorGlowStartedRef.current = true;
       triggerDoorGlow();
+      // Door tapped while the 5th key was still flying to the counter
+      if (pendingDoorRef.current) {
+        pendingDoorRef.current = false;
+        unlockDoor();
+      }
     }
   }, [progress]);
 
@@ -226,6 +237,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     audioManager.playSound('audio/sfx/key-found.mp3');
     
     // Show fly animation
+    keysInFlightRef.current++;
     setCollectingKey(keyId);
     await new Promise(resolve => setTimeout(resolve, 600));
     setCollectingKey(null);
@@ -235,6 +247,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       const newKeysFound = [...p.keysFound, keyId];
       return { ...p, keysFound: newKeysFound };
     });
+    keysInFlightRef.current = Math.max(0, keysInFlightRef.current - 1);
     
     const newLength = currentProgress.keysFound.length + 1;
     
@@ -249,56 +262,67 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   };
 
   const triggerDoorGlow = async () => {
-    // Wait for 5th key praise to finish (~3s)
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
+    // Glow right away; the fairy's line waits for the 5th-key praise (~3s)
     setDoorGlowing(true);
     audioManager.playSound('audio/sfx/door-glow-loop.mp3', true);
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    if (unlockingRef.current) return; // door already tapped, don't talk over the finale
     
     setFairyText(audioManager.getText('fairy-door-glow'));
     await audioManager.playSpeech('fairy-door-glow');
     await new Promise(resolve => setTimeout(resolve, 1500));
-    setFairyText('');
+    if (!unlockingRef.current) setFairyText('');
+  };
+
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const finishGame = () => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    onComplete();
   };
 
   const unlockDoor = async () => {
-    if (progressRef.current.keysFound.length < 5 || unlocking) return;
+    if (progressRef.current.keysFound.length < 5 || unlockingRef.current) return;
+    unlockingRef.current = true;
+    
+    // Failsafe: the complete screen always comes, whatever happens to audio
+    window.setTimeout(finishGame, 30000);
     
     setUnlocking(true);
     setDoorGlowing(false); // Remove glow while unlocking
     audioManager.stopLoop('audio/sfx/door-glow-loop.mp3');
     
-    // Start narration (with timeout race)
+    // Start narration (never waited on for longer than its length + margin)
     setFairyText(audioManager.getText('narr-unlock'));
     const narrationPromise = audioManager.playSpeech('narr-unlock');
     
     // Animate keys flying to locks (starts immediately, runs alongside narration)
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await sleep(1000);
     
     for (let i = 0; i < 5; i++) {
       setFlyingKeysToLocks(prev => [...prev, i]);
       audioManager.playSound('audio/sfx/lock-click.mp3');
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await sleep(300);
     }
     
     // Wait a bit, then open door
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await sleep(1500);
     
     audioManager.playSound('audio/sfx/door-open-magic.mp3');
     audioManager.playSound('audio/sfx/celebration-fanfare.mp3');
     setDoorOpen(true);
     
-    // Wait for narration or continue after timeout
-    await narrationPromise;
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await Promise.race([narrationPromise, sleep(10000)]);
+    await sleep(500);
     
     setFairyCheer(true);
     setFairyText(audioManager.getText('fairy-final'));
-    await audioManager.playSpeech('fairy-final');
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await Promise.race([audioManager.playSpeech('fairy-final'), sleep(11000)]);
+    await sleep(1500);
     
     setFairyText('');
-    onComplete();
+    finishGame();
   };
 
   // Puzzle handlers
@@ -522,6 +546,9 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     
     if (progressRef.current.keysFound.length === 5) {
       await unlockDoor();
+    } else if (progressRef.current.keysFound.length + keysInFlightRef.current >= 5) {
+      // 5th key is still flying to the counter: open the door as soon as it lands
+      pendingDoorRef.current = true;
     } else {
       // Skip speech during intro
       if (introRunningRef.current) return;

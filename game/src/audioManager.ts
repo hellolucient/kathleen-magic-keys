@@ -10,6 +10,7 @@ class AudioManager {
   private lines: AudioLines | null = null;
   private currentSpeech: HTMLAudioElement | null = null;
   private currentResolve: ((text: string) => void) | null = null;
+  private sharedAudioElement: HTMLAudioElement | null = null;
 
   async init() {
     if (this.context) return;
@@ -31,6 +32,17 @@ class AudioManager {
     source.buffer = buffer;
     source.connect(this.context.destination);
     source.start(0);
+    
+    // Prime shared audio element for iOS
+    this.sharedAudioElement = new Audio();
+    this.sharedAudioElement.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    try {
+      await this.sharedAudioElement.play();
+      this.sharedAudioElement.pause();
+      this.sharedAudioElement.currentTime = 0;
+    } catch (e) {
+      console.log('Audio element priming (expected)');
+    }
     
     this.unlocked = true;
     console.log('Audio unlocked');
@@ -138,6 +150,30 @@ class AudioManager {
     return line ? line.text : '';
   }
 
+  private getLineDuration(lineId: string): number {
+    const durations: Record<string, number> = {
+      'narr-title': 13500,
+      'narr-intro': 12500,
+      'narr-fairy-arrives': 5500,
+      'fairy-intro': 14000,
+      'fairy-start': 6500,
+      'fairy-found-1': 5500,
+      'fairy-found-2': 5500,
+      'fairy-found-3': 5500,
+      'fairy-found-4': 5500,
+      'fairy-found-5': 6000,
+      'fairy-door-glow': 7500,
+      'narr-unlock': 14500,
+      'fairy-final': 9000,
+      'curious-kitten': 4500,
+      'curious-musicbox': 5500,
+      'curious-chest': 4500,
+      'curious-dragon': 4500,
+      'curious-door-locked': 6500,
+    };
+    return durations[lineId] || 5000;
+  }
+
   async playSpeech(lineId: string, maxDuration?: number): Promise<string> {
     if (!this.lines) return '';
     
@@ -148,7 +184,7 @@ class AudioManager {
     if (this.currentSpeech) {
       this.currentSpeech.pause();
       if (this.currentResolve) {
-        this.currentResolve(this.lines[lineId]?.text || '');
+        this.currentResolve('');
         this.currentResolve = null;
       }
       this.currentSpeech = null;
@@ -156,15 +192,24 @@ class AudioManager {
 
     if (this.muted) return line.text;
 
-    // Use HTML5 Audio for speech
-    const audio = new Audio(line.file);
+    // Use shared audio element (iOS-compatible)
+    const audio = this.sharedAudioElement || new Audio();
+    audio.src = line.file;
     this.currentSpeech = audio;
+    
+    // Get duration with fallback
+    const duration = maxDuration || (this.getLineDuration(lineId) + 500);
+    let timeoutId: number | null = null;
     
     // Return promise that resolves when speech ends
     return new Promise((resolve) => {
       this.currentResolve = resolve;
       
       const cleanup = () => {
+        if (timeoutId !== null) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
         if (this.currentSpeech === audio) {
           this.currentSpeech = null;
         }
@@ -173,6 +218,7 @@ class AudioManager {
         }
         audio.removeEventListener('ended', onEnded);
         audio.removeEventListener('error', onError);
+        audio.removeEventListener('loadedmetadata', onLoaded);
       };
       
       const onEnded = () => {
@@ -185,19 +231,22 @@ class AudioManager {
         cleanup();
         resolve(line.text);
       };
-      
-      audio.addEventListener('ended', onEnded);
-      audio.addEventListener('error', onError);
-      
-      // Race against max duration if provided
-      if (maxDuration) {
-        setTimeout(() => {
+
+      const onLoaded = () => {
+        // Start timeout based on actual duration if available
+        const actualDuration = audio.duration > 0 ? (audio.duration * 1000 + 500) : duration;
+        timeoutId = window.setTimeout(() => {
           if (this.currentSpeech === audio) {
+            audio.pause();
             cleanup();
             resolve(line.text);
           }
-        }, maxDuration);
-      }
+        }, actualDuration);
+      };
+      
+      audio.addEventListener('ended', onEnded);
+      audio.addEventListener('error', onError);
+      audio.addEventListener('loadedmetadata', onLoaded);
       
       audio.play().catch((error) => {
         console.error('Failed to start speech:', error);

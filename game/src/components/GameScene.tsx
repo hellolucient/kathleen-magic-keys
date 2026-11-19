@@ -26,6 +26,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const [musicBoxPlaying, setMusicBoxPlaying] = useState(false);
   const [dragonWiggling, setDragonWiggling] = useState(false);
   const [flyingKeysToLocks, setFlyingKeysToLocks] = useState<number[]>([]);
+  const [collectingKey, setCollectingKey] = useState<string | null>(null);
   
   const progressRef = useRef(progress);
   const lastInteractionRef = useRef<number>(Date.now());
@@ -33,6 +34,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const hintIndexRef = useRef<number>(0);
   const hintCountRef = useRef<number>(0);
   const longPressTimerRef = useRef<number | null>(null);
+  const introAbortedRef = useRef(false);
 
   useEffect(() => {
     progressRef.current = progress;
@@ -64,27 +66,87 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   };
 
   const startIntro = async () => {
+    // Skip intro if progress already exists (after refresh)
+    if (progressRef.current.keysFound.length > 0) {
+      setFairyVisible(true);
+      lastInteractionRef.current = Date.now();
+      startHintSystem();
+      return;
+    }
+    
     setFairyVisible(true);
     
     await new Promise(resolve => setTimeout(resolve, 500));
-    await audioManager.playSpeech('narr-intro', 13000);
+    if (introAbortedRef.current) {
+      setFairyText('');
+      lastInteractionRef.current = Date.now();
+      startHintSystem();
+      return;
+    }
+    
+    await audioManager.playSpeech('narr-intro');
+    if (introAbortedRef.current) {
+      setFairyText('');
+      lastInteractionRef.current = Date.now();
+      startHintSystem();
+      return;
+    }
     
     await new Promise(resolve => setTimeout(resolve, 500));
-    await audioManager.playSpeech('narr-fairy-arrives', 4000);
+    if (introAbortedRef.current) {
+      setFairyText('');
+      lastInteractionRef.current = Date.now();
+      startHintSystem();
+      return;
+    }
+    
+    await audioManager.playSpeech('narr-fairy-arrives');
+    if (introAbortedRef.current) {
+      setFairyText('');
+      lastInteractionRef.current = Date.now();
+      startHintSystem();
+      return;
+    }
     
     await new Promise(resolve => setTimeout(resolve, 300));
+    if (introAbortedRef.current) {
+      setFairyText('');
+      lastInteractionRef.current = Date.now();
+      startHintSystem();
+      return;
+    }
     
     setFairyText(audioManager.getText('fairy-intro'));
-    await audioManager.playSpeech('fairy-intro', 10000);
+    await audioManager.playSpeech('fairy-intro');
+    if (introAbortedRef.current) {
+      setFairyText('');
+      lastInteractionRef.current = Date.now();
+      startHintSystem();
+      return;
+    }
+    
     await new Promise(resolve => setTimeout(resolve, 1500));
+    if (introAbortedRef.current) {
+      setFairyText('');
+      lastInteractionRef.current = Date.now();
+      startHintSystem();
+      return;
+    }
     
     setFairyText(audioManager.getText('fairy-start'));
-    await audioManager.playSpeech('fairy-start', 6000);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await audioManager.playSpeech('fairy-start');
+    if (introAbortedRef.current) {
+      setFairyText('');
+      lastInteractionRef.current = Date.now();
+      startHintSystem();
+      return;
+    }
     
+    await new Promise(resolve => setTimeout(resolve, 1500));
     setFairyText('');
     
     // Start hint system after intro completes
+    lastInteractionRef.current = Date.now();
     startHintSystem();
   };
 
@@ -140,6 +202,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     lastInteractionRef.current = Date.now();
     hintIndexRef.current = 0;
     hintCountRef.current = 0;
+    introAbortedRef.current = true;
   };
 
   const collectKey = async (keyId: string) => {
@@ -151,8 +214,10 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     audioManager.playSound('audio/sfx/sparkle.mp3');
     audioManager.playSound('audio/sfx/key-found.mp3');
     
-    // Wait a bit for animation
-    await new Promise(resolve => setTimeout(resolve, 400));
+    // Show fly animation
+    setCollectingKey(keyId);
+    await new Promise(resolve => setTimeout(resolve, 600));
+    setCollectingKey(null);
     
     // Update progress with functional update
     setProgress(p => {
@@ -165,7 +230,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     setFairyCheer(true);
     const foundLineId = `fairy-found-${newLength}`;
     setFairyText(audioManager.getText(foundLineId));
-    await audioManager.playSpeech(foundLineId, 6000);
+    await audioManager.playSpeech(foundLineId);
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     setFairyCheer(false);
@@ -173,11 +238,14 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   };
 
   const triggerDoorGlow = async () => {
+    // Wait for 5th key praise to finish (~3s)
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
     setDoorGlowing(true);
     audioManager.playSound('audio/sfx/door-glow-loop.mp3', true);
     
     setFairyText(audioManager.getText('fairy-door-glow'));
-    await audioManager.playSpeech('fairy-door-glow', 6000);
+    await audioManager.playSpeech('fairy-door-glow');
     await new Promise(resolve => setTimeout(resolve, 1500));
     setFairyText('');
   };
@@ -186,11 +254,12 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     if (progressRef.current.keysFound.length < 5 || unlocking) return;
     
     setUnlocking(true);
+    setDoorGlowing(false); // Remove glow while unlocking
     audioManager.stopLoop('audio/sfx/door-glow-loop.mp3');
     
     // Start narration (with timeout race)
     setFairyText(audioManager.getText('narr-unlock'));
-    const narrationPromise = audioManager.playSpeech('narr-unlock', 15000);
+    const narrationPromise = audioManager.playSpeech('narr-unlock');
     
     // Animate keys flying to locks (starts immediately, runs alongside narration)
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -214,7 +283,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     
     setFairyCheer(true);
     setFairyText(audioManager.getText('fairy-final'));
-    await audioManager.playSpeech('fairy-final', 9000);
+    await audioManager.playSpeech('fairy-final');
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     setFairyText('');
@@ -494,11 +563,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         {/* Key behind curtain */}
         {progress.puzzleStates.curtainOpen && !progress.keysFound.includes('key-curtain') && (
           <div 
-            className="sprite key key-curtain clickable sparkle float-up"
+            className={`sprite key key-curtain clickable sparkle ${collectingKey === 'key-curtain' ? 'collecting' : 'float-up'}`}
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-curtain'))}
             onClick={() => handleFloatingKeyClick('key-curtain')}
           >
-            <img src="art/sprites/key.png" alt="Key" style={{ transform: 'rotate(-10deg)' }} />
+            <img src="art/sprites/key.png" alt="Key" style={{ rotate: '-10deg' }} />
           </div>
         )}
         
@@ -570,7 +639,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
               
               {progress.puzzleStates.mirrorSequence.length === 3 && !progress.keysFound.includes('key-mirror') && (
                 <div 
-                  className="sprite key key-mirror clickable sparkle float-up"
+                  className={`sprite key key-mirror clickable sparkle ${collectingKey === 'key-mirror' ? 'collecting' : 'float-up'}`}
                   style={{
                     position: 'absolute',
                     left: '35%',
@@ -605,11 +674,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         
         {progress.puzzleStates.jewelleryOpen && !progress.keysFound.includes('key-jewellery') && (
           <div 
-            className="sprite key key-jewellery clickable sparkle float-up"
+            className={`sprite key key-jewellery clickable sparkle ${collectingKey === 'key-jewellery' ? 'collecting' : 'float-up'}`}
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-jewellery'))}
             onClick={() => handleFloatingKeyClick('key-jewellery')}
           >
-            <img src="art/sprites/key.png" alt="Key" style={{ transform: 'rotate(70deg)' }} />
+            <img src="art/sprites/key.png" alt="Key" style={{ rotate: '70deg' }} />
           </div>
         )}
         
@@ -649,7 +718,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
                   onClick={handleDressClick}
                 >
                   <div 
-                    className="sprite key key-wardrobe sparkle float-up"
+                    className={`sprite key key-wardrobe sparkle ${collectingKey === 'key-wardrobe' ? 'collecting' : 'float-up'}`}
                     style={{
                       position: 'absolute',
                       left: '39%',
@@ -658,7 +727,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
                       height: '30%',
                     }}
                   >
-                    <img src="art/sprites/key.png" alt="Key" style={{ transform: 'rotate(15deg)' }} />
+                    <img src="art/sprites/key.png" alt="Key" style={{ rotate: '15deg' }} />
                   </div>
                 </div>
               )}
@@ -681,11 +750,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         
         {progress.puzzleStates.teddyMoved && !progress.keysFound.includes('key-teddy') && (
           <div 
-            className="sprite key key-teddy clickable sparkle float-up"
+            className={`sprite key key-teddy clickable sparkle ${collectingKey === 'key-teddy' ? 'collecting' : 'float-up'}`}
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-teddy'))}
             onClick={() => handleFloatingKeyClick('key-teddy')}
           >
-            <img src="art/sprites/key.png" alt="Key" style={{ transform: 'rotate(80deg)' }} />
+            <img src="art/sprites/key.png" alt="Key" style={{ rotate: '80deg' }} />
           </div>
         )}
         
@@ -807,23 +876,27 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         </button>
         
         {/* Flying keys to locks animation */}
-        {flyingKeysToLocks.map((lockIndex) => {
+        {!doorOpen && flyingKeysToLocks.map((lockIndex) => {
           const lock = layout.objects.find(o => o.id === `door-lock-${lockIndex + 1}`);
-          if (!lock) return null;
+          if (!lock || !lock.d) return null;
+          
+          const keyWidth = lock.d * 1.4;
+          const keyHeight = lock.d * 1.4 * (16 / 9);
           
           return (
             <div
               key={`flying-key-${lockIndex}`}
               className="flying-key-to-lock"
               style={{
+                '--start-x': '50%',
+                '--start-y': '6%',
+                '--end-x': `${lock.cx}%`,
+                '--end-y': `${lock.cy}%`,
                 position: 'absolute',
-                left: `${lock.cx}%`,
-                top: `${lock.cy}%`,
-                width: `${lock.d}%`,
-                height: `${lock.d}%`,
+                width: `${keyWidth}%`,
+                height: `${keyHeight}%`,
                 zIndex: 100,
-                transform: 'translate(-50%, -50%)',
-              }}
+              } as React.CSSProperties}
             >
               <img src="art/sprites/key.png" alt="" />
             </div>

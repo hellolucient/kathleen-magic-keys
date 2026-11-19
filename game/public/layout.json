@@ -21,7 +21,7 @@
     {"id": "dragon-toy", "src": "art/sprites/dragon.png", "x": 47.0, "y": 51.5, "w": 6.0, "h": 12.2, "z": 30, "puzzle": null, "note": "On the bed. Playful: wiggle + tiny puff of sparkles."},
     {"id": "kitten-sit", "src": "art/sprites/kitten-sit.png", "x": 61.5, "y": 76.0, "w": 5.8, "h": 15.0, "z": 45, "puzzle": null, "note": "Tap = meow + swap to kitten-play for ~2s."},
     {"id": "kitten-play", "src": "art/sprites/kitten-play.png", "x": 60.2, "y": 75.4, "w": 8.4, "h": 16.4, "z": 45, "puzzle": null},
-    {"id": "door", "hitbox": true, "x": 84.0, "y": 12.0, "w": 14.5, "h": 73.0, "z": 15, "note": "Golden door is part of the bg. Glow via CSS when 5/5."},
+    {"id": "door", "hitbox": true, "x": 84.0, "y": 12.0, "w": 14.5, "h": 67.0, "z": 15, "note": "Golden door is part of the bg. Glow via CSS when 5/5."},
     {"id": "door-lock-1", "lock": true, "cx": 90.9, "cy": 31.8, "d": 4.2},
     {"id": "door-lock-2", "lock": true, "cx": 90.9, "cy": 40.8, "d": 4.2},
     {"id": "door-lock-3", "lock": true, "cx": 90.9, "cy": 50.0, "d": 4.2},

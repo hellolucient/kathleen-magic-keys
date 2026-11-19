@@ -186,18 +186,10 @@
 
 @keyframes glow-pulse-anim {
   0%, 100% { 
-    box-shadow: 
-      inset 0 0 40px rgba(255, 215, 0, 0.8), 
-      inset 0 -20px 60px rgba(255, 215, 0, 0.6),
-      0 0 40px rgba(255, 215, 0, 0.5),
-      0 -10px 30px rgba(255, 215, 0, 0.4);
+    box-shadow: 0 0 40px 12px rgba(255, 225, 140, 0.65);
   }
   50% { 
-    box-shadow: 
-      inset 0 0 80px rgba(255, 215, 0, 1), 
-      inset 0 -20px 100px rgba(255, 215, 0, 0.9),
-      0 0 80px rgba(255, 215, 0, 0.8),
-      0 -10px 50px rgba(255, 215, 0, 0.7);
+    box-shadow: 0 0 60px 18px rgba(255, 225, 140, 0.85);
   }
 }
 
@@ -217,8 +209,8 @@
 
 .glow-pulse {
   animation: glow-pulse-anim 2s ease-in-out infinite;
-  background: radial-gradient(ellipse at 50% 100%, rgba(255, 215, 0, 0.4) 0%, rgba(255, 215, 0, 0.2) 50%, transparent 80%);
   border-radius: 50% 50% 0 0 / 22% 22% 0 0;
+  pointer-events: all;
 }
 
 .glow-pulse::after {
@@ -229,6 +221,7 @@
   transform: translateX(-50%);
   font-size: 2rem;
   animation: sparkle-particle 2s ease-in-out infinite;
+  pointer-events: none;
 }
 
 /* Fairy */
@@ -241,23 +234,32 @@
 }
 
 .speech-bubble {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(400px, 80vw);
-  max-width: 500px;
-  padding: 1.5rem;
-  background: white;
+  position: absolute;
+  left: 36%;
+  top: 14%;
+  width: max-content;
+  max-width: min(400px, 35vw);
+  padding: 1.2rem 1.5rem;
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   font-size: 1.3rem;
   line-height: 1.5;
   color: #333;
-  z-index: 200;
+  z-index: 100;
   pointer-events: none;
   animation: pop-in-anim 0.3s ease;
   text-align: center;
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translate(-100%, -50%);
+  border: 12px solid transparent;
+  border-right-color: rgba(255, 255, 255, 0.95);
 }
 
 /* Key counter */
@@ -377,15 +379,21 @@
 /* Flying keys to locks animation */
 @keyframes fly-to-lock {
   0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5);
-  }
-  50% {
+    left: var(--start-x);
+    top: var(--start-y);
     opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+  70% {
+    left: var(--end-x);
+    top: var(--end-y);
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
   }
   100% {
+    left: var(--end-x);
+    top: var(--end-y);
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1) rotate(360deg);
+    transform: translate(-50%, -50%) scale(1) rotate(90deg);
   }
 }
 
@@ -397,7 +405,24 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+  filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 12px gold);
+}
+
+/* Key collection animation */
+@keyframes fly-to-counter {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(50vw - 50%), calc(6vh - 50%)) scale(0.5);
+  }
+}
+
+.key.collecting {
+  animation: fly-to-counter 0.6s ease-out forwards;
+  pointer-events: none;
 }
 
 /* Responsive adjustments */

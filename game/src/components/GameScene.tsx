@@ -262,10 +262,10 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   };
 
   const triggerDoorGlow = async () => {
-    // Glow right away; the fairy's line waits for the 5th-key praise (~3s)
+    // Glow right away; the fairy's line waits for the 5th-key praise (5.5s) to finish
     setDoorGlowing(true);
     audioManager.playSound('audio/sfx/door-glow-loop.mp3', true);
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise(resolve => setTimeout(resolve, 6000));
     if (unlockingRef.current) return; // door already tapped, don't talk over the finale
     
     setFairyText(audioManager.getText('fairy-door-glow'));

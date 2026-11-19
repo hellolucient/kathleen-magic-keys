@@ -43,8 +43,13 @@
   pointer-events: auto;
   cursor: pointer;
   transition: transform 0.1s ease;
-  padding: 10%;
-  margin: -10%;
+}
+
+.clickable::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  cursor: pointer;
 }
 
 .clickable:active {
@@ -63,6 +68,19 @@
 
 .sparkle {
   animation: sparkle-anim 1s ease-in-out infinite;
+}
+
+@keyframes float-up-anim {
+  0%, 100% { 
+    transform: translateY(0);
+  }
+  50% { 
+    transform: translateY(-15px);
+  }
+}
+
+.float-up {
+  animation: float-up-anim 1.2s ease-in-out infinite;
 }
 
 @keyframes twinkle-anim {
@@ -127,15 +145,6 @@
   animation: scale-in-anim 0.5s ease;
 }
 
-@keyframes rise-anim {
-  0% { transform: translateY(20px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
-}
-
-.rise {
-  animation: rise-anim 0.5s ease;
-}
-
 @keyframes fade-in-anim {
   0% { opacity: 0; }
   100% { opacity: 1; }
@@ -145,31 +154,32 @@
   animation: fade-in-anim 1s ease;
 }
 
-@keyframes spin-anim {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes sway-anim {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
 }
 
-.spinning {
-  animation: spin-anim 2s linear infinite;
+.sway {
+  animation: sway-anim 2s ease-in-out infinite;
 }
 
 @keyframes glow-pulse-anim {
   0%, 100% { 
-    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+    box-shadow: inset 0 0 30px rgba(255, 215, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.3);
   }
   50% { 
-    filter: drop-shadow(0 0 30px rgba(255, 215, 0, 1));
+    box-shadow: inset 0 0 60px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.6);
   }
 }
 
 .glow-pulse {
   animation: glow-pulse-anim 2s ease-in-out infinite;
+  background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.2) 0%, transparent 70%);
 }
 
 /* Fairy */
 .fairy {
-  z-index: 100;
+  z-index: 100 !important;
 }
 
 .fairy.cheer img {
@@ -177,42 +187,34 @@
 }
 
 .speech-bubble {
-  position: absolute;
-  top: -20%;
-  left: 110%;
-  width: 250px;
-  padding: 1rem;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(400px, 80vw);
+  max-width: 500px;
+  padding: 1.5rem;
   background: white;
   border-radius: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  font-size: 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  font-size: 1.3rem;
+  line-height: 1.5;
   color: #333;
-  z-index: 101;
+  z-index: 200;
   pointer-events: none;
   animation: pop-in-anim 0.3s ease;
-}
-
-.speech-bubble::before {
-  content: '';
-  position: absolute;
-  left: -15px;
-  top: 30%;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 10px 15px 10px 0;
-  border-color: transparent white transparent transparent;
+  text-align: center;
 }
 
 /* Key counter */
 .key-counter {
   position: absolute;
-  top: 2%;
+  top: 1%;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 90;
+  z-index: 95;
   background: rgba(255, 255, 255, 0.95);
-  padding: 0.8rem 1.5rem;
+  padding: 0.6rem 1.2rem;
   border-radius: 50px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
@@ -259,7 +261,7 @@
 .mute-button,
 .reset-button {
   position: absolute;
-  top: 2%;
+  top: 1%;
   width: 50px;
   height: 50px;
   border: none;
@@ -268,7 +270,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   font-size: 1.5rem;
   cursor: pointer;
-  z-index: 90;
+  z-index: 95;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -276,11 +278,11 @@
 }
 
 .mute-button {
-  right: 2%;
+  right: 1%;
 }
 
 .reset-button {
-  right: calc(2% + 60px);
+  left: 1%;
   font-size: 1.8rem;
   color: #666;
 }
@@ -314,21 +316,25 @@
   transform: scale(1.2);
 }
 
+.door-open-overlay {
+  pointer-events: none;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .speech-bubble {
-    width: 180px;
-    font-size: 0.85rem;
-    padding: 0.7rem;
+    width: min(300px, 85vw);
+    font-size: 1.1rem;
+    padding: 1rem;
   }
   
   .key-counter {
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.8rem;
   }
   
   .key-slot {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
   }
   
   .key-count {
@@ -337,8 +343,8 @@
   
   .mute-button,
   .reset-button {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     font-size: 1.2rem;
   }
 }

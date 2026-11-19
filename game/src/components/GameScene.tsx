@@ -6,7 +6,7 @@ import './GameScene.css';
 
 interface GameSceneProps {
   progress: GameProgress;
-  setProgress: (progress: GameProgress) => void;
+  setProgress: (updater: (prev: GameProgress) => GameProgress) => void;
   onComplete: () => void;
 }
 
@@ -24,11 +24,19 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const [kittenPlaying, setKittenPlaying] = useState(false);
   const [toyChestOpen, setToyChestOpen] = useState(false);
   const [musicBoxPlaying, setMusicBoxPlaying] = useState(false);
+  const [dragonWiggling, setDragonWiggling] = useState(false);
+  const [floatingKeys, setFloatingKeys] = useState<string[]>([]);
+  
+  const progressRef = useRef(progress);
   const lastInteractionRef = useRef<number>(Date.now());
   const hintTimerRef = useRef<number | null>(null);
   const hintIndexRef = useRef<number>(0);
+  const hintCountRef = useRef<number>(0);
   const longPressTimerRef = useRef<number | null>(null);
-  const longPressStartRef = useRef<number>(0);
+
+  useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
 
   useEffect(() => {
     loadLayout();
@@ -51,7 +59,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   }, [progress]);
 
   const loadLayout = async () => {
-    const response = await fetch('/layout.json');
+    const response = await fetch('layout.json');
     const data = await response.json();
     setLayout(data);
   };
@@ -80,10 +88,18 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
 
   const startHintSystem = () => {
     const checkHints = () => {
+      const currentProgress = progressRef.current;
       const timeSinceInteraction = Date.now() - lastInteractionRef.current;
       
-      if (timeSinceInteraction > 25000 && !unlocking && progress.keysFound.length < 5) {
+      // Stop hints if all keys found or unlocking
+      if (currentProgress.keysFound.length === 5 || unlocking) {
+        return;
+      }
+      
+      // Give hint after 25s, max once per 25s
+      if (timeSinceInteraction > 25000 && hintCountRef.current === 0) {
         giveHint();
+        hintCountRef.current = 1;
       }
       
       hintTimerRef.current = window.setTimeout(checkHints, 5000);
@@ -93,7 +109,8 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   };
 
   const giveHint = async () => {
-    const missingKeys = KEY_PUZZLES.filter(key => !progress.keysFound.includes(key));
+    const currentProgress = progressRef.current;
+    const missingKeys = KEY_PUZZLES.filter(key => !currentProgress.keysFound.includes(key));
     
     if (missingKeys.length === 0) return;
     
@@ -119,21 +136,49 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const recordInteraction = () => {
     lastInteractionRef.current = Date.now();
     hintIndexRef.current = 0;
+    hintCountRef.current = 0;
   };
 
   const collectKey = async (keyId: string) => {
-    if (progress.keysFound.includes(keyId)) return;
+    const currentProgress = progressRef.current;
+    if (currentProgress.keysFound.includes(keyId)) return;
     
     recordInteraction();
     
-    audioManager.playSound('/audio/sfx/sparkle.mp3');
-    audioManager.playSound('/audio/sfx/key-found.mp3');
+    // Show key floating
+    setFloatingKeys(prev => [...prev, keyId]);
     
-    const newKeysFound = [...progress.keysFound, keyId];
-    setProgress({ ...progress, keysFound: newKeysFound });
+    // Wait for key to be tapped or auto-collect after 1.2s
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    
+    // Check if still floating (not tapped)
+    setFloatingKeys(prev => {
+      const stillFloating = prev.includes(keyId);
+      if (stillFloating) {
+        // Fly to counter
+        flyKeyToCounter(keyId);
+      }
+      return prev.filter(k => k !== keyId);
+    });
+  };
+
+  const flyKeyToCounter = async (keyId: string) => {
+    audioManager.playSound('audio/sfx/sparkle.mp3');
+    audioManager.playSound('audio/sfx/key-found.mp3');
+    
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Update progress with functional update
+    setProgress(p => {
+      const newKeysFound = [...p.keysFound, keyId];
+      return { ...p, keysFound: newKeysFound };
+    });
+    
+    const currentProgress = progressRef.current;
+    const newLength = currentProgress.keysFound.length + 1;
     
     setFairyCheer(true);
-    const foundLineId = `fairy-found-${newKeysFound.length}`;
+    const foundLineId = `fairy-found-${newLength}`;
     const text = await audioManager.playSpeech(foundLineId);
     setFairyText(text);
     
@@ -145,7 +190,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
 
   const triggerDoorGlow = async () => {
     setDoorGlowing(true);
-    audioManager.playSound('/audio/sfx/door-glow-loop.mp3', true);
+    audioManager.playSound('audio/sfx/door-glow-loop.mp3', true);
     
     const text = await audioManager.playSpeech('fairy-door-glow');
     setFairyText(text);
@@ -154,10 +199,10 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   };
 
   const unlockDoor = async () => {
-    if (progress.keysFound.length < 5 || unlocking) return;
+    if (progressRef.current.keysFound.length < 5 || unlocking) return;
     
     setUnlocking(true);
-    audioManager.stopLoop('/audio/sfx/door-glow-loop.mp3');
+    audioManager.stopLoop('audio/sfx/door-glow-loop.mp3');
     
     const text = await audioManager.playSpeech('narr-unlock');
     setFairyText(text);
@@ -166,14 +211,14 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     for (let i = 0; i < 5; i++) {
-      audioManager.playSound('/audio/sfx/lock-click.mp3');
+      audioManager.playSound('audio/sfx/lock-click.mp3');
       await new Promise(resolve => setTimeout(resolve, 300));
     }
     
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    audioManager.playSound('/audio/sfx/door-open-magic.mp3');
-    audioManager.playSound('/audio/sfx/celebration-fanfare.mp3');
+    audioManager.playSound('audio/sfx/door-open-magic.mp3');
+    audioManager.playSound('audio/sfx/celebration-fanfare.mp3');
     setDoorOpen(true);
     
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -191,112 +236,152 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const handleTeddyClick = () => {
     recordInteraction();
     
-    if (!progress.puzzleStates.teddyWiggled) {
-      audioManager.playSound('/audio/sfx/wiggle-boing.mp3');
-      setProgress({
-        ...progress,
-        puzzleStates: { ...progress.puzzleStates, teddyWiggled: true }
-      });
-    } else if (!progress.puzzleStates.teddyMoved) {
-      audioManager.playSound('/audio/sfx/wiggle-boing.mp3');
-      setProgress({
-        ...progress,
-        puzzleStates: { ...progress.puzzleStates, teddyMoved: true }
-      });
+    const currentProgress = progressRef.current;
+    if (!currentProgress.puzzleStates.teddyWiggled) {
+      audioManager.playSound('audio/sfx/wiggle-boing.mp3');
+      setProgress(p => ({
+        ...p,
+        puzzleStates: { ...p.puzzleStates, teddyWiggled: true }
+      }));
+    } else if (!currentProgress.puzzleStates.teddyMoved) {
+      audioManager.playSound('audio/sfx/wiggle-boing.mp3');
+      setProgress(p => ({
+        ...p,
+        puzzleStates: { ...p.puzzleStates, teddyMoved: true }
+      }));
       setTimeout(() => collectKey('key-teddy'), 500);
     }
   };
 
   const handleJewelleryBoxClick = () => {
-    if (progress.puzzleStates.jewelleryOpen) return;
+    const currentProgress = progressRef.current;
+    if (currentProgress.puzzleStates.jewelleryOpen) return;
     
     recordInteraction();
-    audioManager.playSound('/audio/sfx/lid-click.mp3');
-    setProgress({
-      ...progress,
-      puzzleStates: { ...progress.puzzleStates, jewelleryOpen: true }
-    });
+    audioManager.playSound('audio/sfx/lid-click.mp3');
+    setProgress(p => ({
+      ...p,
+      puzzleStates: { ...p.puzzleStates, jewelleryOpen: true }
+    }));
     setTimeout(() => collectKey('key-jewellery'), 500);
   };
 
   const handleCurtainClick = () => {
-    if (progress.puzzleStates.curtainOpen) return;
+    const currentProgress = progressRef.current;
+    if (currentProgress.puzzleStates.curtainOpen) return;
     
     recordInteraction();
-    audioManager.playSound('/audio/sfx/curtain-swish.mp3');
-    setProgress({
-      ...progress,
-      puzzleStates: { ...progress.puzzleStates, curtainOpen: true }
-    });
+    audioManager.playSound('audio/sfx/curtain-swish.mp3');
+    setProgress(p => ({
+      ...p,
+      puzzleStates: { ...p.puzzleStates, curtainOpen: true }
+    }));
     setTimeout(() => collectKey('key-curtain'), 500);
   };
 
   const handleWardrobeClick = () => {
     recordInteraction();
     
-    if (!progress.puzzleStates.wardrobeOpen) {
-      audioManager.playSound('/audio/sfx/tap-pop.mp3');
-      setProgress({
-        ...progress,
-        puzzleStates: { ...progress.puzzleStates, wardrobeOpen: true }
-      });
+    const currentProgress = progressRef.current;
+    if (!currentProgress.puzzleStates.wardrobeOpen) {
+      audioManager.playSound('audio/sfx/tap-pop.mp3');
+      setProgress(p => ({
+        ...p,
+        puzzleStates: { ...p.puzzleStates, wardrobeOpen: true }
+      }));
     }
   };
 
-  const handleDressClick = () => {
-    if (!progress.puzzleStates.wardrobeOpen) return;
+  const handleDressClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const currentProgress = progressRef.current;
+    if (!currentProgress.puzzleStates.wardrobeOpen) return;
     
     recordInteraction();
-    audioManager.playSound('/audio/sfx/sparkle.mp3');
+    audioManager.playSound('audio/sfx/sparkle.mp3');
     setTimeout(() => collectKey('key-wardrobe'), 300);
   };
 
   const handleMirrorClick = () => {
-    if (progress.puzzleStates.mirrorGlow) return;
+    const currentProgress = progressRef.current;
+    if (currentProgress.puzzleStates.mirrorGlow) return;
     
     recordInteraction();
-    audioManager.playSound('/audio/sfx/sparkle.mp3');
-    setProgress({
-      ...progress,
-      puzzleStates: { ...progress.puzzleStates, mirrorGlow: true, mirrorSequence: [] }
-    });
+    audioManager.playSound('audio/sfx/sparkle.mp3');
+    setProgress(p => ({
+      ...p,
+      puzzleStates: { ...p.puzzleStates, mirrorGlow: true, mirrorSequence: [] }
+    }));
+    
+    // Demo the sequence
+    setTimeout(() => {
+      [1, 2, 3].forEach((n, i) => {
+        setTimeout(() => {
+          audioManager.playSound(`audio/sfx/star-${n}.mp3`);
+        }, i * 400);
+      });
+    }, 500);
   };
 
   const handleStarClick = (order: number) => {
-    if (!progress.puzzleStates.mirrorGlow) return;
+    const currentProgress = progressRef.current;
+    if (!currentProgress.puzzleStates.mirrorGlow) return;
     
     recordInteraction();
     
-    const sequence = [...progress.puzzleStates.mirrorSequence, order];
+    const sequence = currentProgress.puzzleStates.mirrorSequence;
     
-    if (order === sequence.length) {
+    if (order === sequence.length + 1) {
       // Correct!
-      audioManager.playSound(`/audio/sfx/star-${order}.mp3`);
+      audioManager.playSound(`audio/sfx/star-${order}.mp3`);
       
-      if (sequence.length === 3) {
-        // All stars tapped correctly
-        setTimeout(() => collectKey('key-mirror'), 500);
-      } else {
-        setProgress({
-          ...progress,
-          puzzleStates: { ...progress.puzzleStates, mirrorSequence: sequence }
-        });
+      const newSequence = [...sequence, order];
+      setProgress(p => ({
+        ...p,
+        puzzleStates: { ...p.puzzleStates, mirrorSequence: newSequence }
+      }));
+      
+      if (newSequence.length === 3) {
+        // Show key after completing sequence
+        setTimeout(() => {
+          // Key appears, wait for tap
+        }, 500);
       }
     } else {
-      // Wrong order
-      audioManager.playSound('/audio/sfx/star-reset.mp3');
+      // Wrong order - replay demo
+      audioManager.playSound('audio/sfx/star-reset.mp3');
       audioManager.playSpeech('hint-mirror-5');
-      setProgress({
-        ...progress,
-        puzzleStates: { ...progress.puzzleStates, mirrorSequence: [] }
-      });
+      setProgress(p => ({
+        ...p,
+        puzzleStates: { ...p.puzzleStates, mirrorSequence: [] }
+      }));
+      
+      // Replay demo
+      setTimeout(() => {
+        [1, 2, 3].forEach((n, i) => {
+          setTimeout(() => {
+            audioManager.playSound(`audio/sfx/star-${n}.mp3`);
+          }, i * 400);
+        });
+      }, 1000);
     }
+  };
+
+  const handleMirrorKeyClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    recordInteraction();
+    collectKey('key-mirror');
+  };
+
+  const handleFloatingKeyClick = (keyId: string) => {
+    setFloatingKeys(prev => prev.filter(k => k !== keyId));
+    flyKeyToCounter(keyId);
   };
 
   // Fun interactive elements
   const handleKittenClick = async () => {
     recordInteraction();
-    const meow = Math.random() > 0.5 ? '/audio/sfx/kitten-meow-1.mp3' : '/audio/sfx/kitten-meow-2.mp3';
+    const meow = Math.random() > 0.5 ? 'audio/sfx/kitten-meow-1.mp3' : 'audio/sfx/kitten-meow-2.mp3';
     audioManager.playSound(meow);
     
     setKittenPlaying(true);
@@ -311,10 +396,10 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     recordInteraction();
     
     if (musicBoxPlaying) {
-      audioManager.stopLoop('/audio/sfx/music-box-loop.mp3');
+      audioManager.stopLoop('audio/sfx/music-box-loop.mp3');
       setMusicBoxPlaying(false);
     } else {
-      audioManager.playSound('/audio/sfx/music-box-loop.mp3', true);
+      audioManager.playSound('audio/sfx/music-box-loop.mp3', true);
       setMusicBoxPlaying(true);
       
       const text = await audioManager.playSpeech('curious-musicbox');
@@ -325,7 +410,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
 
   const handleToyChestClick = async () => {
     recordInteraction();
-    audioManager.playSound('/audio/sfx/tap-pop.mp3');
+    audioManager.playSound('audio/sfx/tap-pop.mp3');
     
     setToyChestOpen(!toyChestOpen);
     
@@ -338,7 +423,10 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
 
   const handleDragonClick = async () => {
     recordInteraction();
-    audioManager.playSound('/audio/sfx/sparkle.mp3');
+    audioManager.playSound('audio/sfx/sparkle.mp3');
+    
+    setDragonWiggling(true);
+    setTimeout(() => setDragonWiggling(false), 500);
     
     const text = await audioManager.playSpeech('curious-dragon');
     setFairyText(text);
@@ -348,7 +436,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const handleDoorClick = async () => {
     recordInteraction();
     
-    if (progress.keysFound.length === 5) {
+    if (progressRef.current.keysFound.length === 5) {
       await unlockDoor();
     } else {
       const text = await audioManager.playSpeech('curious-door-locked');
@@ -363,7 +451,6 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   };
 
   const handleLongPressStart = () => {
-    longPressStartRef.current = Date.now();
     longPressTimerRef.current = window.setTimeout(() => {
       if (confirm('Reset game progress? This will clear all found keys and restart the adventure.')) {
         resetProgress();
@@ -398,7 +485,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   return (
     <div className="game-scene">
       <div className="game-container">
-        <img src="/art/bg-bedroom.jpg" alt="Princess's Bedroom" className="game-bg" />
+        <img src="art/bg-bedroom.jpg" alt="Princess's Bedroom" className="game-bg" />
         
         {/* Curtain overlay */}
         {!progress.puzzleStates.curtainOpen && (
@@ -407,100 +494,100 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
             style={getObjectStyle(layout.objects.find(o => o.id === 'curtain-closed'))}
             onClick={handleCurtainClick}
           >
-            <img src="/art/sprites/curtain-closed-overlay.png" alt="" />
+            <img src="art/sprites/curtain-closed-overlay.png" alt="" />
           </div>
         )}
         
         {/* Key behind curtain */}
-        {progress.puzzleStates.curtainOpen && !progress.keysFound.includes('key-curtain') && (
+        {progress.puzzleStates.curtainOpen && !progress.keysFound.includes('key-curtain') && !floatingKeys.includes('key-curtain') && (
           <div 
-            className="sprite key key-curtain clickable sparkle"
+            className="sprite key key-curtain clickable sparkle float-up"
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-curtain'))}
-            onClick={() => collectKey('key-curtain')}
+            onClick={() => handleFloatingKeyClick('key-curtain')}
           >
-            <img src="/art/sprites/key.png" alt="Key" />
+            <img src="art/sprites/key.png" alt="Key" />
           </div>
         )}
         
         {/* Mirror and stars puzzle */}
         <div 
           className="sprite mirror-hitbox clickable"
-          style={getObjectStyle(layout.objects.find(o => o.id === 'mirror-glow'))}
+          style={{
+            ...getObjectStyle(layout.objects.find(o => o.id === 'mirror-glow')),
+            zIndex: progress.puzzleStates.mirrorGlow ? 35 : 25,
+          }}
           onClick={handleMirrorClick}
         >
           {progress.puzzleStates.mirrorGlow && (
             <>
-              <img src="/art/sprites/mirror-glow.png" alt="" className="mirror-glow" />
+              <img src="art/sprites/mirror-glow.png" alt="" className="mirror-glow" />
               
-              {!progress.keysFound.includes('key-mirror') && (
+              {!progress.keysFound.includes('key-mirror') && progress.puzzleStates.mirrorSequence.length < 3 && (
                 <>
                   <div 
                     className="sprite star clickable twinkle"
                     style={{
                       position: 'absolute',
-                      left: '20%',
-                      top: '15%',
-                      width: '33%',
-                      height: '18%',
+                      left: '27%',
+                      top: '22%',
+                      width: '45%',
+                      height: '20%',
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleStarClick(1);
                     }}
                   >
-                    <img src="/art/sprites/star.png" alt="Star" />
+                    <img src="art/sprites/star.png" alt="Star 1" />
                   </div>
                   <div 
                     className="sprite star clickable twinkle"
                     style={{
                       position: 'absolute',
-                      left: '57%',
-                      top: '40%',
-                      width: '33%',
-                      height: '18%',
+                      left: '27%',
+                      top: '45%',
+                      width: '45%',
+                      height: '20%',
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleStarClick(2);
                     }}
                   >
-                    <img src="/art/sprites/star.png" alt="Star" />
+                    <img src="art/sprites/star.png" alt="Star 2" />
                   </div>
                   <div 
                     className="sprite star clickable twinkle"
                     style={{
                       position: 'absolute',
-                      left: '22%',
-                      top: '65%',
-                      width: '33%',
-                      height: '18%',
+                      left: '27%',
+                      top: '68%',
+                      width: '45%',
+                      height: '20%',
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleStarClick(3);
                     }}
                   >
-                    <img src="/art/sprites/star.png" alt="Star" />
+                    <img src="art/sprites/star.png" alt="Star 3" />
                   </div>
                 </>
               )}
               
-              {progress.puzzleStates.mirrorSequence.length === 3 && !progress.keysFound.includes('key-mirror') && (
+              {progress.puzzleStates.mirrorSequence.length === 3 && !progress.keysFound.includes('key-mirror') && !floatingKeys.includes('key-mirror') && (
                 <div 
-                  className="sprite key key-mirror clickable sparkle"
+                  className="sprite key key-mirror clickable sparkle float-up"
                   style={{
                     position: 'absolute',
                     left: '35%',
                     top: '35%',
-                    width: '27%',
+                    width: '30%',
                     height: '30%',
                   }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    collectKey('key-mirror');
-                  }}
+                  onClick={handleMirrorKeyClick}
                 >
-                  <img src="/art/sprites/key.png" alt="Key" />
+                  <img src="art/sprites/key.png" alt="Key" />
                 </div>
               )}
             </>
@@ -515,21 +602,21 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         >
           <img 
             src={progress.puzzleStates.jewelleryOpen 
-              ? '/art/sprites/jewellery-box-open.png' 
-              : '/art/sprites/jewellery-box-closed.png'
+              ? 'art/sprites/jewellery-box-open.png' 
+              : 'art/sprites/jewellery-box-closed.png'
             } 
             alt="Jewellery Box" 
             className={progress.puzzleStates.jewelleryOpen ? 'pop-in' : ''}
           />
         </div>
         
-        {progress.puzzleStates.jewelleryOpen && !progress.keysFound.includes('key-jewellery') && (
+        {progress.puzzleStates.jewelleryOpen && !progress.keysFound.includes('key-jewellery') && !floatingKeys.includes('key-jewellery') && (
           <div 
-            className="sprite key key-jewellery clickable sparkle rise"
+            className="sprite key key-jewellery clickable sparkle float-up"
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-jewellery'))}
-            onClick={() => collectKey('key-jewellery')}
+            onClick={() => handleFloatingKeyClick('key-jewellery')}
           >
-            <img src="/art/sprites/key.png" alt="Key" />
+            <img src="art/sprites/key.png" alt="Key" />
           </div>
         )}
         
@@ -540,9 +627,9 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
           onClick={handleMusicBoxClick}
         >
           <img 
-            src="/art/sprites/music-box.png" 
+            src="art/sprites/music-box.png" 
             alt="Music Box" 
-            className={musicBoxPlaying ? 'spinning' : ''}
+            className={musicBoxPlaying ? 'sway' : ''}
           />
         </div>
         
@@ -554,25 +641,22 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         >
           {progress.puzzleStates.wardrobeOpen && (
             <>
-              <img src="/art/sprites/wardrobe-open.png" alt="" className="wardrobe-open scale-in" />
+              <img src="art/sprites/wardrobe-open.png" alt="" className="wardrobe-open scale-in" />
               
-              {!progress.keysFound.includes('key-wardrobe') && (
+              {!progress.keysFound.includes('key-wardrobe') && !floatingKeys.includes('key-wardrobe') && (
                 <div 
                   className="dress-pocket-hitbox clickable"
                   style={{
                     position: 'absolute',
-                    left: '45%',
-                    top: '50%',
-                    width: '10%',
-                    height: '15%',
+                    left: '33%',
+                    top: '40%',
+                    width: '34%',
+                    height: '40%',
                   }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDressClick();
-                  }}
+                  onClick={handleDressClick}
                 >
-                  <div className="sprite key key-wardrobe sparkle">
-                    <img src="/art/sprites/key.png" alt="Key" />
+                  <div className="sprite key key-wardrobe sparkle float-up">
+                    <img src="art/sprites/key.png" alt="Key" />
                   </div>
                 </div>
               )}
@@ -590,16 +674,16 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
           }}
           onClick={handleTeddyClick}
         >
-          <img src="/art/sprites/teddy.png" alt="Teddy Bear" />
+          <img src="art/sprites/teddy.png" alt="Teddy Bear" />
         </div>
         
-        {progress.puzzleStates.teddyMoved && !progress.keysFound.includes('key-teddy') && (
+        {progress.puzzleStates.teddyMoved && !progress.keysFound.includes('key-teddy') && !floatingKeys.includes('key-teddy') && (
           <div 
-            className="sprite key key-teddy clickable sparkle"
+            className="sprite key key-teddy clickable sparkle float-up"
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-teddy'))}
-            onClick={() => collectKey('key-teddy')}
+            onClick={() => handleFloatingKeyClick('key-teddy')}
           >
-            <img src="/art/sprites/key.png" alt="Key" />
+            <img src="art/sprites/key.png" alt="Key" />
           </div>
         )}
         
@@ -611,8 +695,8 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         >
           <img 
             src={toyChestOpen 
-              ? '/art/sprites/toy-chest-open.png' 
-              : '/art/sprites/toy-chest-closed.png'
+              ? 'art/sprites/toy-chest-open.png' 
+              : 'art/sprites/toy-chest-closed.png'
             } 
             alt="Toy Chest" 
             className={toyChestOpen ? 'bounce' : ''}
@@ -621,11 +705,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         
         {/* Dragon toy */}
         <div 
-          className="sprite dragon clickable"
+          className={`sprite dragon clickable ${dragonWiggling ? 'wiggle' : ''}`}
           style={getObjectStyle(layout.objects.find(o => o.id === 'dragon-toy'))}
           onClick={handleDragonClick}
         >
-          <img src="/art/sprites/dragon.png" alt="Dragon" />
+          <img src="art/sprites/dragon.png" alt="Dragon" />
         </div>
         
         {/* Kitten */}
@@ -636,8 +720,8 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         >
           <img 
             src={kittenPlaying 
-              ? '/art/sprites/kitten-play.png' 
-              : '/art/sprites/kitten-sit.png'
+              ? 'art/sprites/kitten-play.png' 
+              : 'art/sprites/kitten-sit.png'
             } 
             alt="Kitten" 
           />
@@ -648,11 +732,17 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
           className={`sprite door-hitbox clickable ${doorGlowing ? 'glow-pulse' : ''}`}
           style={getObjectStyle(layout.objects.find(o => o.id === 'door'))}
           onClick={handleDoorClick}
-        >
-          {doorOpen && (
-            <img src="/art/sprites/door-open-overlay.png" alt="" className="door-open fade-in" />
-          )}
-        </div>
+        />
+        
+        {/* Door open overlay */}
+        {doorOpen && (
+          <div 
+            className="sprite door-open-overlay fade-in"
+            style={getObjectStyle(layout.objects.find(o => o.id === 'door-open'))}
+          >
+            <img src="art/sprites/door-open-overlay.png" alt="" />
+          </div>
+        )}
         
         {/* Fairy */}
         {fairyVisible && (
@@ -662,8 +752,8 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
           >
             <img 
               src={fairyCheer 
-                ? '/art/sprites/fairy-cheer.png' 
-                : '/art/sprites/fairy-talk.png'
+                ? 'art/sprites/fairy-cheer.png' 
+                : 'art/sprites/fairy-talk.png'
               } 
               alt="Fairy" 
             />
@@ -684,7 +774,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
                 className={`key-slot ${i < progress.keysFound.length ? 'filled' : ''}`}
               >
                 {i < progress.keysFound.length && (
-                  <img src="/art/sprites/key.png" alt="Key" className="key-icon" />
+                  <img src="art/sprites/key.png" alt="Key" className="key-icon" />
                 )}
               </div>
             ))}

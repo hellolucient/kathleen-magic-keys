@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { audioManager } from '../audioManager';
 import './TitleScreen.css';
 
@@ -7,41 +7,67 @@ interface TitleScreenProps {
 }
 
 function TitleScreen({ onStart }: TitleScreenProps) {
-  const [titleText, setTitleText] = useState('');
+  const [started, setStarted] = useState(false);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
+  const startingRef = useRef(false);
 
   useEffect(() => {
-    playTitleNarration();
+    // Don't play narration until user taps (iOS requirement)
+    const handleFirstInteraction = async () => {
+      if (!audioUnlocked) {
+        await audioManager.unlock();
+        setAudioUnlocked(true);
+        playTitleNarration();
+      }
+    };
+    
+    document.addEventListener('click', handleFirstInteraction, { once: true });
+    document.addEventListener('touchstart', handleFirstInteraction, { once: true });
+    
+    return () => {
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+    };
   }, []);
 
   const playTitleNarration = async () => {
-    const text = await audioManager.playSpeech('narr-title');
-    setTitleText(text);
+    await audioManager.playSpeech('narr-title');
   };
 
-  const handleStart = async () => {
+  const handleStart = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // Guard against double-click
+    if (startingRef.current || started) return;
+    startingRef.current = true;
+    setStarted(true);
+    
     await audioManager.unlock();
     onStart();
   };
 
   return (
-    <div className="title-screen" onClick={handleStart}>
+    <div className="title-screen">
       <div className="title-bg">
-        <img src="/art/title.jpg" alt="Princess Kathleen and Fairy" />
+        <img src="art/title.jpg" alt="Princess Kathleen and Fairy" />
       </div>
       <div className="title-overlay">
         <div className="title-content">
-          <h1 className="main-title">
-            Princess Kathleen<br />
-            <span className="title-and">and the</span><br />
-            Five Magic Keys
-          </h1>
-          <h2 className="chapter-title">Chapter 1: The Princess's Bedroom</h2>
-          <button className="play-button" onClick={handleStart}>
+          <div className="title-text-area">
+            <h1 className="main-title">
+              Princess Kathleen<br />
+              <span className="title-and">and the</span><br />
+              Five Magic Keys
+            </h1>
+            <h2 className="chapter-title">Chapter 1: The Princess's Bedroom</h2>
+          </div>
+          <button 
+            className="play-button" 
+            onClick={handleStart}
+            disabled={started}
+          >
             ✨ Play ✨
           </button>
-          {titleText && (
-            <p className="title-narration">{titleText}</p>
-          )}
         </div>
       </div>
     </div>

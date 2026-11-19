@@ -52,15 +52,20 @@ function App() {
   };
 
   const handlePlayAgain = () => {
-    setProgress(getInitialProgress());
+    const initialProgress = getInitialProgress();
+    setProgress(initialProgress);
     setScreen('game');
+  };
+  
+  const updateProgress = (updater: (prev: GameProgress) => GameProgress) => {
+    setProgress(updater);
   };
 
   if (orientation === 'portrait') {
     return (
       <div className="portrait-warning">
         <div className="portrait-content">
-          <img src="/art/sprites/fairy-talk.png" alt="Fairy" className="portrait-fairy" />
+          <img src="art/sprites/fairy-talk.png" alt="Fairy" className="portrait-fairy" />
           <h2>Please turn your iPad sideways!</h2>
           <p>This magical adventure works best in landscape mode.</p>
         </div>
@@ -75,7 +80,7 @@ function App() {
       {screen === 'game' && (
         <GameScene
           progress={progress}
-          setProgress={setProgress}
+          setProgress={updateProgress}
           onComplete={handleGameComplete}
         />
       )}

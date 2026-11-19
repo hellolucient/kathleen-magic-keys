@@ -18,7 +18,7 @@ function CompleteScreen({ onPlayAgain }: CompleteScreenProps) {
   return (
     <div className="complete-screen">
       <div className="complete-bg">
-        <img src="/art/complete.jpg" alt="Chapter Complete" />
+        <img src="art/complete.jpg" alt="Chapter Complete" />
       </div>
       <div className="complete-overlay">
         <div className="complete-content">

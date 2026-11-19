@@ -3,7 +3,6 @@
   height: 100%;
   position: relative;
   overflow: hidden;
-  cursor: pointer;
 }
 
 .title-bg {
@@ -26,44 +25,62 @@
   position: absolute;
   top: 0;
   left: 0;
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 100%);
   display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.title-content {
-  text-align: center;
-  color: white;
+  align-items: flex-start;
+  justify-content: space-between;
   padding: 2rem;
 }
 
+.title-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.title-text-area {
+  text-align: left;
+  color: white;
+  max-width: 600px;
+  margin-left: 2rem;
+  margin-top: 2rem;
+}
+
 .main-title {
-  font-size: clamp(2rem, 5vw, 4rem);
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
   margin-bottom: 1rem;
-  text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.9);
+  text-shadow: 
+    0 0 20px rgba(255, 255, 255, 0.8),
+    0 0 40px rgba(255, 192, 203, 0.6),
+    3px 3px 6px rgba(0, 0, 0, 0.8);
   font-family: 'Georgia', serif;
-  line-height: 1.3;
+  line-height: 1.2;
   font-weight: bold;
 }
 
 .title-and {
-  font-size: 0.6em;
+  font-size: 0.5em;
   font-style: italic;
   font-weight: normal;
 }
 
 .chapter-title {
-  font-size: clamp(1.2rem, 3vw, 2rem);
-  margin-bottom: 2rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+  font-size: clamp(1.3rem, 2.5vw, 2rem);
+  margin-bottom: 1rem;
+  text-shadow: 
+    0 0 15px rgba(255, 255, 255, 0.6),
+    2px 2px 4px rgba(0, 0, 0, 0.9);
   font-style: italic;
   color: #ffc0cb;
 }
 
 .play-button {
-  font-size: clamp(1.5rem, 3vw, 2.5rem);
-  padding: 1rem 3rem;
+  align-self: flex-start;
+  margin-left: 3rem;
+  margin-bottom: 3rem;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  padding: 1.2rem 3.5rem;
   background: linear-gradient(135deg, #ff69b4 0%, #ffc0cb 100%);
   color: white;
   border: none;
@@ -77,21 +94,19 @@
   animation: pulse 2s ease-in-out infinite;
 }
 
-.play-button:hover {
+.play-button:hover:not(:disabled) {
   transform: scale(1.1);
   box-shadow: 0 12px 30px rgba(255, 105, 180, 0.6);
 }
 
-.play-button:active {
+.play-button:active:not(:disabled) {
   transform: scale(0.95);
 }
 
-.title-narration {
-  margin-top: 2rem;
-  font-size: 1rem;
-  max-width: 600px;
-  opacity: 0.8;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+.play-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  animation: none;
 }
 
 @keyframes pulse {
@@ -100,5 +115,17 @@
   }
   50% {
     transform: scale(1.05);
+  }
+}
+
+@media (max-width: 768px) {
+  .title-text-area {
+    margin-left: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .play-button {
+    margin-left: 1.5rem;
+    margin-bottom: 2rem;
   }
 }

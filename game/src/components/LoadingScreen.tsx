@@ -22,23 +22,23 @@ function LoadingScreen({ onComplete }: LoadingScreenProps) {
 
       // Get all audio files to preload
       const soundEffects = [
-        '/audio/sfx/celebration-fanfare.mp3',
-        '/audio/sfx/curtain-swish.mp3',
-        '/audio/sfx/door-glow-loop.mp3',
-        '/audio/sfx/door-open-magic.mp3',
-        '/audio/sfx/key-found.mp3',
-        '/audio/sfx/kitten-meow-1.mp3',
-        '/audio/sfx/kitten-meow-2.mp3',
-        '/audio/sfx/lid-click.mp3',
-        '/audio/sfx/lock-click.mp3',
-        '/audio/sfx/music-box-loop.mp3',
-        '/audio/sfx/sparkle.mp3',
-        '/audio/sfx/star-1.mp3',
-        '/audio/sfx/star-2.mp3',
-        '/audio/sfx/star-3.mp3',
-        '/audio/sfx/star-reset.mp3',
-        '/audio/sfx/tap-pop.mp3',
-        '/audio/sfx/wiggle-boing.mp3',
+        'audio/sfx/celebration-fanfare.mp3',
+        'audio/sfx/curtain-swish.mp3',
+        'audio/sfx/door-glow-loop.mp3',
+        'audio/sfx/door-open-magic.mp3',
+        'audio/sfx/key-found.mp3',
+        'audio/sfx/kitten-meow-1.mp3',
+        'audio/sfx/kitten-meow-2.mp3',
+        'audio/sfx/lid-click.mp3',
+        'audio/sfx/lock-click.mp3',
+        'audio/sfx/music-box-loop.mp3',
+        'audio/sfx/sparkle.mp3',
+        'audio/sfx/star-1.mp3',
+        'audio/sfx/star-2.mp3',
+        'audio/sfx/star-3.mp3',
+        'audio/sfx/star-reset.mp3',
+        'audio/sfx/tap-pop.mp3',
+        'audio/sfx/wiggle-boing.mp3',
       ];
 
       setStatus('Loading sound effects...');
@@ -47,28 +47,28 @@ function LoadingScreen({ onComplete }: LoadingScreenProps) {
 
       // Preload images
       const images = [
-        '/art/bg-bedroom.jpg',
-        '/art/title.jpg',
-        '/art/complete.jpg',
-        '/art/sprites/curtain-closed-overlay.png',
-        '/art/sprites/key.png',
-        '/art/sprites/mirror-glow.png',
-        '/art/sprites/star.png',
-        '/art/sprites/jewellery-box-closed.png',
-        '/art/sprites/jewellery-box-open.png',
-        '/art/sprites/music-box.png',
-        '/art/sprites/wardrobe-open.png',
-        '/art/sprites/teddy.png',
-        '/art/sprites/toy-chest-closed.png',
-        '/art/sprites/toy-chest-open.png',
-        '/art/sprites/dragon.png',
-        '/art/sprites/kitten-sit.png',
-        '/art/sprites/kitten-play.png',
-        '/art/sprites/door-open-overlay.png',
-        '/art/sprites/fairy-talk.png',
-        '/art/sprites/fairy-cheer.png',
-        '/art/sprites/kathleen.png',
-        '/art/sprites/kathleen-cheer.png',
+        'art/bg-bedroom.jpg',
+        'art/title.jpg',
+        'art/complete.jpg',
+        'art/sprites/curtain-closed-overlay.png',
+        'art/sprites/key.png',
+        'art/sprites/mirror-glow.png',
+        'art/sprites/star.png',
+        'art/sprites/jewellery-box-closed.png',
+        'art/sprites/jewellery-box-open.png',
+        'art/sprites/music-box.png',
+        'art/sprites/wardrobe-open.png',
+        'art/sprites/teddy.png',
+        'art/sprites/toy-chest-closed.png',
+        'art/sprites/toy-chest-open.png',
+        'art/sprites/dragon.png',
+        'art/sprites/kitten-sit.png',
+        'art/sprites/kitten-play.png',
+        'art/sprites/door-open-overlay.png',
+        'art/sprites/fairy-talk.png',
+        'art/sprites/fairy-cheer.png',
+        'art/sprites/kathleen.png',
+        'art/sprites/kathleen-cheer.png',
       ];
 
       setStatus('Loading beautiful artwork...');
@@ -107,7 +107,7 @@ function LoadingScreen({ onComplete }: LoadingScreenProps) {
   return (
     <div className="loading-screen">
       <div className="loading-bg">
-        <img src="/art/title.jpg" alt="" />
+        <img src="art/title.jpg" alt="" />
       </div>
       <div className="loading-overlay">
         <div className="loading-content">

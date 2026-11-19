@@ -37,7 +37,7 @@ class AudioManager {
 
   async loadAudioLines() {
     try {
-      const response = await fetch('/audio/lines.json');
+      const response = await fetch('audio/lines.json');
       this.lines = await response.json();
     } catch (error) {
       console.error('Failed to load audio lines:', error);
@@ -127,7 +127,7 @@ class AudioManager {
     }
   }
 
-  async playSpeech(lineId: string, onComplete?: () => void): Promise<string> {
+  async playSpeech(lineId: string): Promise<string> {
     if (!this.lines || this.muted) return '';
     
     const line = this.lines[lineId];
@@ -136,26 +136,42 @@ class AudioManager {
     // Stop any current speech
     if (this.currentSpeech) {
       this.currentSpeech.pause();
+      this.currentSpeech = null;
     }
 
-    // Use HTML5 Audio for speech (easier to manage and doesn't need preload)
+    // Use HTML5 Audio for speech
     const audio = new Audio(line.file);
     this.currentSpeech = audio;
     
-    audio.addEventListener('ended', () => {
-      if (this.currentSpeech === audio) {
-        this.currentSpeech = null;
-      }
-      if (onComplete) onComplete();
+    // Return promise that resolves when speech ends
+    return new Promise((resolve) => {
+      const onEnded = () => {
+        if (this.currentSpeech === audio) {
+          this.currentSpeech = null;
+        }
+        audio.removeEventListener('ended', onEnded);
+        audio.removeEventListener('error', onError);
+        resolve(line.text);
+      };
+      
+      const onError = (error: Event) => {
+        console.error('Failed to play speech:', lineId, error);
+        if (this.currentSpeech === audio) {
+          this.currentSpeech = null;
+        }
+        audio.removeEventListener('ended', onEnded);
+        audio.removeEventListener('error', onError);
+        resolve(line.text);
+      };
+      
+      audio.addEventListener('ended', onEnded);
+      audio.addEventListener('error', onError);
+      
+      audio.play().catch((error) => {
+        console.error('Failed to start speech:', error);
+        onError(error);
+      });
     });
-
-    try {
-      await audio.play();
-    } catch (error) {
-      console.error('Failed to play speech:', error);
-    }
-
-    return line.text;
   }
 
   setMuted(muted: boolean) {

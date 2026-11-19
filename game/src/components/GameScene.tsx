@@ -25,7 +25,6 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const [toyChestOpen, setToyChestOpen] = useState(false);
   const [musicBoxPlaying, setMusicBoxPlaying] = useState(false);
   const [dragonWiggling, setDragonWiggling] = useState(false);
-  const [floatingKeys, setFloatingKeys] = useState<string[]>([]);
   
   const progressRef = useRef(progress);
   const lastInteractionRef = useRef<number>(Date.now());
@@ -145,28 +144,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     
     recordInteraction();
     
-    // Show key floating
-    setFloatingKeys(prev => [...prev, keyId]);
-    
-    // Wait for key to be tapped or auto-collect after 1.2s
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    
-    // Check if still floating (not tapped)
-    setFloatingKeys(prev => {
-      const stillFloating = prev.includes(keyId);
-      if (stillFloating) {
-        // Fly to counter
-        flyKeyToCounter(keyId);
-      }
-      return prev.filter(k => k !== keyId);
-    });
-  };
-
-  const flyKeyToCounter = async (keyId: string) => {
     audioManager.playSound('audio/sfx/sparkle.mp3');
     audioManager.playSound('audio/sfx/key-found.mp3');
     
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Wait a bit for animation
+    await new Promise(resolve => setTimeout(resolve, 400));
     
     // Update progress with functional update
     setProgress(p => {
@@ -174,7 +156,6 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       return { ...p, keysFound: newKeysFound };
     });
     
-    const currentProgress = progressRef.current;
     const newLength = currentProgress.keysFound.length + 1;
     
     setFairyCheer(true);
@@ -374,8 +355,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   };
 
   const handleFloatingKeyClick = (keyId: string) => {
-    setFloatingKeys(prev => prev.filter(k => k !== keyId));
-    flyKeyToCounter(keyId);
+    collectKey(keyId);
   };
 
   // Fun interactive elements
@@ -499,7 +479,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         )}
         
         {/* Key behind curtain */}
-        {progress.puzzleStates.curtainOpen && !progress.keysFound.includes('key-curtain') && !floatingKeys.includes('key-curtain') && (
+        {progress.puzzleStates.curtainOpen && !progress.keysFound.includes('key-curtain') && (
           <div 
             className="sprite key key-curtain clickable sparkle float-up"
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-curtain'))}
@@ -575,7 +555,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
                 </>
               )}
               
-              {progress.puzzleStates.mirrorSequence.length === 3 && !progress.keysFound.includes('key-mirror') && !floatingKeys.includes('key-mirror') && (
+              {progress.puzzleStates.mirrorSequence.length === 3 && !progress.keysFound.includes('key-mirror') && (
                 <div 
                   className="sprite key key-mirror clickable sparkle float-up"
                   style={{
@@ -610,7 +590,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
           />
         </div>
         
-        {progress.puzzleStates.jewelleryOpen && !progress.keysFound.includes('key-jewellery') && !floatingKeys.includes('key-jewellery') && (
+        {progress.puzzleStates.jewelleryOpen && !progress.keysFound.includes('key-jewellery') && (
           <div 
             className="sprite key key-jewellery clickable sparkle float-up"
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-jewellery'))}
@@ -643,7 +623,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
             <>
               <img src="art/sprites/wardrobe-open.png" alt="" className="wardrobe-open scale-in" />
               
-              {!progress.keysFound.includes('key-wardrobe') && !floatingKeys.includes('key-wardrobe') && (
+              {!progress.keysFound.includes('key-wardrobe') && (
                 <div 
                   className="dress-pocket-hitbox clickable"
                   style={{
@@ -677,7 +657,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
           <img src="art/sprites/teddy.png" alt="Teddy Bear" />
         </div>
         
-        {progress.puzzleStates.teddyMoved && !progress.keysFound.includes('key-teddy') && !floatingKeys.includes('key-teddy') && (
+        {progress.puzzleStates.teddyMoved && !progress.keysFound.includes('key-teddy') && (
           <div 
             className="sprite key key-teddy clickable sparkle float-up"
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-teddy'))}

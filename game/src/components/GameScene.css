@@ -3,7 +3,21 @@
   height: 100%;
   position: relative;
   overflow: hidden;
-  background: #000;
+  background: #1a1a2e;
+}
+
+.game-scene::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/art/bg-bedroom.jpg');
+  background-size: cover;
+  background-position: center;
+  filter: blur(20px) brightness(0.3);
+  z-index: 0;
 }
 
 .game-container {
@@ -16,6 +30,7 @@
   max-width: 177.78vh;
   max-height: 56.25vw;
   aspect-ratio: 16 / 9;
+  z-index: 1;
 }
 
 .game-bg {
@@ -72,15 +87,21 @@
 
 @keyframes float-up-anim {
   0%, 100% { 
-    transform: translateY(0);
+    translate: 0 0;
   }
   50% { 
-    transform: translateY(-15px);
+    translate: 0 -15px;
   }
 }
 
 .float-up {
   animation: float-up-anim 1.2s ease-in-out infinite;
+}
+
+.float-up img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 @keyframes twinkle-anim {
@@ -165,16 +186,49 @@
 
 @keyframes glow-pulse-anim {
   0%, 100% { 
-    box-shadow: inset 0 0 30px rgba(255, 215, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.3);
+    box-shadow: 
+      inset 0 0 40px rgba(255, 215, 0, 0.8), 
+      inset 0 -20px 60px rgba(255, 215, 0, 0.6),
+      0 0 40px rgba(255, 215, 0, 0.5),
+      0 -10px 30px rgba(255, 215, 0, 0.4);
   }
   50% { 
-    box-shadow: inset 0 0 60px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.6);
+    box-shadow: 
+      inset 0 0 80px rgba(255, 215, 0, 1), 
+      inset 0 -20px 100px rgba(255, 215, 0, 0.9),
+      0 0 80px rgba(255, 215, 0, 0.8),
+      0 -10px 50px rgba(255, 215, 0, 0.7);
+  }
+}
+
+@keyframes sparkle-particle {
+  0% { 
+    opacity: 0; 
+    transform: translateY(0) scale(0);
+  }
+  50% { 
+    opacity: 1; 
+  }
+  100% { 
+    opacity: 0; 
+    transform: translateY(-30px) scale(1);
   }
 }
 
 .glow-pulse {
   animation: glow-pulse-anim 2s ease-in-out infinite;
-  background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.2) 0%, transparent 70%);
+  background: radial-gradient(ellipse at 50% 100%, rgba(255, 215, 0, 0.4) 0%, rgba(255, 215, 0, 0.2) 50%, transparent 80%);
+  border-radius: 50% 50% 0 0 / 22% 22% 0 0;
+}
+
+.glow-pulse::after {
+  content: '✨';
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2rem;
+  animation: sparkle-particle 2s ease-in-out infinite;
 }
 
 /* Fairy */
@@ -318,6 +372,32 @@
 
 .door-open-overlay {
   pointer-events: none;
+}
+
+/* Flying keys to locks animation */
+@keyframes fly-to-lock {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(360deg);
+  }
+}
+
+.flying-key-to-lock {
+  animation: fly-to-lock 0.8s ease-out forwards;
+}
+
+.flying-key-to-lock img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
 }
 
 /* Responsive adjustments */

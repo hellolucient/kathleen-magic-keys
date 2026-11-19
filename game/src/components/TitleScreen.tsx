@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { audioManager } from '../audioManager';
 import './TitleScreen.css';
 
@@ -11,27 +11,8 @@ function TitleScreen({ onStart }: TitleScreenProps) {
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const startingRef = useRef(false);
 
-  useEffect(() => {
-    // Don't play narration until user taps (iOS requirement)
-    const handleFirstInteraction = async () => {
-      if (!audioUnlocked) {
-        await audioManager.unlock();
-        setAudioUnlocked(true);
-        playTitleNarration();
-      }
-    };
-    
-    document.addEventListener('click', handleFirstInteraction, { once: true });
-    document.addEventListener('touchstart', handleFirstInteraction, { once: true });
-    
-    return () => {
-      document.removeEventListener('click', handleFirstInteraction);
-      document.removeEventListener('touchstart', handleFirstInteraction);
-    };
-  }, []);
-
   const playTitleNarration = async () => {
-    await audioManager.playSpeech('narr-title');
+    await audioManager.playSpeech('narr-title', 14000);
   };
 
   const handleStart = async (e: React.MouseEvent) => {
@@ -43,6 +24,13 @@ function TitleScreen({ onStart }: TitleScreenProps) {
     setStarted(true);
     
     await audioManager.unlock();
+    
+    // Play title narration on tap (iOS won't autoplay)
+    if (!audioUnlocked) {
+      setAudioUnlocked(true);
+      playTitleNarration();
+    }
+    
     onStart();
   };
 

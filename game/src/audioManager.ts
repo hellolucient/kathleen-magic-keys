@@ -9,6 +9,7 @@ class AudioManager {
   private currentLoops: Map<string, AudioBufferSourceNode> = new Map();
   private lines: AudioLines | null = null;
   private currentSpeech: HTMLAudioElement | null = null;
+  private currentResolve: ((text: string) => void) | null = null;
 
   async init() {
     if (this.context) return;
@@ -123,21 +124,37 @@ class AudioManager {
 
     if (this.currentSpeech) {
       this.currentSpeech.pause();
+      if (this.currentResolve) {
+        this.currentResolve('');
+        this.currentResolve = null;
+      }
       this.currentSpeech = null;
     }
   }
 
-  async playSpeech(lineId: string): Promise<string> {
-    if (!this.lines || this.muted) return '';
+  getText(lineId: string): string {
+    if (!this.lines) return '';
+    const line = this.lines[lineId];
+    return line ? line.text : '';
+  }
+
+  async playSpeech(lineId: string, maxDuration?: number): Promise<string> {
+    if (!this.lines) return '';
     
     const line = this.lines[lineId];
     if (!line) return '';
 
-    // Stop any current speech
+    // Stop any current speech and resolve its promise
     if (this.currentSpeech) {
       this.currentSpeech.pause();
+      if (this.currentResolve) {
+        this.currentResolve(this.lines[lineId]?.text || '');
+        this.currentResolve = null;
+      }
       this.currentSpeech = null;
     }
+
+    if (this.muted) return line.text;
 
     // Use HTML5 Audio for speech
     const audio = new Audio(line.file);
@@ -145,27 +162,42 @@ class AudioManager {
     
     // Return promise that resolves when speech ends
     return new Promise((resolve) => {
-      const onEnded = () => {
+      this.currentResolve = resolve;
+      
+      const cleanup = () => {
         if (this.currentSpeech === audio) {
           this.currentSpeech = null;
         }
+        if (this.currentResolve === resolve) {
+          this.currentResolve = null;
+        }
         audio.removeEventListener('ended', onEnded);
         audio.removeEventListener('error', onError);
+      };
+      
+      const onEnded = () => {
+        cleanup();
         resolve(line.text);
       };
       
       const onError = (error: Event) => {
         console.error('Failed to play speech:', lineId, error);
-        if (this.currentSpeech === audio) {
-          this.currentSpeech = null;
-        }
-        audio.removeEventListener('ended', onEnded);
-        audio.removeEventListener('error', onError);
+        cleanup();
         resolve(line.text);
       };
       
       audio.addEventListener('ended', onEnded);
       audio.addEventListener('error', onError);
+      
+      // Race against max duration if provided
+      if (maxDuration) {
+        setTimeout(() => {
+          if (this.currentSpeech === audio) {
+            cleanup();
+            resolve(line.text);
+          }
+        }, maxDuration);
+      }
       
       audio.play().catch((error) => {
         console.error('Failed to start speech:', error);

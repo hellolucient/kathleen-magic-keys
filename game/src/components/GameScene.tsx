@@ -25,6 +25,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const [toyChestOpen, setToyChestOpen] = useState(false);
   const [musicBoxPlaying, setMusicBoxPlaying] = useState(false);
   const [dragonWiggling, setDragonWiggling] = useState(false);
+  const [flyingKeysToLocks, setFlyingKeysToLocks] = useState<number[]>([]);
   
   const progressRef = useRef(progress);
   const lastInteractionRef = useRef<number>(Date.now());
@@ -40,7 +41,6 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   useEffect(() => {
     loadLayout();
     startIntro();
-    startHintSystem();
 
     return () => {
       if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
@@ -64,25 +64,28 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   };
 
   const startIntro = async () => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    await audioManager.playSpeech('narr-intro');
-    
-    await new Promise(resolve => setTimeout(resolve, 500));
-    await audioManager.playSpeech('narr-fairy-arrives');
-    
     setFairyVisible(true);
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
+    await audioManager.playSpeech('narr-intro', 13000);
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
+    await audioManager.playSpeech('narr-fairy-arrives', 4000);
+    
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    const text3 = await audioManager.playSpeech('fairy-intro');
-    setFairyText(text3);
+    setFairyText(audioManager.getText('fairy-intro'));
+    await audioManager.playSpeech('fairy-intro', 10000);
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    setFairyText(audioManager.getText('fairy-start'));
+    await audioManager.playSpeech('fairy-start', 6000);
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    const text4 = await audioManager.playSpeech('fairy-start');
-    setFairyText(text4);
-    
-    await new Promise(resolve => setTimeout(resolve, 4000));
     setFairyText('');
+    
+    // Start hint system after intro completes
+    startHintSystem();
   };
 
   const startHintSystem = () => {
@@ -112,6 +115,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     const missingKeys = KEY_PUZZLES.filter(key => !currentProgress.keysFound.includes(key));
     
     if (missingKeys.length === 0) return;
+    if (fairyText) return; // Skip if fairy is already speaking
     
     const targetKey = missingKeys[0];
     const puzzleName = targetKey.replace('key-', '');
@@ -126,10 +130,10 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     const hintId = hints[Math.min(hintIndexRef.current, hints.length - 1)];
     hintIndexRef.current++;
     
-    const text = await audioManager.playSpeech(hintId);
-    setFairyText(text);
-    
-    setTimeout(() => setFairyText(''), 4000);
+    setFairyText(audioManager.getText(hintId));
+    await audioManager.playSpeech(hintId, 5000);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setFairyText('');
   };
 
   const recordInteraction = () => {
@@ -160,23 +164,22 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     
     setFairyCheer(true);
     const foundLineId = `fairy-found-${newLength}`;
-    const text = await audioManager.playSpeech(foundLineId);
-    setFairyText(text);
+    setFairyText(audioManager.getText(foundLineId));
+    await audioManager.playSpeech(foundLineId, 6000);
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    setTimeout(() => {
-      setFairyCheer(false);
-      setFairyText('');
-    }, 3000);
+    setFairyCheer(false);
+    setFairyText('');
   };
 
   const triggerDoorGlow = async () => {
     setDoorGlowing(true);
     audioManager.playSound('audio/sfx/door-glow-loop.mp3', true);
     
-    const text = await audioManager.playSpeech('fairy-door-glow');
-    setFairyText(text);
-    
-    setTimeout(() => setFairyText(''), 4000);
+    setFairyText(audioManager.getText('fairy-door-glow'));
+    await audioManager.playSpeech('fairy-door-glow', 6000);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setFairyText('');
   };
 
   const unlockDoor = async () => {
@@ -185,31 +188,36 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     setUnlocking(true);
     audioManager.stopLoop('audio/sfx/door-glow-loop.mp3');
     
-    const text = await audioManager.playSpeech('narr-unlock');
-    setFairyText(text);
+    // Start narration (with timeout race)
+    setFairyText(audioManager.getText('narr-unlock'));
+    const narrationPromise = audioManager.playSpeech('narr-unlock', 15000);
     
-    // Animate keys flying to locks
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Animate keys flying to locks (starts immediately, runs alongside narration)
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     for (let i = 0; i < 5; i++) {
+      setFlyingKeysToLocks(prev => [...prev, i]);
       audioManager.playSound('audio/sfx/lock-click.mp3');
       await new Promise(resolve => setTimeout(resolve, 300));
     }
     
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Wait a bit, then open door
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
     audioManager.playSound('audio/sfx/door-open-magic.mp3');
     audioManager.playSound('audio/sfx/celebration-fanfare.mp3');
     setDoorOpen(true);
     
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait for narration or continue after timeout
+    await narrationPromise;
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     setFairyCheer(true);
-    const finalText = await audioManager.playSpeech('fairy-final');
-    setFairyText(finalText);
+    setFairyText(audioManager.getText('fairy-final'));
+    await audioManager.playSpeech('fairy-final', 9000);
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    
+    setFairyText('');
     onComplete();
   };
 
@@ -367,9 +375,10 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     setKittenPlaying(true);
     setTimeout(() => setKittenPlaying(false), 2000);
     
-    const text = await audioManager.playSpeech('curious-kitten');
-    setFairyText(text);
-    setTimeout(() => setFairyText(''), 3000);
+    setFairyText(audioManager.getText('curious-kitten'));
+    await audioManager.playSpeech('curious-kitten', 4000);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setFairyText('');
   };
 
   const handleMusicBoxClick = async () => {
@@ -382,9 +391,10 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       audioManager.playSound('audio/sfx/music-box-loop.mp3', true);
       setMusicBoxPlaying(true);
       
-      const text = await audioManager.playSpeech('curious-musicbox');
-      setFairyText(text);
-      setTimeout(() => setFairyText(''), 3000);
+      setFairyText(audioManager.getText('curious-musicbox'));
+      await audioManager.playSpeech('curious-musicbox', 5000);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setFairyText('');
     }
   };
 
@@ -395,9 +405,10 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     setToyChestOpen(!toyChestOpen);
     
     if (!toyChestOpen) {
-      const text = await audioManager.playSpeech('curious-chest');
-      setFairyText(text);
-      setTimeout(() => setFairyText(''), 3000);
+      setFairyText(audioManager.getText('curious-chest'));
+      await audioManager.playSpeech('curious-chest', 4000);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setFairyText('');
     }
   };
 
@@ -408,9 +419,10 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     setDragonWiggling(true);
     setTimeout(() => setDragonWiggling(false), 500);
     
-    const text = await audioManager.playSpeech('curious-dragon');
-    setFairyText(text);
-    setTimeout(() => setFairyText(''), 3000);
+    setFairyText(audioManager.getText('curious-dragon'));
+    await audioManager.playSpeech('curious-dragon', 4000);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setFairyText('');
   };
 
   const handleDoorClick = async () => {
@@ -419,9 +431,10 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     if (progressRef.current.keysFound.length === 5) {
       await unlockDoor();
     } else {
-      const text = await audioManager.playSpeech('curious-door-locked');
-      setFairyText(text);
-      setTimeout(() => setFairyText(''), 3000);
+      setFairyText(audioManager.getText('curious-door-locked'));
+      await audioManager.playSpeech('curious-door-locked', 6000);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setFairyText('');
     }
   };
 
@@ -485,7 +498,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-curtain'))}
             onClick={() => handleFloatingKeyClick('key-curtain')}
           >
-            <img src="art/sprites/key.png" alt="Key" />
+            <img src="art/sprites/key.png" alt="Key" style={{ transform: 'rotate(-10deg)' }} />
           </div>
         )}
         
@@ -596,7 +609,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-jewellery'))}
             onClick={() => handleFloatingKeyClick('key-jewellery')}
           >
-            <img src="art/sprites/key.png" alt="Key" />
+            <img src="art/sprites/key.png" alt="Key" style={{ transform: 'rotate(70deg)' }} />
           </div>
         )}
         
@@ -635,8 +648,17 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
                   }}
                   onClick={handleDressClick}
                 >
-                  <div className="sprite key key-wardrobe sparkle float-up">
-                    <img src="art/sprites/key.png" alt="Key" />
+                  <div 
+                    className="sprite key key-wardrobe sparkle float-up"
+                    style={{
+                      position: 'absolute',
+                      left: '39%',
+                      top: '29%',
+                      width: '22%',
+                      height: '30%',
+                    }}
+                  >
+                    <img src="art/sprites/key.png" alt="Key" style={{ transform: 'rotate(15deg)' }} />
                   </div>
                 </div>
               )}
@@ -663,7 +685,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-teddy'))}
             onClick={() => handleFloatingKeyClick('key-teddy')}
           >
-            <img src="art/sprites/key.png" alt="Key" />
+            <img src="art/sprites/key.png" alt="Key" style={{ transform: 'rotate(80deg)' }} />
           </div>
         )}
         
@@ -783,6 +805,30 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         >
           ↻
         </button>
+        
+        {/* Flying keys to locks animation */}
+        {flyingKeysToLocks.map((lockIndex) => {
+          const lock = layout.objects.find(o => o.id === `door-lock-${lockIndex + 1}`);
+          if (!lock) return null;
+          
+          return (
+            <div
+              key={`flying-key-${lockIndex}`}
+              className="flying-key-to-lock"
+              style={{
+                position: 'absolute',
+                left: `${lock.cx}%`,
+                top: `${lock.cy}%`,
+                width: `${lock.d}%`,
+                height: `${lock.d}%`,
+                zIndex: 100,
+                transform: 'translate(-50%, -50%)',
+              }}
+            >
+              <img src="art/sprites/key.png" alt="" />
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -54,13 +54,14 @@
 }
 
 .complete-message {
-  font-size: clamp(1.3rem, 2.5vw, 2rem);
+  font-size: clamp(1.2rem, 2.2vw, 1.7rem);
   text-shadow: 
     0 0 15px rgba(255, 255, 255, 0.8),
     2px 2px 4px rgba(0, 0, 0, 0.9);
   font-style: italic;
   color: white;
-  margin-top: -1rem;
+  margin-top: 0.5rem;
+  max-width: 600px;
 }
 
 .complete-buttons {

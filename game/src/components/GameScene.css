@@ -1,0 +1,344 @@
+.game-scene {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+}
+
+.game-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  max-width: 177.78vh;
+  max-height: 56.25vw;
+  aspect-ratio: 16 / 9;
+}
+
+.game-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.sprite {
+  position: absolute;
+  pointer-events: none;
+}
+
+.sprite img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+}
+
+.clickable {
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+  padding: 10%;
+  margin: -10%;
+}
+
+.clickable:active {
+  transform: scale(0.95);
+}
+
+/* Animations */
+@keyframes sparkle-anim {
+  0%, 100% { 
+    filter: brightness(1) drop-shadow(0 0 5px rgba(255, 215, 0, 0.5)); 
+  }
+  50% { 
+    filter: brightness(1.5) drop-shadow(0 0 15px rgba(255, 215, 0, 1)); 
+  }
+}
+
+.sparkle {
+  animation: sparkle-anim 1s ease-in-out infinite;
+}
+
+@keyframes twinkle-anim {
+  0%, 100% { 
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.twinkle {
+  animation: twinkle-anim 1.5s ease-in-out infinite;
+}
+
+@keyframes float-anim {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.float {
+  animation: float-anim 3s ease-in-out infinite;
+}
+
+@keyframes wiggle-anim {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
+}
+
+.wiggle {
+  animation: wiggle-anim 0.5s ease-in-out 3;
+}
+
+@keyframes bounce-anim {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+.bounce {
+  animation: bounce-anim 0.5s ease;
+}
+
+@keyframes pop-in-anim {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.pop-in {
+  animation: pop-in-anim 0.4s ease;
+}
+
+@keyframes scale-in-anim {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.scale-in {
+  animation: scale-in-anim 0.5s ease;
+}
+
+@keyframes rise-anim {
+  0% { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.rise {
+  animation: rise-anim 0.5s ease;
+}
+
+@keyframes fade-in-anim {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.fade-in {
+  animation: fade-in-anim 1s ease;
+}
+
+@keyframes spin-anim {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinning {
+  animation: spin-anim 2s linear infinite;
+}
+
+@keyframes glow-pulse-anim {
+  0%, 100% { 
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+  }
+  50% { 
+    filter: drop-shadow(0 0 30px rgba(255, 215, 0, 1));
+  }
+}
+
+.glow-pulse {
+  animation: glow-pulse-anim 2s ease-in-out infinite;
+}
+
+/* Fairy */
+.fairy {
+  z-index: 100;
+}
+
+.fairy.cheer img {
+  animation: bounce-anim 0.5s ease infinite;
+}
+
+.speech-bubble {
+  position: absolute;
+  top: -20%;
+  left: 110%;
+  width: 250px;
+  padding: 1rem;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-size: 1rem;
+  color: #333;
+  z-index: 101;
+  pointer-events: none;
+  animation: pop-in-anim 0.3s ease;
+}
+
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  left: -15px;
+  top: 30%;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 10px 15px 10px 0;
+  border-color: transparent white transparent transparent;
+}
+
+/* Key counter */
+.key-counter {
+  position: absolute;
+  top: 2%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 0.8rem 1.5rem;
+  border-radius: 50px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.key-slots {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.key-slot {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #ccc;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.key-slot.filled {
+  border-color: gold;
+  background: rgba(255, 215, 0, 0.2);
+  animation: pop-in-anim 0.4s ease;
+}
+
+.key-icon {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+}
+
+.key-count {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+  font-family: 'Georgia', serif;
+}
+
+/* Controls */
+.mute-button,
+.reset-button {
+  position: absolute;
+  top: 2%;
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 90;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mute-button {
+  right: 2%;
+}
+
+.reset-button {
+  right: calc(2% + 60px);
+  font-size: 1.8rem;
+  color: #666;
+}
+
+.mute-button:hover,
+.reset-button:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 1);
+}
+
+.mute-button:active,
+.reset-button:active {
+  transform: scale(0.9);
+}
+
+/* Special puzzle elements */
+.mirror-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  animation: fade-in-anim 0.5s ease;
+}
+
+.star {
+  transition: transform 0.2s ease;
+}
+
+.star:hover {
+  transform: scale(1.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .speech-bubble {
+    width: 180px;
+    font-size: 0.85rem;
+    padding: 0.7rem;
+  }
+  
+  .key-counter {
+    padding: 0.5rem 1rem;
+  }
+  
+  .key-slot {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .key-count {
+    font-size: 1rem;
+  }
+  
+  .mute-button,
+  .reset-button {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+}

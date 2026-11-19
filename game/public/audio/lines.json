@@ -1,0 +1,278 @@
+{
+ "narr-intro": {
+  "text": "Once upon a time, in a sparkling pink castle, Princess Kathleen woke up in her beautiful bedroom. The sun was peeking through the curtains... and something magical was about to happen.",
+  "voice": "en-GB-SoniaNeural",
+  "speaker": "narrator",
+  "file": "audio/narr-intro.mp3"
+ },
+ "narr-fairy-arrives": {
+  "text": "Suddenly, with a twinkle and a shimmer, a little fairy appeared!",
+  "voice": "en-GB-SoniaNeural",
+  "speaker": "narrator",
+  "file": "audio/narr-fairy-arrives.mp3"
+ },
+ "fairy-intro": {
+  "text": "Oh, Princess Kathleen! The five magic keys have disappeared! Without them, we can't open the castle's enchanted door. Can you help me find them?",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-intro.mp3"
+ },
+ "fairy-start": {
+  "text": "Let's look all around your room. Tap on things to see what's hiding!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-start.mp3"
+ },
+ "fairy-found-1": {
+  "text": "You found one! Hooray! Four more to go!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-found-1.mp3"
+ },
+ "fairy-found-2": {
+  "text": "Another magic key! Two keys! You're so clever, Kathleen!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-found-2.mp3"
+ },
+ "fairy-found-3": {
+  "text": "Three keys! Wow, you're a wonderful explorer! Only two more!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-found-3.mp3"
+ },
+ "fairy-found-4": {
+  "text": "Four keys! Just one more to find. I know you can do it!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-found-4.mp3"
+ },
+ "fairy-found-5": {
+  "text": "Five keys! You found them all, Princess Kathleen!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-found-5.mp3"
+ },
+ "hint-teddy-1": {
+  "text": "I think Teddy is hiding something...",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-teddy-1.mp3"
+ },
+ "hint-teddy-2": {
+  "text": "Teddy looks a little bit wiggly. Maybe give him a tap?",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-teddy-2.mp3"
+ },
+ "hint-teddy-3": {
+  "text": "What could be behind Teddy? Let's ask him to move over!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-teddy-3.mp3"
+ },
+ "hint-teddy-4": {
+  "text": "Teddy is sitting on something shiny!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-teddy-4.mp3"
+ },
+ "hint-jewellery-1": {
+  "text": "Something sparkly is in the jewellery box...",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-jewellery-1.mp3"
+ },
+ "hint-jewellery-2": {
+  "text": "Ooh, the pretty pink box on your dressing table... I wonder what's inside?",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-jewellery-2.mp3"
+ },
+ "hint-jewellery-3": {
+  "text": "Princesses keep their treasures in a jewellery box. Try opening the lid!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-jewellery-3.mp3"
+ },
+ "hint-jewellery-4": {
+  "text": "I can hear something jingling in the little pink box!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-jewellery-4.mp3"
+ },
+ "hint-curtain-1": {
+  "text": "The curtains are moving in the breeze...",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-curtain-1.mp3"
+ },
+ "hint-curtain-2": {
+  "text": "Something is twinkling behind the curtains by the window!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-curtain-2.mp3"
+ },
+ "hint-curtain-3": {
+  "text": "Let's open the curtains and let the starlight in!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-curtain-3.mp3"
+ },
+ "hint-curtain-4": {
+  "text": "Peek behind the big pink curtains, Kathleen!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-curtain-4.mp3"
+ },
+ "hint-wardrobe-1": {
+  "text": "Have you looked inside the wardrobe?",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-wardrobe-1.mp3"
+ },
+ "hint-wardrobe-2": {
+  "text": "So many pretty dresses live in your wardrobe... Let's open the doors!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-wardrobe-2.mp3"
+ },
+ "hint-wardrobe-3": {
+  "text": "One of the dresses has a little pocket. What's in it?",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-wardrobe-3.mp3"
+ },
+ "hint-wardrobe-4": {
+  "text": "Look closely at the pink dress in the middle!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-wardrobe-4.mp3"
+ },
+ "hint-mirror-1": {
+  "text": "The mirror is twinkling...",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-mirror-1.mp3"
+ },
+ "hint-mirror-2": {
+  "text": "Magic mirror, magic mirror! Try giving it a tap.",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-mirror-2.mp3"
+ },
+ "hint-mirror-3": {
+  "text": "The mirror is twinkling... tap the stars!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-mirror-3.mp3"
+ },
+ "hint-mirror-4": {
+  "text": "Tap the stars one, two, three, from the top to the bottom!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-mirror-4.mp3"
+ },
+ "hint-mirror-5": {
+  "text": "Oops, let's try the stars again. Start with the top star!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-mirror-5.mp3"
+ },
+ "hint-general-1": {
+  "text": "Keep exploring! Magic keys love to hide.",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-general-1.mp3"
+ },
+ "hint-general-2": {
+  "text": "Tap on anything that looks interesting!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-general-2.mp3"
+ },
+ "hint-general-3": {
+  "text": "Hmm... where haven't we looked yet?",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-general-3.mp3"
+ },
+ "curious-musicbox": {
+  "text": "Ooh, what a lovely song! Look at the little ballerina dance!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/curious-musicbox.mp3"
+ },
+ "curious-kitten": {
+  "text": "Hello, kitty! She wants to play!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/curious-kitten.mp3"
+ },
+ "curious-chest": {
+  "text": "Your toys are saying hello!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/curious-chest.mp3"
+ },
+ "curious-dragon": {
+  "text": "The little dragon is giggling! That tickles!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/curious-dragon.mp3"
+ },
+ "curious-chandelier": {
+  "text": "Sparkle, sparkle! Isn't it beautiful?",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/curious-chandelier.mp3"
+ },
+ "curious-bed": {
+  "text": "What a cosy bed! But no keys under the pillows.",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/curious-bed.mp3"
+ },
+ "curious-door-locked": {
+  "text": "The golden door is locked tight. We need all five magic keys!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/curious-door-locked.mp3"
+ },
+ "curious-books": {
+  "text": "So many storybooks! Maybe we'll read one later.",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/curious-books.mp3"
+ },
+ "fairy-door-glow": {
+  "text": "Look! The golden door is glowing! Tap the door, Kathleen!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-door-glow.mp3"
+ },
+ "narr-unlock": {
+  "text": "One by one, the five magic keys flew into the golden locks... click, click, click, click, click! And the enchanted door swung open.",
+  "voice": "en-GB-SoniaNeural",
+  "speaker": "narrator",
+  "file": "audio/narr-unlock.mp3"
+ },
+ "fairy-final": {
+  "text": "You did it, Princess Kathleen! You're a wonderful treasure hunter! Now our magical adventure can begin!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-final.mp3"
+ },
+ "narr-complete": {
+  "text": "And so, Princess Kathleen and her fairy friend stepped through the glowing door... To be continued!",
+  "voice": "en-GB-SoniaNeural",
+  "speaker": "narrator",
+  "file": "audio/narr-complete.mp3"
+ },
+ "narr-title": {
+  "text": "Princess Kathleen and the Five Magic Keys. Chapter One: The Princess's Bedroom.",
+  "voice": "en-GB-SoniaNeural",
+  "speaker": "narrator",
+  "file": "audio/narr-title.mp3"
+ }
+}

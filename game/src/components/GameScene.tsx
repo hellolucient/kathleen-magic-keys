@@ -35,6 +35,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const hintCountRef = useRef<number>(0);
   const longPressTimerRef = useRef<number | null>(null);
   const introAbortedRef = useRef(false);
+  const introRunningRef = useRef(false);
 
   useEffect(() => {
     progressRef.current = progress;
@@ -74,11 +75,13 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       return;
     }
     
+    introRunningRef.current = true;
     setFairyVisible(true);
     
     await new Promise(resolve => setTimeout(resolve, 500));
     if (introAbortedRef.current) {
       setFairyText('');
+      introRunningRef.current = false;
       lastInteractionRef.current = Date.now();
       startHintSystem();
       return;
@@ -87,6 +90,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     await audioManager.playSpeech('narr-intro');
     if (introAbortedRef.current) {
       setFairyText('');
+      introRunningRef.current = false;
       lastInteractionRef.current = Date.now();
       startHintSystem();
       return;
@@ -95,6 +99,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     await new Promise(resolve => setTimeout(resolve, 500));
     if (introAbortedRef.current) {
       setFairyText('');
+      introRunningRef.current = false;
       lastInteractionRef.current = Date.now();
       startHintSystem();
       return;
@@ -103,6 +108,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     await audioManager.playSpeech('narr-fairy-arrives');
     if (introAbortedRef.current) {
       setFairyText('');
+      introRunningRef.current = false;
       lastInteractionRef.current = Date.now();
       startHintSystem();
       return;
@@ -111,6 +117,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     await new Promise(resolve => setTimeout(resolve, 300));
     if (introAbortedRef.current) {
       setFairyText('');
+      introRunningRef.current = false;
       lastInteractionRef.current = Date.now();
       startHintSystem();
       return;
@@ -120,6 +127,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     await audioManager.playSpeech('fairy-intro');
     if (introAbortedRef.current) {
       setFairyText('');
+      introRunningRef.current = false;
       lastInteractionRef.current = Date.now();
       startHintSystem();
       return;
@@ -128,6 +136,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     await new Promise(resolve => setTimeout(resolve, 1500));
     if (introAbortedRef.current) {
       setFairyText('');
+      introRunningRef.current = false;
       lastInteractionRef.current = Date.now();
       startHintSystem();
       return;
@@ -137,6 +146,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     await audioManager.playSpeech('fairy-start');
     if (introAbortedRef.current) {
       setFairyText('');
+      introRunningRef.current = false;
       lastInteractionRef.current = Date.now();
       startHintSystem();
       return;
@@ -144,6 +154,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     
     await new Promise(resolve => setTimeout(resolve, 1500));
     setFairyText('');
+    introRunningRef.current = false;
     
     // Start hint system after intro completes
     lastInteractionRef.current = Date.now();
@@ -193,7 +204,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     hintIndexRef.current++;
     
     setFairyText(audioManager.getText(hintId));
-    await audioManager.playSpeech(hintId, 5000);
+    await audioManager.playSpeech(hintId);
     await new Promise(resolve => setTimeout(resolve, 1500));
     setFairyText('');
   };
@@ -444,8 +455,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     setKittenPlaying(true);
     setTimeout(() => setKittenPlaying(false), 2000);
     
+    // Skip speech during intro
+    if (introRunningRef.current) return;
+    
     setFairyText(audioManager.getText('curious-kitten'));
-    await audioManager.playSpeech('curious-kitten', 4000);
+    await audioManager.playSpeech('curious-kitten');
     await new Promise(resolve => setTimeout(resolve, 1500));
     setFairyText('');
   };
@@ -460,8 +474,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       audioManager.playSound('audio/sfx/music-box-loop.mp3', true);
       setMusicBoxPlaying(true);
       
+      // Skip speech during intro
+      if (introRunningRef.current) return;
+      
       setFairyText(audioManager.getText('curious-musicbox'));
-      await audioManager.playSpeech('curious-musicbox', 5000);
+      await audioManager.playSpeech('curious-musicbox');
       await new Promise(resolve => setTimeout(resolve, 1500));
       setFairyText('');
     }
@@ -474,8 +491,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     setToyChestOpen(!toyChestOpen);
     
     if (!toyChestOpen) {
+      // Skip speech during intro
+      if (introRunningRef.current) return;
+      
       setFairyText(audioManager.getText('curious-chest'));
-      await audioManager.playSpeech('curious-chest', 4000);
+      await audioManager.playSpeech('curious-chest');
       await new Promise(resolve => setTimeout(resolve, 1500));
       setFairyText('');
     }
@@ -488,8 +508,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     setDragonWiggling(true);
     setTimeout(() => setDragonWiggling(false), 500);
     
+    // Skip speech during intro
+    if (introRunningRef.current) return;
+    
     setFairyText(audioManager.getText('curious-dragon'));
-    await audioManager.playSpeech('curious-dragon', 4000);
+    await audioManager.playSpeech('curious-dragon');
     await new Promise(resolve => setTimeout(resolve, 1500));
     setFairyText('');
   };
@@ -500,8 +523,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     if (progressRef.current.keysFound.length === 5) {
       await unlockDoor();
     } else {
+      // Skip speech during intro
+      if (introRunningRef.current) return;
+      
       setFairyText(audioManager.getText('curious-door-locked'));
-      await audioManager.playSpeech('curious-door-locked', 6000);
+      await audioManager.playSpeech('curious-door-locked');
       await new Promise(resolve => setTimeout(resolve, 1500));
       setFairyText('');
     }

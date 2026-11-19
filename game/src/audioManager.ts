@@ -8,9 +8,10 @@ class AudioManager {
   private currentSources: AudioBufferSourceNode[] = [];
   private currentLoops: Map<string, AudioBufferSourceNode> = new Map();
   private lines: AudioLines | null = null;
-  private currentSpeech: HTMLAudioElement | null = null;
   private currentResolve: ((text: string) => void) | null = null;
   private sharedAudioElement: HTMLAudioElement | null = null;
+  private speechToken = 0;
+  private finishCurrent: (() => void) | null = null;
 
   async init() {
     if (this.context) return;
@@ -20,6 +21,17 @@ class AudioManager {
 
   async unlock() {
     if (this.unlocked || !this.context) return;
+    
+    // Prime shared audio element for iOS (synchronously before any await)
+    this.sharedAudioElement = new Audio();
+    this.sharedAudioElement.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    try {
+      this.sharedAudioElement.play();
+      this.sharedAudioElement.pause();
+      this.sharedAudioElement.currentTime = 0;
+    } catch (e) {
+      console.log('Audio element priming (expected)');
+    }
     
     // Resume context on user gesture (required for iOS)
     if (this.context.state === 'suspended') {
@@ -32,17 +44,6 @@ class AudioManager {
     source.buffer = buffer;
     source.connect(this.context.destination);
     source.start(0);
-    
-    // Prime shared audio element for iOS
-    this.sharedAudioElement = new Audio();
-    this.sharedAudioElement.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-    try {
-      await this.sharedAudioElement.play();
-      this.sharedAudioElement.pause();
-      this.sharedAudioElement.currentTime = 0;
-    } catch (e) {
-      console.log('Audio element priming (expected)');
-    }
     
     this.unlocked = true;
     console.log('Audio unlocked');
@@ -134,14 +135,15 @@ class AudioManager {
     });
     this.currentLoops.clear();
 
-    if (this.currentSpeech) {
-      this.currentSpeech.pause();
-      if (this.currentResolve) {
-        this.currentResolve('');
-        this.currentResolve = null;
-      }
-      this.currentSpeech = null;
+    if (this.sharedAudioElement) {
+      this.sharedAudioElement.pause();
     }
+    
+    if (this.finishCurrent) {
+      this.finishCurrent();
+    }
+    
+    this.speechToken++;
   }
 
   getText(lineId: string): string {
@@ -174,44 +176,39 @@ class AudioManager {
     return durations[lineId] || 5000;
   }
 
-  async playSpeech(lineId: string, maxDuration?: number): Promise<string> {
+  async playSpeech(lineId: string): Promise<string> {
     if (!this.lines) return '';
     
     const line = this.lines[lineId];
     if (!line) return '';
 
-    // Stop any current speech and resolve its promise
-    if (this.currentSpeech) {
-      this.currentSpeech.pause();
-      if (this.currentResolve) {
-        this.currentResolve('');
-        this.currentResolve = null;
-      }
-      this.currentSpeech = null;
+    // Finish any current speech
+    if (this.finishCurrent) {
+      this.finishCurrent();
     }
 
     if (this.muted) return line.text;
 
     // Use shared audio element (iOS-compatible)
     const audio = this.sharedAudioElement || new Audio();
-    audio.src = line.file;
-    this.currentSpeech = audio;
+    const token = ++this.speechToken;
     
-    // Get duration with fallback
-    const duration = maxDuration || (this.getLineDuration(lineId) + 500);
+    audio.pause();
+    audio.src = line.file;
+    
     let timeoutId: number | null = null;
     
     // Return promise that resolves when speech ends
     return new Promise((resolve) => {
       this.currentResolve = resolve;
       
-      const cleanup = () => {
+      const finish = () => {
         if (timeoutId !== null) {
           clearTimeout(timeoutId);
           timeoutId = null;
         }
-        if (this.currentSpeech === audio) {
-          this.currentSpeech = null;
+        if (this.finishCurrent === finish) {
+          this.finishCurrent = null;
         }
         if (this.currentResolve === resolve) {
           this.currentResolve = null;
@@ -219,27 +216,31 @@ class AudioManager {
         audio.removeEventListener('ended', onEnded);
         audio.removeEventListener('error', onError);
         audio.removeEventListener('loadedmetadata', onLoaded);
+        resolve(line.text);
       };
       
+      this.finishCurrent = finish;
+      
       const onEnded = () => {
-        cleanup();
-        resolve(line.text);
+        if (token === this.speechToken) {
+          finish();
+        }
       };
       
       const onError = (error: Event) => {
         console.error('Failed to play speech:', lineId, error);
-        cleanup();
-        resolve(line.text);
+        if (token === this.speechToken) {
+          finish();
+        }
       };
 
       const onLoaded = () => {
-        // Start timeout based on actual duration if available
-        const actualDuration = audio.duration > 0 ? (audio.duration * 1000 + 500) : duration;
+        // Start timeout based on actual duration
+        const actualDuration = audio.duration > 0 ? (audio.duration * 1000 + 500) : (this.getLineDuration(lineId) + 500);
         timeoutId = window.setTimeout(() => {
-          if (this.currentSpeech === audio) {
+          if (token === this.speechToken) {
             audio.pause();
-            cleanup();
-            resolve(line.text);
+            finish();
           }
         }, actualDuration);
       };
@@ -248,10 +249,7 @@ class AudioManager {
       audio.addEventListener('error', onError);
       audio.addEventListener('loadedmetadata', onLoaded);
       
-      audio.play().catch((error) => {
-        console.error('Failed to start speech:', error);
-        onError(error);
-      });
+      audio.play().catch(() => finish());
     });
   }
 

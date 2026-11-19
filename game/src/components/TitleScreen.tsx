@@ -12,7 +12,7 @@ function TitleScreen({ onStart }: TitleScreenProps) {
   const startingRef = useRef(false);
 
   const playTitleNarration = async () => {
-    await audioManager.playSpeech('narr-title', 14000);
+    await audioManager.playSpeech('narr-title');
   };
 
   const handleStart = async (e: React.MouseEvent) => {

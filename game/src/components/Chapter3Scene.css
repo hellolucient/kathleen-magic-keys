@@ -1,0 +1,362 @@
+.chapter3-scene {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.chapter3-scene .game-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.chapter3-scene .game-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.chapter3-scene .sprite {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.chapter3-scene .sprite img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.chapter3-scene .clickable {
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+
+/* Lily pads floating in the open water (lower middle of river) */
+.chapter3-scene .lily-pads {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.chapter3-scene .lily-pad {
+  position: absolute;
+  width: 16%;
+  height: auto;
+  transition: transform 0.2s, filter 0.2s;
+  pointer-events: none;
+  cursor: pointer;
+}
+
+.chapter3-scene .lily-pad.clickable {
+  pointer-events: auto;
+}
+
+.chapter3-scene .lily-pad img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
+/* Spread across the open water y 55-80%, x 25-80% */
+.chapter3-scene .lily-pad-0 { left: 28%; top: 58%; }
+.chapter3-scene .lily-pad-1 { left: 40%; top: 62%; }
+.chapter3-scene .lily-pad-2 { left: 52%; top: 56%; }
+.chapter3-scene .lily-pad-3 { left: 64%; top: 64%; }
+.chapter3-scene .lily-pad-4 { left: 76%; top: 60%; }
+
+.chapter3-scene .lily-pad.glowing {
+  filter: brightness(1.4) drop-shadow(0 0 20px rgba(255, 255, 255, 0.8));
+}
+
+.chapter3-scene .lily-pad.hint-glow img {
+  animation: hint-glow-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes hint-glow-pulse {
+  0%, 100% { 
+    filter: brightness(1) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+  }
+  50% { 
+    filter: brightness(1.3) drop-shadow(0 0 15px rgba(255, 220, 100, 0.9));
+  }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-10px) scale(1.05); }
+}
+
+.chapter3-scene .bounce {
+  animation: bounce 0.4s ease-out;
+}
+
+/* Three frogs on the near bank */
+.chapter3-scene .frog-group {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.chapter3-scene .frog {
+  position: absolute;
+  width: 13%;
+  height: auto;
+}
+
+.chapter3-scene .frog img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.4));
+}
+
+/* Three frogs sitting on near bank/rocks */
+.chapter3-scene .frog-1 {
+  left: 8%;
+  top: 68%;
+}
+
+.chapter3-scene .frog-2 {
+  left: 22%;
+  top: 72%;
+}
+
+.chapter3-scene .frog-3 {
+  left: 14%;
+  top: 78%;
+}
+
+/* Fairy */
+.chapter3-scene .fairy {
+  position: absolute;
+  right: 8%;
+  top: 15%;
+  width: 11%;
+  height: auto;
+  z-index: 60;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.chapter3-scene .float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Speech bubble */
+.chapter3-scene .speech-bubble {
+  position: absolute;
+  left: 3%;
+  top: 18%;
+  width: max-content;
+  max-width: 36%;
+  padding: 1.2rem 1.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-size: 1.3rem;
+  line-height: 1.5;
+  color: #333;
+  z-index: 100;
+  pointer-events: none;
+  animation: pop-in-anim 0.3s ease;
+  text-align: center;
+  font-family: 'Georgia', serif;
+}
+
+@keyframes pop-in-anim {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Purple gem */
+.chapter3-scene .purple-gem {
+  position: absolute;
+  left: 45%;
+  top: 30%;
+  width: 10%;
+  height: auto;
+  z-index: 50;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.chapter3-scene .fade-in {
+  animation: fadeIn 1s ease-in;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.chapter3-scene .sparkle {
+  animation: twinkle 1.5s ease-in-out infinite;
+}
+
+@keyframes sparkleBurst {
+  0% { 
+    transform: scale(0.8);
+    filter: brightness(2);
+  }
+  50% {
+    transform: scale(1.1);
+    filter: brightness(1.5);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.chapter3-scene .sparkle-burst {
+  animation: sparkleBurst 0.6s ease-out;
+}
+
+/* Music notes */
+.chapter3-scene .music-notes {
+  position: absolute;
+  left: 45%;
+  top: 35%;
+  width: 8%;
+  height: auto;
+  z-index: 55;
+}
+
+/* Treasure bar with slots */
+.chapter3-scene .treasure-bar {
+  position: absolute;
+  top: 2%;
+  left: 3%;
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 10px;
+  border-radius: 15px;
+  border: 3px solid #8b4513;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 90;
+}
+
+.chapter3-scene .treasure-slot {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(240, 240, 240, 0.5);
+  border: 2px dashed rgba(139, 69, 19, 0.3);
+}
+
+.chapter3-scene .treasure-slot.filled {
+  background: rgba(255, 250, 220, 0.8);
+  border: 2px solid rgba(218, 165, 32, 0.6);
+}
+
+.chapter3-scene .treasure-slot img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Round counter */
+.chapter3-scene .round-counter {
+  position: absolute;
+  top: 2%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: 3px solid #8b4513;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  font-family: 'Georgia', serif;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #8b4513;
+  z-index: 90;
+}
+
+/* Mute button */
+.chapter3-scene .mute-button {
+  position: absolute;
+  bottom: 2%;
+  right: 2%;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 3px solid #8b4513;
+  background: rgba(255, 255, 255, 0.95);
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.chapter3-scene .mute-button:hover {
+  transform: scale(1.1);
+}
+
+.chapter3-scene .mute-button:active {
+  transform: scale(0.95);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .chapter3-scene .speech-bubble {
+    max-width: 45%;
+    font-size: 1.1rem;
+    padding: 1rem;
+  }
+  
+  .chapter3-scene .treasure-bar {
+    padding: 6px 10px;
+  }
+  
+  .chapter3-scene .treasure-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .chapter3-scene .round-counter {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+  }
+  
+  .chapter3-scene .mute-button {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+}

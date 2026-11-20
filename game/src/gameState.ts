@@ -27,6 +27,10 @@ export function loadProgress(): GameProgress | null {
           puzzleStates: { ...base.chapter1.puzzleStates, ...(saved.chapter1?.puzzleStates || {}) },
         },
         chapter2: { ...base.chapter2, ...(saved.chapter2 || {}) },
+        treasures: { ...base.treasures, ...(saved.treasures || {}) },
+        chapter3: { ...base.chapter3, ...(saved.chapter3 || {}) },
+        chapter4: { ...base.chapter4, ...(saved.chapter4 || {}) },
+        chapter5: { ...base.chapter5, ...(saved.chapter5 || {}) },
       };
     }
   } catch (error) {
@@ -47,6 +51,11 @@ export function getInitialProgress(): GameProgress {
   return {
     currentChapter: 1,
     completedChapters: [],
+    treasures: {
+      petal: false,
+      gem: false,
+      light: false,
+    },
     chapter1: {
       keysFound: [],
       puzzleStates: {
@@ -62,6 +71,18 @@ export function getInitialProgress(): GameProgress {
     chapter2: {
       matchedFlowers: [],
       wrongAttempts: 0,
+    },
+    chapter3: {
+      round: 0,
+      completedRounds: [],
+    },
+    chapter4: {
+      firefliesCaught: 0,
+      matchedAnimals: [],
+    },
+    chapter5: {
+      timesFound: 0,
+      crownPieces: [],
     },
   };
 }

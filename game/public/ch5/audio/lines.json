@@ -1,0 +1,104 @@
+{
+  "narr-title": {
+    "text": "Chapter Five: Smudge's Cloud Castle.",
+    "voice": "en-GB-SoniaNeural",
+    "speaker": "Narrator",
+    "file": "ch5/audio/narr-title.mp3"
+  },
+  "narr-intro": {
+    "text": "High on Cloud Mountain stood a little castle made of clouds. And inside, someone was crying.",
+    "voice": "en-GB-SoniaNeural",
+    "speaker": "Narrator",
+    "file": "ch5/audio/narr-intro.mp3"
+  },
+  "smudge-cry": {
+    "text": "Boo hoo... Nobody ever wants to play with me.",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch5/audio/smudge-cry.mp3"
+  },
+  "fairy-intro": {
+    "text": "It's the little purple dragon! He's shy. He's hiding in the clouds. Can you find him, Kathleen?",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch5/audio/fairy-intro.mp3"
+  },
+  "fairy-found-1": {
+    "text": "There he is!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch5/audio/fairy-found-1.mp3"
+  },
+  "fairy-found-2": {
+    "text": "You found him again!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch5/audio/fairy-found-2.mp3"
+  },
+  "fairy-found-3": {
+    "text": "Peekaboo! You're so good at this!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch5/audio/fairy-found-3.mp3"
+  },
+  "smudge-sorry": {
+    "text": "I'm Smudge. I took the magic keys, and I sneezed the colours away. I'm sorry. I just wanted a friend.",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch5/audio/smudge-sorry.mp3"
+  },
+  "fairy-crown": {
+    "text": "Kathleen, let's make Smudge a friendship crown, with all the treasures we found!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch5/audio/fairy-crown.mp3"
+  },
+  "fairy-place-petal": {
+    "text": "The Rainbow Petal!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch5/audio/fairy-place-petal.mp3"
+  },
+  "fairy-place-gem": {
+    "text": "The Purple Dragon Gem!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch5/audio/fairy-place-gem.mp3"
+  },
+  "fairy-place-light": {
+    "text": "The Firefly Light!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch5/audio/fairy-place-light.mp3"
+  },
+  "smudge-happy": {
+    "text": "A crown, for me? Thank you, Kathleen! Will you be my friend?",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch5/audio/smudge-happy.mp3"
+  },
+  "fairy-friends": {
+    "text": "Of course we will! Friends forever!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch5/audio/fairy-friends.mp3"
+  },
+  "narr-rainbow": {
+    "text": "Smudge laughed for the very first time, and a big, beautiful rainbow came back across the sky.",
+    "voice": "en-GB-SoniaNeural",
+    "speaker": "Narrator",
+    "file": "ch5/audio/narr-rainbow.mp3"
+  },
+  "smudge-ride": {
+    "text": "Climb on! I'll fly you home!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch5/audio/smudge-ride.mp3"
+  },
+  "narr-end": {
+    "text": "And so Smudge flew Princess Kathleen and Pip all the way home. The End... of book one. But Smudge will be back for more adventures!",
+    "voice": "en-GB-SoniaNeural",
+    "speaker": "Narrator",
+    "file": "ch5/audio/narr-end.mp3"
+  }
+}

@@ -9,6 +9,9 @@ class AudioManager {
   private currentLoops: Map<string, AudioBufferSourceNode> = new Map();
   private lines: AudioLines | null = null;
   private ch2Lines: AudioLines | null = null;
+  private ch3Lines: AudioLines | null = null;
+  private ch4Lines: AudioLines | null = null;
+  private ch5Lines: AudioLines | null = null;
   private currentResolve: ((text: string) => void) | null = null;
   private sharedAudioElement: HTMLAudioElement | null = null;
   private speechToken = 0;
@@ -20,6 +23,9 @@ class AudioManager {
     this.context = new (window.AudioContext || (window as any).webkitAudioContext)();
     await this.loadAudioLines();
     await this.loadCh2AudioLines();
+    await this.loadCh3AudioLines();
+    await this.loadCh4AudioLines();
+    await this.loadCh5AudioLines();
   }
 
   async unlock() {
@@ -67,6 +73,33 @@ class AudioManager {
       this.ch2Lines = await response.json();
     } catch (error) {
       console.error('Failed to load ch2 audio lines:', error);
+    }
+  }
+
+  async loadCh3AudioLines() {
+    try {
+      const response = await fetch('ch3/audio/lines.json');
+      this.ch3Lines = await response.json();
+    } catch (error) {
+      console.error('Failed to load ch3 audio lines:', error);
+    }
+  }
+
+  async loadCh4AudioLines() {
+    try {
+      const response = await fetch('ch4/audio/lines.json');
+      this.ch4Lines = await response.json();
+    } catch (error) {
+      console.error('Failed to load ch4 audio lines:', error);
+    }
+  }
+
+  async loadCh5AudioLines() {
+    try {
+      const response = await fetch('ch5/audio/lines.json');
+      this.ch5Lines = await response.json();
+    } catch (error) {
+      console.error('Failed to load ch5 audio lines:', error);
     }
   }
 
@@ -210,8 +243,13 @@ class AudioManager {
     this.speechToken++;
   }
 
-  getText(lineId: string, chapter: 'ch1' | 'ch2' = 'ch1'): string {
-    const lines = chapter === 'ch2' ? this.ch2Lines : this.lines;
+  getText(lineId: string, chapter: 'ch1' | 'ch2' | 'ch3' | 'ch4' | 'ch5' = 'ch1'): string {
+    let lines = this.lines;
+    if (chapter === 'ch2') lines = this.ch2Lines;
+    else if (chapter === 'ch3') lines = this.ch3Lines;
+    else if (chapter === 'ch4') lines = this.ch4Lines;
+    else if (chapter === 'ch5') lines = this.ch5Lines;
+    
     if (!lines) return '';
     const line = lines[lineId];
     return line ? line.text : '';
@@ -219,6 +257,7 @@ class AudioManager {
 
   private getLineDuration(lineId: string): number {
     const durations: Record<string, number> = {
+      // Chapter 1
       'narr-title': 13500,
       'narr-intro': 12500,
       'narr-fairy-arrives': 5500,
@@ -237,12 +276,49 @@ class AudioManager {
       'curious-chest': 4500,
       'curious-dragon': 4500,
       'curious-door-locked': 6500,
+      // Chapter 3
+      'fairy-good-1': 4000,
+      'fairy-good-2': 4500,
+      'fairy-good-3': 3500,
+      'fairy-tryagain': 4500,
+      'fairy-gem': 8000,
+      'fairy-gem-got': 9000,
+      'fairy-howto': 5000,
+      // Chapter 4
+      'count-1': 2000, 'count-2': 2000, 'count-3': 2000, 'count-4': 2000, 'count-5': 2000,
+      'count-6': 2000, 'count-7': 2000, 'count-8': 2000, 'count-9': 2000, 'count-10': 2000,
+      'fairy-ten': 5000,
+      'fairy-animals': 7500,
+      'fairy-match-owl': 5000,
+      'fairy-match-rabbit': 3500,
+      'fairy-match-deer': 4000,
+      'fairy-wrong': 5500,
+      'narr-cry': 8500,
+      'fairy-light': 6500,
+      'fairy-light-got': 6500,
+      // Chapter 5
+      'smudge-cry': 5000,
+      'smudge-sorry': 10000,
+      'smudge-happy': 7000,
+      'smudge-ride': 4000,
+      'fairy-crown': 6500,
+      'fairy-place-petal': 2500,
+      'fairy-place-gem': 3000,
+      'fairy-place-light': 2500,
+      'fairy-friends': 4500,
+      'narr-rainbow': 7000,
+      'narr-end': 10500,
     };
     return durations[lineId] || 5000;
   }
 
-  async playSpeech(lineId: string, chapter: 'ch1' | 'ch2' = 'ch1'): Promise<string> {
-    const lines = chapter === 'ch2' ? this.ch2Lines : this.lines;
+  async playSpeech(lineId: string, chapter: 'ch1' | 'ch2' | 'ch3' | 'ch4' | 'ch5' = 'ch1'): Promise<string> {
+    let lines = this.lines;
+    if (chapter === 'ch2') lines = this.ch2Lines;
+    else if (chapter === 'ch3') lines = this.ch3Lines;
+    else if (chapter === 'ch4') lines = this.ch4Lines;
+    else if (chapter === 'ch5') lines = this.ch5Lines;
+    
     if (!lines) return '';
     
     const line = lines[lineId];

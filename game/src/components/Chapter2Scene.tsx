@@ -36,6 +36,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
     setPetalTappable(false);
     setPetalCollected(true);
     audioManager.playSound('audio/sfx/sparkle.mp3');
+    setProgress(p => ({ ...p, treasures: { ...p.treasures, petal: true } }));
   };
   const [backgroundSolved, setBackgroundSolved] = useState(false);
   const [sneezePuffVisible, setSneezePuffVisible] = useState(true);

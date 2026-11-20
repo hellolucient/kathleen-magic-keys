@@ -7,6 +7,9 @@ import TitleScreen from './components/TitleScreen';
 import ChapterPicker from './components/ChapterPicker';
 import GameScene from './components/GameScene';
 import Chapter2Scene from './components/Chapter2Scene';
+import Chapter3Scene from './components/Chapter3Scene';
+import Chapter4Scene from './components/Chapter4Scene';
+import Chapter5Scene from './components/Chapter5Scene';
 import CompleteScreen from './components/CompleteScreen';
 import './App.css';
 
@@ -52,7 +55,10 @@ function App() {
   const freshChapter = (prev: GameProgress, chapter: ChapterNumber): GameProgress => {
     const base = getInitialProgress();
     if (chapter === 1) return { ...prev, currentChapter: 1, chapter1: base.chapter1 };
-    return { ...prev, currentChapter: chapter, chapter2: base.chapter2 };
+    if (chapter === 2) return { ...prev, currentChapter: 2, chapter2: base.chapter2 };
+    if (chapter === 3) return { ...prev, currentChapter: 3, chapter3: base.chapter3 };
+    if (chapter === 4) return { ...prev, currentChapter: 4, chapter4: base.chapter4 };
+    return { ...prev, currentChapter: 5, chapter5: base.chapter5 };
   };
 
   const handleChapterSelect = (chapter: ChapterNumber) => {
@@ -82,7 +88,7 @@ function App() {
 
   const handleNextChapter = () => {
     const nextChapter = (progress.currentChapter + 1) as ChapterNumber;
-    if (nextChapter <= 2) {
+    if (nextChapter <= 5) {
       setProgress(prev => freshChapter(prev, nextChapter));
       setScreen('game');
     }
@@ -132,6 +138,27 @@ function App() {
       )}
       {screen === 'game' && progress.currentChapter === 2 && (
         <Chapter2Scene
+          progress={progress}
+          setProgress={updateProgress}
+          onComplete={handleGameComplete}
+        />
+      )}
+      {screen === 'game' && progress.currentChapter === 3 && (
+        <Chapter3Scene
+          progress={progress}
+          setProgress={updateProgress}
+          onComplete={handleGameComplete}
+        />
+      )}
+      {screen === 'game' && progress.currentChapter === 4 && (
+        <Chapter4Scene
+          progress={progress}
+          setProgress={updateProgress}
+          onComplete={handleGameComplete}
+        />
+      )}
+      {screen === 'game' && progress.currentChapter === 5 && (
+        <Chapter5Scene
           progress={progress}
           setProgress={updateProgress}
           onComplete={handleGameComplete}

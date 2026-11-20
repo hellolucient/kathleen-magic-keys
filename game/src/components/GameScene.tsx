@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { GameProgress, Layout } from '../types';
 import { audioManager } from '../audioManager';
 import { saveProgress, resetProgress } from '../gameState';
+import LookForPreview from './LookForPreview';
 import './GameScene.css';
 
 interface GameSceneProps {
@@ -15,8 +16,11 @@ const KEY_PUZZLES = ['key-teddy', 'key-jewellery', 'key-curtain', 'key-wardrobe'
 function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const [layout, setLayout] = useState<Layout | null>(null);
   const [fairyText, setFairyText] = useState('');
+  const [showKeyPreview, setShowKeyPreview] = useState(false);
   const [fairyVisible, setFairyVisible] = useState(false);
   const [fairyCheer, setFairyCheer] = useState(false);
+  const [fairyFlyingToDoor, setFairyFlyingToDoor] = useState(false);
+  const [fairyAtDoor, setFairyAtDoor] = useState(false);
   const [doorGlowing, setDoorGlowing] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const [doorOpen, setDoorOpen] = useState(false);
@@ -154,7 +158,9 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     }
     
     setFairyText(audioManager.getText('fairy-start'));
+    setShowKeyPreview(true);
     await audioManager.playSpeech('fairy-start');
+    setShowKeyPreview(false);
     if (introAbortedRef.current) {
       setFairyText('');
       introRunningRef.current = false;
@@ -234,12 +240,17 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     recordInteraction();
     
     audioManager.playSound('audio/sfx/sparkle.mp3');
+    
+    // Play key-found chime (don't await - let it play alongside)
     audioManager.playSound('audio/sfx/key-found.mp3');
+    
+    // Wait for chime to mostly finish, then small delay before narration
+    await new Promise(resolve => setTimeout(resolve, 800));
     
     // Show fly animation
     keysInFlightRef.current++;
     setCollectingKey(keyId);
-    await new Promise(resolve => setTimeout(resolve, 600));
+    await new Promise(resolve => setTimeout(resolve, 400));
     setCollectingKey(null);
     
     // Update progress with functional update
@@ -265,7 +276,45 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     // Glow right away; the fairy's line waits for the 5th-key praise (5.5s) to finish
     setDoorGlowing(true);
     audioManager.playSound('audio/sfx/door-glow-loop.mp3', true);
-    await new Promise(resolve => setTimeout(resolve, 6000));
+    
+    // Check for early door tap before fairy flies
+    if (pendingDoorRef.current && !unlockingRef.current) {
+      pendingDoorRef.current = false;
+      unlockDoor();
+      return;
+    }
+    
+    // Start fairy flying to door after a brief moment
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setFairyCheer(false);
+    setFairyFlyingToDoor(true);
+    audioManager.playSound('audio/sfx/sparkle.mp3');
+    
+    // Check for door tap during fairy flight
+    if (pendingDoorRef.current && !unlockingRef.current) {
+      pendingDoorRef.current = false;
+      // Let fairy finish flying
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setFairyFlyingToDoor(false);
+      setFairyAtDoor(true);
+      unlockDoor();
+      return;
+    }
+    
+    // Wait for fairy to reach door (1.5s animation)
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setFairyFlyingToDoor(false);
+    setFairyAtDoor(true);
+    
+    // Check again after fairy lands
+    if (pendingDoorRef.current && !unlockingRef.current) {
+      pendingDoorRef.current = false;
+      unlockDoor();
+      return;
+    }
+    
+    // Wait a bit more for total 6s (to let 5th-key praise finish)
+    await new Promise(resolve => setTimeout(resolve, 2500));
     if (unlockingRef.current) return; // door already tapped, don't talk over the finale
     
     setFairyText(audioManager.getText('fairy-door-glow'));
@@ -313,6 +362,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     audioManager.playSound('audio/sfx/celebration-fanfare.mp3');
     setDoorOpen(true);
     
+    // Fairy flies through doorway
+    setFairyAtDoor(false);
+    setFairyFlyingToDoor(false);
+    audioManager.playSound('audio/sfx/sparkle.mp3');
+    
     await Promise.race([narrationPromise, sleep(10000)]);
     await sleep(500);
     
@@ -322,6 +376,10 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     await sleep(1500);
     
     setFairyText('');
+    
+    // Fairy leads the way through the door
+    setFairyVisible(false);
+    
     finishGame();
   };
 
@@ -334,19 +392,13 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       audioManager.playSound('audio/sfx/wiggle-boing.mp3');
       setProgress(p => ({
         ...p,
-        chapter1: {
-          ...p.chapter1,
-          puzzleStates: { ...p.chapter1.puzzleStates, teddyWiggled: true }
-        }
+        chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, teddyWiggled: true } }
       }));
     } else if (!currentProgress.chapter1.puzzleStates.teddyMoved) {
       audioManager.playSound('audio/sfx/wiggle-boing.mp3');
       setProgress(p => ({
         ...p,
-        chapter1: {
-          ...p.chapter1,
-          puzzleStates: { ...p.chapter1.puzzleStates, teddyMoved: true }
-        }
+        chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, teddyMoved: true } }
       }));
       setTimeout(() => collectKey('key-teddy'), 500);
     }
@@ -360,10 +412,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     audioManager.playSound('audio/sfx/lid-click.mp3');
     setProgress(p => ({
       ...p,
-      chapter1: {
-        ...p.chapter1,
-        puzzleStates: { ...p.chapter1.puzzleStates, jewelleryOpen: true }
-      }
+      chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, jewelleryOpen: true } }
     }));
     setTimeout(() => collectKey('key-jewellery'), 500);
   };
@@ -376,10 +425,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     audioManager.playSound('audio/sfx/curtain-swish.mp3');
     setProgress(p => ({
       ...p,
-      chapter1: {
-        ...p.chapter1,
-        puzzleStates: { ...p.chapter1.puzzleStates, curtainOpen: true }
-      }
+      chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, curtainOpen: true } }
     }));
     setTimeout(() => collectKey('key-curtain'), 500);
   };
@@ -392,10 +438,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       audioManager.playSound('audio/sfx/tap-pop.mp3');
       setProgress(p => ({
         ...p,
-        chapter1: {
-          ...p.chapter1,
-          puzzleStates: { ...p.chapter1.puzzleStates, wardrobeOpen: true }
-        }
+        chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, wardrobeOpen: true } }
       }));
     }
   };
@@ -418,10 +461,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     audioManager.playSound('audio/sfx/sparkle.mp3');
     setProgress(p => ({
       ...p,
-      chapter1: {
-        ...p.chapter1,
-        puzzleStates: { ...p.chapter1.puzzleStates, mirrorGlow: true, mirrorSequence: [] }
-      }
+      chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, mirrorGlow: true, mirrorSequence: [] } }
     }));
     
     // Demo the sequence
@@ -449,10 +489,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       const newSequence = [...sequence, order];
       setProgress(p => ({
         ...p,
-        chapter1: {
-          ...p.chapter1,
-          puzzleStates: { ...p.chapter1.puzzleStates, mirrorSequence: newSequence }
-        }
+        chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, mirrorSequence: newSequence } }
       }));
       
       if (newSequence.length === 3) {
@@ -467,10 +504,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       audioManager.playSpeech('hint-mirror-5');
       setProgress(p => ({
         ...p,
-        chapter1: {
-          ...p.chapter1,
-          puzzleStates: { ...p.chapter1.puzzleStates, mirrorSequence: [] }
-        }
+        chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, mirrorSequence: [] } }
       }));
       
       // Replay demo
@@ -568,11 +602,17 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const handleDoorClick = async () => {
     recordInteraction();
     
-    if (progressRef.current.chapter1.keysFound.length === 5) {
-      await unlockDoor();
-    } else if (progressRef.current.chapter1.keysFound.length + keysInFlightRef.current >= 5) {
-      // 5th key is still flying to the counter: open the door as soon as it lands
+    const totalKeys = progressRef.current.chapter1.keysFound.length + keysInFlightRef.current;
+    
+    if (totalKeys >= 5) {
+      // Remember this tap - if unlocking can't start yet, triggerDoorGlow will handle it
       pendingDoorRef.current = true;
+      
+      // Try to unlock immediately if ready
+      if (progressRef.current.chapter1.keysFound.length === 5 && !unlockingRef.current) {
+        pendingDoorRef.current = false;
+        await unlockDoor();
+      }
     } else {
       // Skip speech during intro
       if (introRunningRef.current) return;
@@ -882,6 +922,26 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
           onClick={handleDoorClick}
         />
         
+        {doorGlowing && (
+          <img className="door-glow-overlay" src="art/sprites/door-glow.png" alt="" />
+        )}
+
+        {/* Sparkles around door when glowing */}
+        {doorGlowing && (
+          <>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '-12%', top: '8%', fontSize: '2.6rem', animation: 'sparkle-twinkle 1.2s ease-in-out 0s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '92%', top: '4%', fontSize: '3rem', animation: 'sparkle-twinkle 1.5s ease-in-out 0.15s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '-16%', top: '26%', fontSize: '4rem', animation: 'sparkle-twinkle 1.3s ease-in-out 0.3s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '100%', top: '22%', fontSize: '3.2rem', animation: 'sparkle-twinkle 1.7s ease-in-out 0.45s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '-14%', top: '44%', fontSize: '3.8rem', animation: 'sparkle-twinkle 1.4s ease-in-out 0.6s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '102%', top: '42%', fontSize: '3.3rem', animation: 'sparkle-twinkle 1.6s ease-in-out 0.75s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '-16%', top: '62%', fontSize: '4.2rem', animation: 'sparkle-twinkle 1.35s ease-in-out 0.9s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '100%', top: '60%', fontSize: '3.6rem', animation: 'sparkle-twinkle 1.55s ease-in-out 1.05s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '-12%', top: '80%', fontSize: '3.4rem', animation: 'sparkle-twinkle 1.45s ease-in-out 1.2s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '98%', top: '80%', fontSize: '3.7rem', animation: 'sparkle-twinkle 1.25s ease-in-out 1.35s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+          </>
+        )}
+        
         {/* Door open overlay */}
         {doorOpen && (
           <div 
@@ -895,7 +955,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         {/* Fairy */}
         {fairyVisible && (
           <div 
-            className={`sprite fairy ${fairyCheer ? 'cheer' : 'float'}`}
+            className={`sprite fairy ${
+              fairyFlyingToDoor ? 'flying-to-door' : 
+              fairyAtDoor ? 'at-door' : 
+              fairyCheer ? 'cheer' : 'float'
+            }`}
             style={getObjectStyle(layout.objects.find(o => o.id === 'fairy'))}
           >
             <img 
@@ -905,12 +969,21 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
               } 
               alt="Fairy" 
             />
-            {fairyText && (
-              <div className="speech-bubble">
-                {fairyText}
-              </div>
-            )}
           </div>
+        )}
+
+        {/* Speech box: fixed spot away from the action, never on top of Pip */}
+        {fairyText && (
+          <div className={`speech-bubble ${
+            progress.chapter1.keysFound.length === 5 || fairyFlyingToDoor || fairyAtDoor ? 'pos-bottom-left' : 'pos-top'
+          }`}>
+            {fairyText}
+          </div>
+        )}
+
+        {/* Show what to look for while Pip explains */}
+        {showKeyPreview && (
+          <LookForPreview imageSrc="art/sprites/key.png" alt="A magic key" />
         )}
         
         {/* Key counter */}

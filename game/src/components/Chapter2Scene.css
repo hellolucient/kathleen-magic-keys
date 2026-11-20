@@ -55,10 +55,17 @@
 
 .chapter2-scene .butterfly:not(.butterfly-settled) {
   cursor: grab;
+  transform: scale(0.7);
 }
 
 .chapter2-scene .butterfly:active {
   cursor: grabbing;
+}
+
+.chapter2-scene .butterfly-settled {
+  pointer-events: none;
+  transform: scale(0.35);
+  transform-origin: center;
 }
 
 @keyframes float {
@@ -155,7 +162,7 @@
 .chapter2-scene .speech-bubble {
   position: absolute;
   width: max-content;
-  max-width: 38%;
+  max-width: 34%;
   padding: 1.2rem 1.5rem;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
@@ -170,17 +177,17 @@
   font-family: 'Georgia', serif;
 }
 
-/* Top left: keeps clear of Pip (who floats center-top) and butterflies in the sky */
+/* Top left: below the flower counter, clear of Pip and butterflies */
 .chapter2-scene .speech-bubble.pos-top-left {
   left: 3%;
-  top: 12%;
+  top: 20%;
 }
 
 /* Bottom right: when the garden bursts into color and we show the footprints/petal */
 .chapter2-scene .speech-bubble.pos-bottom-right {
   right: 3%;
-  bottom: 5%;
-  max-width: 35%;
+  bottom: 8%;
+  max-width: 34%;
 }
 
 .chapter2-scene .flower-counter {

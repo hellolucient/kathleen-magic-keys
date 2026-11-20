@@ -12,7 +12,7 @@
   "file": "audio/narr-fairy-arrives.mp3"
  },
  "fairy-intro": {
-  "text": "Oh, Princess Kathleen! The five magic keys have disappeared! Without them, we can't open the castle's enchanted door. Can you help me find them?",
+  "text": "Hello, Princess Kathleen! I'm Pip, the fairy of this castle. Oh dear, the five magic keys have disappeared! Without them, we can't open the castle's enchanted door. Can you help me find them?",
   "voice": "en-GB-MaisieNeural",
   "speaker": "fairy",
   "file": "audio/fairy-intro.mp3"
@@ -264,7 +264,7 @@
   "file": "audio/fairy-final.mp3"
  },
  "narr-complete": {
-  "text": "And so, Princess Kathleen and her fairy friend stepped through the glowing door... To be continued!",
+  "text": "And so, Princess Kathleen and her fairy friend Pip stepped through the glowing door... To be continued!",
   "voice": "en-GB-SoniaNeural",
   "speaker": "narrator",
   "file": "audio/narr-complete.mp3"

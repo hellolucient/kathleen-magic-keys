@@ -437,12 +437,15 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
                 <div
                   className="sprite butterfly-settled flutter"
                   style={{
-                    ...getObjectStyle(layout.objects.find(o => o.id === `flower-${color}`)),
-                    top: `${(layout.objects.find(o => o.id === `flower-${color}`)?.y || 0) - 5}%`,
+                    position: 'absolute',
+                    left: `${(layout.objects.find(o => o.id === `flower-${color}`)?.x || 0) + (layout.objects.find(o => o.id === `flower-${color}`)?.w || 0) / 2 - 4}%`,
+                    top: `${(layout.objects.find(o => o.id === `flower-${color}`)?.y || 0) - 3}%`,
+                    width: `${(layout.objects.find(o => o.id === `flower-${color}`)?.w || 0) * 0.33}%`,
+                    height: 'auto',
                     zIndex: (layout.objects.find(o => o.id === `flower-${color}`)?.z || 0) + 5,
                   }}
                 >
-                  <img src={`ch2/art/sprites/butterfly-${color}-flap.png`} alt="" />
+                  <img src={`ch2/art/sprites/butterfly-${color}-flap.png`} alt="" style={{ width: '100%', height: 'auto' }} />
                 </div>
               )}
             </div>

@@ -350,10 +350,8 @@
 
 .speech-bubble {
   position: absolute;
-  left: 36%;
-  top: 14%;
   width: max-content;
-  max-width: min(400px, 35vw);
+  max-width: 34%;
   padding: 1.2rem 1.5rem;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
@@ -366,15 +364,37 @@
   animation: pop-in-anim 0.3s ease;
   text-align: center;
 }
+/* Normal play: top band, right of Pip's resting spot, below the key counter */
+.speech-bubble.pos-top { left: 37%; top: 15%; }
+/* After the fifth key Pip flies to the door, so the box moves out of her path */
+.speech-bubble.pos-bottom-left { left: 3%; bottom: 5%; max-width: 40%; }
 
-.speech-bubble::after {
-  content: '';
+/* Big picture of what to find, shown while Pip explains */
+@keyframes look-for-pop {
+  0% { transform: translate(-50%, -50%) scale(0.3) rotate(-20deg); opacity: 0; }
+  60% { transform: translate(-50%, -50%) scale(1.1) rotate(8deg); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes look-for-bob {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-6%) rotate(6deg); }
+}
+.look-for-preview {
   position: absolute;
-  top: 50%;
-  left: 0;
-  transform: translate(-100%, -50%);
-  border: 12px solid transparent;
-  border-right-color: rgba(255, 255, 255, 0.95);
+  left: 50%; top: 52%;
+  width: 22%; aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,250,225,0.97) 0%, rgba(255,240,190,0.92) 60%, rgba(255,230,160,0) 72%);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 99;
+  pointer-events: none;
+  animation: look-for-pop 0.6s ease-out both;
+}
+.look-for-preview img {
+  height: 78%;
+  filter: drop-shadow(0 0 14px rgba(255, 200, 60, 0.9));
+  animation: look-for-bob 1.6s ease-in-out infinite;
 }
 
 /* Key counter */
@@ -543,7 +563,7 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .speech-bubble {
-    width: min(300px, 85vw);
+    max-width: 40%;
     font-size: 1.1rem;
     padding: 1rem;
   }

@@ -15,6 +15,7 @@ const KEY_PUZZLES = ['key-teddy', 'key-jewellery', 'key-curtain', 'key-wardrobe'
 function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const [layout, setLayout] = useState<Layout | null>(null);
   const [fairyText, setFairyText] = useState('');
+  const [showKeyPreview, setShowKeyPreview] = useState(false);
   const [fairyVisible, setFairyVisible] = useState(false);
   const [fairyCheer, setFairyCheer] = useState(false);
   const [fairyFlyingToDoor, setFairyFlyingToDoor] = useState(false);
@@ -156,7 +157,9 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     }
     
     setFairyText(audioManager.getText('fairy-start'));
+    setShowKeyPreview(true);
     await audioManager.playSpeech('fairy-start');
+    setShowKeyPreview(false);
     if (introAbortedRef.current) {
       setFairyText('');
       introRunningRef.current = false;
@@ -965,11 +968,22 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
               } 
               alt="Fairy" 
             />
-            {fairyText && (
-              <div className="speech-bubble">
-                {fairyText}
-              </div>
-            )}
+          </div>
+        )}
+
+        {/* Speech box: fixed spot away from the action, never on top of Pip */}
+        {fairyText && (
+          <div className={`speech-bubble ${
+            progress.keysFound.length === 5 || fairyFlyingToDoor || fairyAtDoor ? 'pos-bottom-left' : 'pos-top'
+          }`}>
+            {fairyText}
+          </div>
+        )}
+
+        {/* Show what to look for while Pip explains */}
+        {showKeyPreview && (
+          <div className="look-for-preview">
+            <img src="art/sprites/key.png" alt="A magic key" />
           </div>
         )}
         

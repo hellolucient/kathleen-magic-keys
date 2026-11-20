@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { GameProgress } from '../types';
 import { audioManager } from '../audioManager';
 import { saveProgress } from '../gameState';
+import { clientToPercent, hitTestRect, startPointerDrag } from '../pointerDrag';
 import './Chapter4Scene.css';
 
 interface Chapter4SceneProps {
@@ -38,8 +40,10 @@ function Chapter4Scene({ progress, setProgress, onComplete }: Chapter4SceneProps
   
   const progressRef = useRef(progress);
   const containerRef = useRef<HTMLDivElement>(null);
+  const parentRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const animationFrameRef = useRef<number | null>(null);
   const introRunningRef = useRef(false);
+  const matchingRef = useRef(false);
 
   useEffect(() => {
     progressRef.current = progress;
@@ -58,6 +62,7 @@ function Chapter4Scene({ progress, setProgress, onComplete }: Chapter4SceneProps
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      audioManager.stopAllSounds();
     };
   }, []);
 
@@ -188,98 +193,68 @@ function Chapter4Scene({ progress, setProgress, onComplete }: Chapter4SceneProps
     setFairyText('');
   };
 
-  const handleBabyStart = (e: React.MouseEvent | React.TouchEvent, baby: string) => {
-    e.preventDefault();
-    if (matchedAnimals.includes(baby)) return;
-    
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const rect = container.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    
-    const x = ((clientX - rect.left) / rect.width) * 100;
-    const y = ((clientY - rect.top) / rect.height) * 100;
-    
-    setDraggingBaby(baby);
-    setDragPosition({ x, y });
-    
-    audioManager.playSound('ch2/audio/sfx/butterfly-flutter.mp3');
-  };
+  const finishBabyDrop = async (baby: string, clientX: number, clientY: number) => {
+    if (matchingRef.current) return;
+    matchingRef.current = true;
 
-  const handleBabyMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!draggingBaby) return;
-    e.preventDefault();
-    
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const rect = container.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    
-    const x = ((clientX - rect.left) / rect.width) * 100;
-    const y = ((clientY - rect.top) / rect.height) * 100;
-    
-    setDragPosition({ x, y });
-  };
-
-  const handleBabyEnd = async (e: React.MouseEvent | React.TouchEvent) => {
-    if (!draggingBaby) return;
-    e.preventDefault();
-    
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const rect = container.getBoundingClientRect();
-    const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
-    const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : e.clientY;
-    
-    const dropX = ((clientX - rect.left) / rect.width) * 100;
-    const dropY = ((clientY - rect.top) / rect.height) * 100;
-    
-    // Check if dropped on correct parent
-    const babyIndex = BABIES.indexOf(draggingBaby);
+    const babyIndex = BABIES.indexOf(baby);
     const parent = ANIMALS[babyIndex];
-    
-    // Parent positions (right side, vertically distributed)
-    const parentY = 25 + (babyIndex * 22);
-    const isMatch = dropX >= 70 && dropX <= 95 && dropY >= parentY && dropY <= parentY + 18;
-    
+    const parentEl = parentRefs.current[parent];
+    const isMatch = hitTestRect(parentEl ?? null, clientX, clientY, 50);
+
+    setDraggingBaby(null);
+
     if (isMatch) {
-      // Correct match!
       audioManager.playSound('ch2/audio/sfx/correct-match.mp3');
       audioManager.playSound('audio/sfx/sparkle.mp3');
-      
-      const newMatched = [...matchedAnimals, draggingBaby];
+
+      const newMatched = [...matchedAnimals, baby];
       setMatchedAnimals(newMatched);
-      
+
       setProgress(prev => ({
         ...prev,
         chapter4: { ...prev.chapter4, matchedAnimals: newMatched },
       }));
-      
+
       const matchLine = `fairy-match-${parent}`;
       setFairyText(audioManager.getText(matchLine, 'ch4'));
       await audioManager.playSpeech(matchLine, 'ch4');
       await new Promise(resolve => setTimeout(resolve, 500));
       setFairyText('');
-      
+
       if (newMatched.length === 3) {
         await completeanimalPhase();
       }
     } else {
-      // Wrong match
       audioManager.playSound('ch2/audio/sfx/wrong-boop.mp3');
-      
+
       setFairyText(audioManager.getText('fairy-wrong', 'ch4'));
       await audioManager.playSpeech('fairy-wrong', 'ch4');
       await new Promise(resolve => setTimeout(resolve, 500));
       setFairyText('');
     }
-    
-    setDraggingBaby(null);
+
+    matchingRef.current = false;
+  };
+
+  const handleBabyPointerDown = (e: ReactPointerEvent, baby: string) => {
+    if (matchedAnimals.includes(baby) || matchingRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const pct = clientToPercent(container, e.clientX, e.clientY);
+    setDraggingBaby(baby);
+    setDragPosition(pct);
+    audioManager.playSound('ch2/audio/sfx/butterfly-flutter.mp3');
+
+    startPointerDrag(e, {
+      onMove: (cx, cy) => {
+        setDragPosition(clientToPercent(container, cx, cy));
+      },
+      onEnd: (cx, cy) => {
+        void finishBabyDrop(baby, cx, cy);
+      },
+    });
   };
 
   const completeanimalPhase = async () => {
@@ -338,14 +313,23 @@ function Chapter4Scene({ progress, setProgress, onComplete }: Chapter4SceneProps
     setMuted(newMuted);
   };
 
+  // Natural spots for mums around the forest
+  const PARENT_SPOTS: Record<string, { left: string; top: string }> = {
+    owl: { left: '8%', top: '58%' },      // left by tree roots
+    rabbit: { left: '42%', top: '62%' },  // middle by the path
+    deer: { left: '72%', top: '55%' },    // right by mushrooms
+  };
+
+  const BABY_HIDE_SPOTS = [
+    { left: '18%', top: '38%' },
+    { left: '55%', top: '42%' },
+    { left: '78%', top: '35%' },
+  ];
+
   return (
     <div 
       className="game-scene chapter4-scene"
       ref={containerRef}
-      onMouseMove={handleBabyMove}
-      onMouseUp={handleBabyEnd}
-      onTouchMove={handleBabyMove}
-      onTouchEnd={handleBabyEnd}
       style={{ touchAction: 'none' }}
     >
       <div className="game-container">
@@ -388,72 +372,53 @@ function Chapter4Scene({ progress, setProgress, onComplete }: Chapter4SceneProps
           </div>
         )}
         
-        {/* Animals phase */}
+        {/* Animals phase — mums in natural spots; babies hide until revealed by lantern light */}
         {phase === 'animals' || phase === 'crying' ? (
           <>
-            {/* Parent animals on right */}
-            {ANIMALS.map((animal, index) => (
-              <div
-                key={animal}
-                className={`parent-animal parent-${animal}`}
-                style={{
-                  right: '5%',
-                  top: `${25 + index * 22}%`,
-                }}
-              >
-                <img src={`ch4/art/sprites/${animal}.png`} alt={animal} />
-              </div>
-            ))}
-            
-            {/* Baby animals on left */}
+            {ANIMALS.map((animal) => {
+              const spot = PARENT_SPOTS[animal];
+              const baby = BABIES[ANIMALS.indexOf(animal)];
+              const matched = matchedAnimals.includes(baby);
+              return (
+                <div
+                  key={animal}
+                  ref={(el) => { parentRefs.current[animal] = el; }}
+                  className={`parent-animal parent-${animal}`}
+                  style={{ left: spot.left, top: spot.top }}
+                >
+                  <img src={`ch4/art/sprites/${animal}.png`} alt={animal} />
+                  {matched && draggingBaby !== baby && (
+                    <div className="baby-animal matched snuggled">
+                      <img src={`ch4/art/sprites/${baby}.png`} alt={baby} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
             {babyPositions.map((baby, index) => {
               const isMatched = matchedAnimals.includes(baby);
               const isDragging = draggingBaby === baby;
-              const parentIndex = BABIES.indexOf(baby);
-              
-              if (isMatched && !isDragging) {
-                return (
-                  <div
-                    key={baby}
-                    className="baby-animal matched"
-                    style={{
-                      right: '15%',
-                      top: `${28 + parentIndex * 22}%`,
-                    }}
-                  >
-                    <img src={`ch4/art/sprites/${baby}.png`} alt={baby} />
-                  </div>
-                );
-              }
-              
-              if (isDragging) {
-                return (
-                  <div
-                    key={baby}
-                    className="baby-animal dragging"
-                    style={{
-                      left: `${dragPosition.x}%`,
-                      top: `${dragPosition.y}%`,
-                      transform: 'translate(-50%, -50%) scale(1.1)',
-                    }}
-                  >
-                    <img src={`ch4/art/sprites/${baby}.png`} alt={baby} />
-                  </div>
-                );
-              }
-              
+              if (isMatched && !isDragging) return null;
+
+              const hide = BABY_HIDE_SPOTS[index % BABY_HIDE_SPOTS.length];
               return (
                 <div
                   key={baby}
-                  className="baby-animal clickable"
-                  style={{
-                    left: '10%',
-                    top: `${25 + index * 22}%`,
-                  }}
-                  onMouseDown={(e) => handleBabyStart(e, baby)}
-                  onTouchStart={(e) => handleBabyStart(e, baby)}
+                  className={`baby-animal clickable ${isDragging ? 'dragging' : ''}`}
+                  style={
+                    isDragging
+                      ? {
+                          left: `${dragPosition.x}%`,
+                          top: `${dragPosition.y}%`,
+                          transform: 'translate(-50%, -50%) scale(1.1)',
+                          touchAction: 'none',
+                        }
+                      : { left: hide.left, top: hide.top, touchAction: 'none' }
+                  }
+                  onPointerDown={(e) => handleBabyPointerDown(e, baby)}
                 >
-                  <img src={`ch4/art/sprites/${baby}.png`} alt={baby} />
+                  <img src={`ch4/art/sprites/${baby}.png`} alt={baby} draggable={false} />
                 </div>
               );
             })}

@@ -13,11 +13,11 @@ interface Chapter3SceneProps {
 const LILY_COLORS = ['red', 'yellow', 'blue', 'pink', 'white'];
 const LILY_NOTES = [261.63, 293.66, 329.63, 392.00, 440.00]; // C, D, E, G, A
 
-// Round sequences
+// Round sequences — easier: 2, 3, 3 notes
 const SEQUENCES = [
-  [0, 2, 1],       // Round 1: 3 notes (red, blue, yellow)
-  [1, 3, 0, 2],    // Round 2: 4 notes (yellow, pink, red, blue)
-  [2, 4, 1, 3, 0], // Round 3: 5 notes (blue, white, yellow, pink, red)
+  [0, 2],          // Round 1: 2 notes (red, blue)
+  [1, 3, 0],       // Round 2: 3 notes (yellow, pink, red)
+  [2, 4, 1],       // Round 3: 3 notes (blue, white, yellow)
 ];
 
 function Chapter3Scene({ progress, setProgress, onComplete }: Chapter3SceneProps) {
@@ -51,8 +51,12 @@ function Chapter3Scene({ progress, setProgress, onComplete }: Chapter3SceneProps
       ...prev,
       chapter3: { round: 0, completedRounds: [] },
     }));
-    
+
     startIntro();
+
+    return () => {
+      audioManager.stopAllSounds();
+    };
   }, []);
 
   useEffect(() => {
@@ -93,23 +97,43 @@ function Chapter3Scene({ progress, setProgress, onComplete }: Chapter3SceneProps
     playSequence(seq);
   };
 
-  const playSequence = async (sequence: number[]) => {
+  const playSequence = async (sequence: number[], hintPad = -1) => {
     setPhase('playing');
     setFrogState('singing');
-    
+
+    // Resume AudioContext before every sequence (iOS may suspend between gestures)
+    await audioManager.resumeContext();
+    ensureNoteContext();
+
     for (let i = 0; i < sequence.length; i++) {
       const padIndex = sequence[i];
       setGlowingPad(padIndex);
+      // After a wrong try, pulse the next correct pad as a hint on replay
+      if (hintPad >= 0 && padIndex === hintPad) {
+        setShowHint(true);
+      }
       playNote(padIndex);
       await new Promise(resolve => setTimeout(resolve, 700));
       setGlowingPad(-1);
+      setShowHint(false);
       await new Promise(resolve => setTimeout(resolve, 200));
     }
-    
+
     setFrogState('closed');
     setPhase('waiting');
     lastInteractionRef.current = Date.now();
     startIdleHint();
+  };
+
+  const ensureNoteContext = () => {
+    const shared = audioManager.getAudioContext();
+    if (shared) {
+      audioContextRef.current = shared;
+      return;
+    }
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
   };
 
   const startIdleHint = () => {
@@ -124,23 +148,27 @@ function Chapter3Scene({ progress, setProgress, onComplete }: Chapter3SceneProps
 
   const playNote = (padIndex: number) => {
     if (muted) return;
-    
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    
+
+    ensureNoteContext();
     const ctx = audioContextRef.current;
+    if (!ctx) return;
+
+    // Fire-and-forget resume if suspended mid-gesture
+    if (ctx.state === 'suspended') {
+      void ctx.resume();
+    }
+
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
-    
+
     oscillator.type = 'sine';
     oscillator.frequency.value = LILY_NOTES[padIndex];
     gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-    
+
     oscillator.connect(gainNode);
     gainNode.connect(ctx.destination);
-    
+
     oscillator.start(ctx.currentTime);
     oscillator.stop(ctx.currentTime + 0.5);
   };
@@ -171,9 +199,10 @@ function Chapter3Scene({ progress, setProgress, onComplete }: Chapter3SceneProps
       await new Promise(resolve => setTimeout(resolve, 500));
       setFairyText('');
       
-      // Replay sequence
+      // Replay sequence with next correct pad pulsing as a hint
       setPlayerSequence([]);
-      playSequence(currentSequence);
+      const nextCorrect = currentSequence[0];
+      playSequence(currentSequence, nextCorrect);
       return;
     }
     

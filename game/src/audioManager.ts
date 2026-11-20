@@ -29,33 +29,51 @@ class AudioManager {
   }
 
   async unlock() {
-    if (this.unlocked || !this.context) return;
-    
-    // Prime shared audio element for iOS (synchronously before any await)
-    this.sharedAudioElement = new Audio();
-    this.sharedAudioElement.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    if (!this.context) {
+      await this.init();
+    }
+    if (!this.context) return;
+
+    // Always (re)prime inside a user gesture for iOS — even if already unlocked
+    if (!this.sharedAudioElement) {
+      this.sharedAudioElement = new Audio();
+      this.sharedAudioElement.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    }
     try {
       this.sharedAudioElement.play().catch(() => { /* priming only */ });
       this.sharedAudioElement.pause();
       this.sharedAudioElement.currentTime = 0;
-    } catch (e) {
-      console.log('Audio element priming (expected)');
+    } catch {
+      /* expected on some browsers */
     }
-    
+
     // Resume context on user gesture (required for iOS)
     if (this.context.state === 'suspended') {
       await this.context.resume();
     }
-    
-    // Play silent buffer to unlock audio on iOS
+
+    // Play silent buffer to unlock Web Audio on iOS
     const buffer = this.context.createBuffer(1, 1, 22050);
     const source = this.context.createBufferSource();
     source.buffer = buffer;
     source.connect(this.context.destination);
     source.start(0);
-    
+
     this.unlocked = true;
-    console.log('Audio unlocked');
+  }
+
+  /** Ensure AudioContext is running (call before synth notes / playSequence). */
+  async resumeContext(): Promise<void> {
+    if (!this.context) {
+      await this.init();
+    }
+    if (this.context && this.context.state === 'suspended') {
+      await this.context.resume();
+    }
+  }
+
+  getAudioContext(): AudioContext | null {
+    return this.context;
   }
 
   async loadAudioLines() {

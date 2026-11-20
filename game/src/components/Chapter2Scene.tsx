@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { GameProgress, Layout } from '../types';
 import { audioManager } from '../audioManager';
 import { saveProgress } from '../gameState';
+import { clientToPercent, hitTestRect, startPointerDrag } from '../pointerDrag';
 import LookForPreview from './LookForPreview';
 import './Chapter2Scene.css';
 
@@ -49,7 +51,9 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
   const introRunningRef = useRef(false);
   const completedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const flowerRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const wrongAttemptCountRef = useRef(0);
+  const matchingRef = useRef(false);
 
   useEffect(() => {
     progressRef.current = progress;
@@ -61,6 +65,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
 
     return () => {
       if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
+      audioManager.stopAllSounds();
     };
   }, []);
 
@@ -245,90 +250,30 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
     onComplete();
   };
 
-  const handleButterflyStart = (e: React.MouseEvent | React.TouchEvent, color: string) => {
-    e.preventDefault();
-    if (progress.chapter2.matchedFlowers.includes(color)) return;
-    
-    recordInteraction();
-    
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const rect = container.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    
-    const x = ((clientX - rect.left) / rect.width) * 100;
-    const y = ((clientY - rect.top) / rect.height) * 100;
-    
-    const butterfly = layout?.objects.find(obj => obj.id === `butterfly-${color}`);
-    if (butterfly) {
-      setDragOffset({
-        x: x - butterfly.x,
-        y: y - butterfly.y,
-      });
-    }
-    
-    setDraggingButterfly(color);
-    setDragPosition({ x, y });
-    setButterflyFlapping(prev => ({ ...prev, [color]: true }));
-    
-    audioManager.playSound('ch2/audio/sfx/butterfly-flutter.mp3');
-  };
+  const finishButterflyDrop = async (color: string, clientX: number, clientY: number) => {
+    if (matchingRef.current) return;
+    matchingRef.current = true;
 
-  const handleButterflyMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!draggingButterfly) return;
-    e.preventDefault();
-    
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const rect = container.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    
-    const x = ((clientX - rect.left) / rect.width) * 100;
-    const y = ((clientY - rect.top) / rect.height) * 100;
-    
-    setDragPosition({ x, y });
-  };
+    const flowerEl = flowerRefs.current[color];
+    const isMatch = hitTestRect(flowerEl ?? null, clientX, clientY, 50);
 
-  const handleButterflyEnd = async (e: React.MouseEvent | React.TouchEvent) => {
-    if (!draggingButterfly) return;
-    e.preventDefault();
-    
-    const container = containerRef.current;
-    if (!container || !layout) return;
-    
-    const rect = container.getBoundingClientRect();
-    const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
-    const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : e.clientY;
-    
-    const dropX = ((clientX - rect.left) / rect.width) * 100;
-    const dropY = ((clientY - rect.top) / rect.height) * 100;
-    
-    const matchingFlower = layout.objects.find(obj => 
-      obj.id.startsWith('flower-') && 
-      obj.id.includes('-grey') &&
-      obj.color === draggingButterfly &&
-      dropX >= obj.x && dropX <= obj.x + obj.w &&
-      dropY >= obj.y && dropY <= obj.y + obj.h
-    );
-    
-    if (matchingFlower) {
+    setDraggingButterfly(null);
+    setButterflyFlapping(prev => ({ ...prev, [color]: false }));
+
+    if (isMatch) {
       audioManager.playSound('ch2/audio/sfx/correct-match.mp3');
       audioManager.playSound('audio/sfx/sparkle.mp3');
-      
+
       setProgress(p => ({
         ...p,
         chapter2: {
           ...p.chapter2,
-          matchedFlowers: [...p.chapter2.matchedFlowers, draggingButterfly],
+          matchedFlowers: [...p.chapter2.matchedFlowers, color],
         },
       }));
-      
+
       setFairyCheer(true);
-      const matchLineId = `fairy-match-${draggingButterfly}`;
+      const matchLineId = `fairy-match-${color}`;
       setFairyText(audioManager.getText(matchLineId, 'ch2'));
       await audioManager.playSpeech(matchLineId, 'ch2');
       await new Promise(resolve => setTimeout(resolve, 400));
@@ -336,7 +281,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
       setFairyText('');
     } else {
       audioManager.playSound('ch2/audio/sfx/wrong-boop.mp3');
-      
+
       wrongAttemptCountRef.current++;
       setProgress(p => ({
         ...p,
@@ -345,7 +290,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
           wrongAttempts: p.chapter2.wrongAttempts + 1,
         },
       }));
-      
+
       if (wrongAttemptCountRef.current <= 3) {
         const wrongLineId = `fairy-wrong-${wrongAttemptCountRef.current}`;
         setFairyText(audioManager.getText(wrongLineId, 'ch2'));
@@ -354,9 +299,39 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
         setFairyText('');
       }
     }
-    
-    setDraggingButterfly(null);
-    setButterflyFlapping(prev => ({ ...prev, [draggingButterfly]: false }));
+
+    matchingRef.current = false;
+  };
+
+  const handleButterflyPointerDown = (e: ReactPointerEvent, color: string) => {
+    if (progress.chapter2.matchedFlowers.includes(color) || matchingRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    recordInteraction();
+
+    const pct = clientToPercent(container, e.clientX, e.clientY);
+    const butterfly = layout?.objects.find(obj => obj.id === `butterfly-${color}`);
+    if (butterfly) {
+      setDragOffset({
+        x: pct.x - butterfly.x,
+        y: pct.y - butterfly.y,
+      });
+    }
+
+    setDraggingButterfly(color);
+    setDragPosition(pct);
+    setButterflyFlapping(prev => ({ ...prev, [color]: true }));
+    audioManager.playSound('ch2/audio/sfx/butterfly-flutter.mp3');
+
+    startPointerDrag(e, {
+      onMove: (cx, cy) => {
+        setDragPosition(clientToPercent(container, cx, cy));
+      },
+      onEnd: (cx, cy) => {
+        void finishButterflyDrop(color, cx, cy);
+      },
+    });
   };
 
   const toggleMute = () => {
@@ -401,10 +376,6 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
     <div 
       className="game-scene chapter2-scene"
       ref={containerRef}
-      onMouseMove={handleButterflyMove}
-      onMouseUp={handleButterflyEnd}
-      onTouchMove={handleButterflyMove}
-      onTouchEnd={handleButterflyEnd}
       style={{ touchAction: 'none' }}
     >
       <div className="game-container">
@@ -439,6 +410,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
               
               {!isMatched && (
                 <div
+                  ref={(el) => { flowerRefs.current[color] = el; }}
                   className={`sprite flower-hint flower-hint-${color}`}
                   style={getObjectStyle(layout.objects.find(o => o.id === `flower-${color}`))}
                 >
@@ -446,28 +418,16 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
                 </div>
               )}
 
-              {!isMatched && draggingButterfly !== color && (
+              {!isMatched && (
                 <div
-                  className="sprite butterfly float clickable"
-                  style={getButterflyStyle(color)}
-                  onMouseDown={(e) => handleButterflyStart(e, color)}
-                  onTouchStart={(e) => handleButterflyStart(e, color)}
+                  className={`sprite butterfly clickable ${draggingButterfly === color ? '' : 'float'}`}
+                  style={{ ...getButterflyStyle(color), touchAction: 'none' }}
+                  onPointerDown={(e) => handleButterflyPointerDown(e, color)}
                 >
                   <img 
-                    src={`ch2/art/sprites/butterfly-${color}${butterflyFlapping[color] ? '-flap' : ''}.png`} 
+                    src={`ch2/art/sprites/butterfly-${color}${draggingButterfly === color || butterflyFlapping[color] ? '-flap' : ''}.png`} 
                     alt={`${color} butterfly`}
-                  />
-                </div>
-              )}
-              
-              {!isMatched && draggingButterfly === color && (
-                <div
-                  className="sprite butterfly"
-                  style={getButterflyStyle(color)}
-                >
-                  <img 
-                    src={`ch2/art/sprites/butterfly-${color}-flap.png`} 
-                    alt={`${color} butterfly`}
+                    draggable={false}
                   />
                 </div>
               )}

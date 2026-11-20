@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { GameProgress } from '../types';
 import { audioManager } from '../audioManager';
 import { saveProgress } from '../gameState';
+import { clientToPercent, hitTestRect, elementCenter, startPointerDrag } from '../pointerDrag';
 import './Chapter5Scene.css';
 
 interface Chapter5SceneProps {
@@ -16,8 +18,12 @@ const CLOUD_POSITIONS = [
   { x: 72, y: 40 },
 ];
 
+const PIECES = ['petal', 'gem', 'light'] as const;
+type Piece = (typeof PIECES)[number];
+
 function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps) {
   const [fairyText, setFairyText] = useState('');
+  const [captionIsNarrator, setCaptionIsNarrator] = useState(false);
   const [muted, setMuted] = useState(false);
   const [phase, setPhase] = useState<'intro' | 'hideseek' | 'crown' | 'ending'>('intro');
   const [smudgePosition, setSmudgePosition] = useState(0);
@@ -27,51 +33,69 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
   const [crownPieces, setCrownPieces] = useState<string[]>([]);
   const [draggingPiece, setDraggingPiece] = useState<string | null>(null);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+  const [flyingPiece, setFlyingPiece] = useState<string | null>(null);
   const [smudgeFlying, setSmudgeFlying] = useState(false);
-  
+  const [wrongCloud, setWrongCloud] = useState<number | null>(null);
+  const [revealedCloud, setRevealedCloud] = useState<number | null>(null);
+  const [showTheEnd, setShowTheEnd] = useState(false);
+
   const progressRef = useRef(progress);
   const containerRef = useRef<HTMLDivElement>(null);
+  const crownTargetRef = useRef<HTMLDivElement>(null);
   const introRunningRef = useRef(false);
   const completedRef = useRef(false);
+  const placingRef = useRef(false);
 
   useEffect(() => {
     progressRef.current = progress;
   }, [progress]);
 
   useEffect(() => {
-    // Reset chapter state
     setProgress(prev => ({
       ...prev,
       chapter5: { timesFound: 0, crownPieces: [] },
     }));
-    
+
     startIntro();
+
+    return () => {
+      audioManager.stopAllSounds();
+    };
   }, []);
 
   useEffect(() => {
     saveProgress(progress);
   }, [progress]);
 
+  const showLine = async (lineId: string, isNarrator = false) => {
+    const text = audioManager.getText(lineId, 'ch5');
+    setCaptionIsNarrator(isNarrator);
+    setFairyText(text);
+    await audioManager.playSpeech(lineId, 'ch5');
+  };
+
   const startIntro = async () => {
     if (introRunningRef.current) return;
     introRunningRef.current = true;
-    
+
     await new Promise(resolve => setTimeout(resolve, 500));
-    await audioManager.playSpeech('narr-title', 'ch5');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    await audioManager.playSpeech('narr-intro', 'ch5');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    audioManager.playSound('audio/sfx/sparkle.mp3');
-    await audioManager.playSpeech('smudge-cry', 'ch5');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    setFairyText(audioManager.getText('fairy-intro', 'ch5'));
-    await audioManager.playSpeech('fairy-intro', 'ch5');
+    await showLine('narr-title', true);
     await new Promise(resolve => setTimeout(resolve, 500));
     setFairyText('');
-    
+
+    await showLine('narr-intro', true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setFairyText('');
+
+    audioManager.playSound('audio/sfx/sparkle.mp3');
+    await showLine('smudge-cry');
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setFairyText('');
+
+    await showLine('fairy-intro');
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setFairyText('');
+
     introRunningRef.current = false;
     startHideSeek();
   };
@@ -79,32 +103,46 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
   const startHideSeek = () => {
     setPhase('hideseek');
     setSmudgePosition(Math.floor(Math.random() * 3));
+    setRevealedCloud(null);
   };
 
-  const findSmudge = async () => {
-    if (phase !== 'hideseek') return;
-    
+  const tapCloud = async (index: number) => {
+    if (phase !== 'hideseek' || revealedCloud !== null) return;
+
+    if (index !== smudgePosition) {
+      setWrongCloud(index);
+      setFairyText('Not here!');
+      audioManager.playSound('ch2/audio/sfx/wrong-boop.mp3');
+      await new Promise(resolve => setTimeout(resolve, 700));
+      setWrongCloud(null);
+      setFairyText('');
+      return;
+    }
+
+    // Correct cloud — puff aside and reveal Smudge
+    setRevealedCloud(index);
     audioManager.playSound('audio/sfx/sparkle.mp3');
-    
+
     const newFound = timesFound + 1;
     setTimesFound(newFound);
-    
+
     setProgress(prev => ({
       ...prev,
       chapter5: { ...prev.chapter5, timesFound: newFound },
     }));
-    
+
     const praiseLine = `fairy-found-${newFound}`;
-    setFairyText(audioManager.getText(praiseLine, 'ch5'));
-    await audioManager.playSpeech(praiseLine, 'ch5');
+    await showLine(praiseLine);
     await new Promise(resolve => setTimeout(resolve, 500));
     setFairyText('');
-    
+
     if (newFound < 3) {
-      // Hide again
-      setSmudgePosition(Math.floor(Math.random() * 3));
+      setRevealedCloud(null);
+      // Pick a different cloud next time when possible
+      let next = Math.floor(Math.random() * 3);
+      if (next === smudgePosition) next = (next + 1) % 3;
+      setSmudgePosition(next);
     } else {
-      // Hide-and-seek complete
       await completeHideSeek();
     }
   };
@@ -112,140 +150,137 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
   const completeHideSeek = async () => {
     setPhase('crown');
     setSmudgeSprite('shy');
-    
+
     await new Promise(resolve => setTimeout(resolve, 500));
-    
-    await audioManager.playSpeech('smudge-sorry', 'ch5');
+
+    await showLine('smudge-sorry');
     await new Promise(resolve => setTimeout(resolve, 500));
-    
-    setFairyText(audioManager.getText('fairy-crown', 'ch5'));
-    await audioManager.playSpeech('fairy-crown', 'ch5');
+    setFairyText('');
+
+    await showLine('fairy-crown');
     await new Promise(resolve => setTimeout(resolve, 500));
     setFairyText('');
   };
 
-  const handlePieceStart = (e: React.MouseEvent | React.TouchEvent, piece: string) => {
-    e.preventDefault();
-    if (crownPieces.includes(piece)) return;
-    
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const rect = container.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    
-    const x = ((clientX - rect.left) / rect.width) * 100;
-    const y = ((clientY - rect.top) / rect.height) * 100;
-    
-    setDraggingPiece(piece);
-    setDragPosition({ x, y });
-    
-    audioManager.playSound('ch2/audio/sfx/butterfly-flutter.mp3');
-  };
+  const placePiece = async (piece: string) => {
+    if (placingRef.current || crownPieces.includes(piece)) return;
+    placingRef.current = true;
 
-  const handlePieceMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!draggingPiece) return;
-    e.preventDefault();
-    
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const rect = container.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    
-    const x = ((clientX - rect.left) / rect.width) * 100;
-    const y = ((clientY - rect.top) / rect.height) * 100;
-    
-    setDragPosition({ x, y });
-  };
+    audioManager.playSound('ch2/audio/sfx/correct-match.mp3');
+    audioManager.playSound('audio/sfx/sparkle.mp3');
 
-  const handlePieceEnd = async (e: React.MouseEvent | React.TouchEvent) => {
-    if (!draggingPiece) return;
-    e.preventDefault();
-    
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const rect = container.getBoundingClientRect();
-    const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
-    const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : e.clientY;
-    
-    const dropX = ((clientX - rect.left) / rect.width) * 100;
-    const dropY = ((clientY - rect.top) / rect.height) * 100;
-    
-    // Check if dropped on crown (center area)
-    const isOnCrown = dropX >= 42 && dropX <= 58 && dropY >= 28 && dropY <= 42;
-    
-    if (isOnCrown) {
-      // Placed on crown!
-      audioManager.playSound('ch2/audio/sfx/correct-match.mp3');
-      audioManager.playSound('audio/sfx/sparkle.mp3');
-      
-      const newPieces = [...crownPieces, draggingPiece];
-      setCrownPieces(newPieces);
-      
-      setProgress(prev => ({
-        ...prev,
-        chapter5: { ...prev.chapter5, crownPieces: newPieces },
-      }));
-      
-      const placeLine = `fairy-place-${draggingPiece}`;
-      setFairyText(audioManager.getText(placeLine, 'ch5'));
-      await audioManager.playSpeech(placeLine, 'ch5');
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setFairyText('');
-      
-      if (newPieces.length === 3) {
-        await completeCrown();
-      }
+    const newPieces = [...crownPieces, piece];
+    setCrownPieces(newPieces);
+
+    setProgress(prev => ({
+      ...prev,
+      chapter5: { ...prev.chapter5, crownPieces: newPieces },
+    }));
+
+    const placeLine = `fairy-place-${piece}`;
+    await showLine(placeLine);
+    await new Promise(resolve => setTimeout(resolve, 400));
+    setFairyText('');
+
+    placingRef.current = false;
+
+    if (newPieces.length === 3) {
+      await completeCrown();
     }
-    
-    setDraggingPiece(null);
+  };
+
+  const flyPieceToCrown = (piece: string) => {
+    const crown = crownTargetRef.current;
+    const container = containerRef.current;
+    if (!crown || !container) {
+      void placePiece(piece);
+      return;
+    }
+    const center = elementCenter(crown);
+    const pct = clientToPercent(container, center.x, center.y);
+    setFlyingPiece(piece);
+    setDragPosition(pct);
+    window.setTimeout(() => {
+      setFlyingPiece(null);
+      setDraggingPiece(null);
+      void placePiece(piece);
+    }, 350);
+  };
+
+  const handlePiecePointerDown = (e: ReactPointerEvent, piece: Piece) => {
+    if (crownPieces.includes(piece) || placingRef.current || flyingPiece) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const pct = clientToPercent(container, e.clientX, e.clientY);
+    setDraggingPiece(piece);
+    setDragPosition(pct);
+    audioManager.playSound('ch2/audio/sfx/butterfly-flutter.mp3');
+
+    startPointerDrag(e, {
+      onMove: (cx, cy) => {
+        const p = clientToPercent(container, cx, cy);
+        setDragPosition(p);
+      },
+      onEnd: (cx, cy, wasTap) => {
+        if (wasTap) {
+          // Single tap → fly to crown
+          flyPieceToCrown(piece);
+          return;
+        }
+        const nearCrown = hitTestRect(crownTargetRef.current, cx, cy, 60);
+        setDraggingPiece(null);
+        if (nearCrown) {
+          void placePiece(piece);
+        }
+      },
+    });
   };
 
   const completeCrown = async () => {
     if (completedRef.current) return;
     completedRef.current = true;
-    
+
     setPhase('ending');
-    
+
     await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Crown flies to Smudge
+
     setSmudgeSprite('laughing');
     audioManager.playSound('audio/sfx/sparkle.mp3');
-    
+
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    await audioManager.playSpeech('smudge-happy', 'ch5');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    setFairyText(audioManager.getText('fairy-friends', 'ch5'));
-    await audioManager.playSpeech('fairy-friends', 'ch5');
+
+    await showLine('smudge-happy');
     await new Promise(resolve => setTimeout(resolve, 500));
     setFairyText('');
-    
-    // Rainbow appears
+
+    await showLine('fairy-friends');
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setFairyText('');
+
     setShowRainbow(true);
     audioManager.playSound('audio/sfx/sparkle.mp3');
-    
+
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    await audioManager.playSpeech('narr-rainbow', 'ch5');
+
+    await showLine('narr-rainbow', true);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Smudge flies
+    setFairyText('');
+
     setSmudgeSprite('flying');
     setSmudgeFlying(true);
-    
-    await audioManager.playSpeech('smudge-ride', 'ch5');
+
+    await showLine('smudge-ride');
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    await audioManager.playSpeech('narr-end', 'ch5');
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+    setFairyText('');
+
+    await showLine('narr-end', true);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setFairyText('');
+
+    setShowTheEnd(true);
+    await new Promise(resolve => setTimeout(resolve, 2500));
+
     onComplete();
   };
 
@@ -254,48 +289,66 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
     setMuted(newMuted);
   };
 
+  const pieceSrc = (piece: string) => {
+    if (piece === 'petal') return 'ch5/art/sprites/rainbow-petal.png';
+    if (piece === 'gem') return 'ch5/art/sprites/purple-gem.png';
+    return 'ch5/art/sprites/firefly.png';
+  };
+
+  const pieceAlt = (piece: string) => {
+    if (piece === 'petal') return 'Rainbow Petal';
+    if (piece === 'gem') return 'Purple Gem';
+    return 'Firefly Light';
+  };
+
   return (
-    <div 
+    <div
       className="game-scene chapter5-scene"
       ref={containerRef}
-      onMouseMove={handlePieceMove}
-      onMouseUp={handlePieceEnd}
-      onTouchMove={handlePieceMove}
-      onTouchEnd={handlePieceEnd}
       style={{ touchAction: 'none' }}
     >
       <div className="game-container">
         <img src="ch5/art/raw/bg-clouds.jpg" alt="Cloud Castle" className="game-bg" />
-        
-        {/* Rainbow */}
-        {showRainbow && (
-          <div className="rainbow fade-in" />
-        )}
-        
-        {/* Hide-and-seek phase */}
+
+        {showRainbow && <div className="rainbow fade-in" />}
+
+        {/* Hide-and-seek: cloud puffs covering Smudge */}
         {phase === 'hideseek' && (
           <>
-            {CLOUD_POSITIONS.map((pos, index) => (
-              <div
-                key={index}
-                className={`cloud-hiding-spot ${index === smudgePosition ? 'has-smudge' : ''}`}
-                style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
-              >
-                {index === smudgePosition && (
-                  <div 
-                    className="smudge-peeking clickable wiggle"
-                    onClick={findSmudge}
-                    onTouchStart={(e) => { e.preventDefault(); findSmudge(); }}
-                  >
-                    <img src="ch5/art/sprites/smudge-peeking.png" alt="Smudge peeking" />
+            {CLOUD_POSITIONS.map((pos, index) => {
+              const hasSmudge = index === smudgePosition;
+              const isRevealed = revealedCloud === index;
+              const isWrong = wrongCloud === index;
+              return (
+                <div
+                  key={index}
+                  className={`cloud-hiding-spot ${hasSmudge ? 'has-smudge' : ''} ${isWrong ? 'wobble' : ''} ${isRevealed ? 'puffed-aside' : ''}`}
+                  style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    void tapCloud(index);
+                  }}
+                >
+                  {hasSmudge && (
+                    <div className={`smudge-behind ${isRevealed ? 'revealed' : 'hidden-peek'}`}>
+                      <img src="ch5/art/sprites/smudge-peeking.png" alt="Smudge" />
+                      {!isRevealed && <div className="smudge-giggle" aria-hidden />}
+                    </div>
+                  )}
+                  <div className={`cloud-puff ${isRevealed ? 'aside' : ''}`}>
+                    <div className="cloud-blob cloud-blob-a" />
+                    <div className="cloud-blob cloud-blob-b" />
+                    <div className="cloud-blob cloud-blob-c" />
                   </div>
-                )}
-              </div>
-            ))}
+                  {hasSmudge && !isRevealed && (
+                    <div className="tail-tip" aria-hidden />
+                  )}
+                </div>
+              );
+            })}
           </>
         )}
-        
-        {/* Smudge sitting (crown phase) */}
+
         {phase === 'crown' && (
           <div className={`smudge-sitting ${crownPieces.length === 3 ? 'with-crown' : ''}`}>
             <img src={`ch5/art/sprites/smudge-${smudgeSprite}.png`} alt="Smudge" />
@@ -306,8 +359,7 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
             )}
           </div>
         )}
-        
-        {/* Flying Smudge (ending) */}
+
         {smudgeFlying && (
           <div className="smudge-flying-across">
             <img src="ch5/art/sprites/smudge-flying.png" alt="Smudge flying" />
@@ -316,112 +368,68 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
             </div>
           </div>
         )}
-        
-        {/* Crown assembly */}
+
+        {/* Crown drop target */}
         {phase === 'crown' && crownPieces.length < 3 && (
-          <div className="crown-assembly">
+          <div className="crown-assembly" ref={crownTargetRef}>
             <div className="crown-base">
               {crownPieces.length === 0 && <div className="crown-empty-circle" />}
               {crownPieces.map((piece, index) => (
                 <div key={piece} className={`crown-piece-placed crown-piece-${index}`}>
-                  {piece === 'petal' && <img src="ch5/art/sprites/rainbow-petal.png" alt="Petal" />}
-                  {piece === 'gem' && <img src="ch5/art/sprites/purple-gem.png" alt="Gem" />}
-                  {piece === 'light' && <img src="ch5/art/sprites/firefly.png" alt="Light" />}
+                  <img src={pieceSrc(piece)} alt={pieceAlt(piece)} />
                 </div>
               ))}
             </div>
           </div>
         )}
-        
-        {/* Treasure tray */}
+
+        {/* Treasure tray — pointer-draggable pieces */}
         {phase === 'crown' && (
           <div className="treasure-tray">
-            {!crownPieces.includes('petal') && (
-              draggingPiece === 'petal' ? (
+            {PIECES.map((piece) => {
+              if (crownPieces.includes(piece)) return null;
+              const isDragging = draggingPiece === piece || flyingPiece === piece;
+              if (isDragging) {
+                return (
+                  <div
+                    key={piece}
+                    className={`treasure-piece dragging ${flyingPiece === piece ? 'flying-to-crown' : ''}`}
+                    style={{
+                      left: `${dragPosition.x}%`,
+                      top: `${dragPosition.y}%`,
+                      transform: 'translate(-50%, -50%) scale(1.1)',
+                    }}
+                  >
+                    <img src={pieceSrc(piece)} alt={pieceAlt(piece)} />
+                  </div>
+                );
+              }
+              return (
                 <div
-                  className="treasure-piece dragging"
-                  style={{
-                    left: `${dragPosition.x}%`,
-                    top: `${dragPosition.y}%`,
-                    transform: 'translate(-50%, -50%) scale(1.1)',
-                  }}
-                >
-                  <img src="ch5/art/sprites/rainbow-petal.png" alt="Rainbow Petal" />
-                </div>
-              ) : (
-                <div
+                  key={piece}
                   className="treasure-piece clickable"
-                  onMouseDown={(e) => handlePieceStart(e, 'petal')}
-                  onTouchStart={(e) => handlePieceStart(e, 'petal')}
+                  style={{ touchAction: 'none' }}
+                  onPointerDown={(e) => handlePiecePointerDown(e, piece)}
                 >
-                  <img src="ch5/art/sprites/rainbow-petal.png" alt="Rainbow Petal" />
+                  <img src={pieceSrc(piece)} alt={pieceAlt(piece)} />
                 </div>
-              )
-            )}
-            
-            {!crownPieces.includes('gem') && (
-              draggingPiece === 'gem' ? (
-                <div
-                  className="treasure-piece dragging"
-                  style={{
-                    left: `${dragPosition.x}%`,
-                    top: `${dragPosition.y}%`,
-                    transform: 'translate(-50%, -50%) scale(1.1)',
-                  }}
-                >
-                  <img src="ch5/art/sprites/purple-gem.png" alt="Purple Gem" />
-                </div>
-              ) : (
-                <div
-                  className="treasure-piece clickable"
-                  onMouseDown={(e) => handlePieceStart(e, 'gem')}
-                  onTouchStart={(e) => handlePieceStart(e, 'gem')}
-                >
-                  <img src="ch5/art/sprites/purple-gem.png" alt="Purple Gem" />
-                </div>
-              )
-            )}
-            
-            {!crownPieces.includes('light') && (
-              draggingPiece === 'light' ? (
-                <div
-                  className="treasure-piece dragging"
-                  style={{
-                    left: `${dragPosition.x}%`,
-                    top: `${dragPosition.y}%`,
-                    transform: 'translate(-50%, -50%) scale(1.1)',
-                  }}
-                >
-                  <img src="ch5/art/sprites/firefly.png" alt="Firefly Light" />
-                </div>
-              ) : (
-                <div
-                  className="treasure-piece clickable"
-                  onMouseDown={(e) => handlePieceStart(e, 'light')}
-                  onTouchStart={(e) => handlePieceStart(e, 'light')}
-                >
-                  <img src="ch5/art/sprites/firefly.png" alt="Firefly Light" />
-                </div>
-              )
-            )}
+              );
+            })}
           </div>
         )}
-        
-        {/* Pip */}
+
         {!smudgeFlying && (
           <div className="sprite fairy float">
             <img src="ch5/art/sprites/fairy-talk.png" alt="Pip the Fairy" />
           </div>
         )}
-        
-        {/* Speech bubble */}
+
         {fairyText && (
-          <div className="speech-bubble">
+          <div className={`speech-bubble ${captionIsNarrator ? 'narrator' : ''}`}>
             {fairyText}
           </div>
         )}
-        
-        {/* Treasure bar with slots */}
+
         <div className="treasure-bar">
           <div className={`treasure-slot ${progress.treasures.petal ? 'filled' : 'empty'}`}>
             {progress.treasures.petal && <img src="ch5/art/sprites/rainbow-petal.png" alt="Rainbow Petal" />}
@@ -433,9 +441,14 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
             {progress.treasures.light && <img src="ch5/art/sprites/firefly.png" alt="Firefly Light" />}
           </div>
         </div>
-        
-        {/* Mute button */}
-        <button 
+
+        {showTheEnd && (
+          <div className="the-end-overlay">
+            <h1>The End of Book One</h1>
+          </div>
+        )}
+
+        <button
           className="mute-button"
           onClick={toggleMute}
           title={muted ? 'Unmute' : 'Mute'}

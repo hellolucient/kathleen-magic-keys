@@ -61,7 +61,10 @@ function App() {
     return { ...prev, currentChapter: 5, chapter5: base.chapter5 };
   };
 
-  const handleChapterSelect = (chapter: ChapterNumber) => {
+  const handleChapterSelect = async (chapter: ChapterNumber) => {
+    // Create/resume AudioContext inside the chapter-card tap (iOS gesture)
+    await audioManager.unlock();
+    await audioManager.resumeContext();
     setProgress(prev => freshChapter(prev, chapter));
     setScreen('game');
   };

@@ -124,19 +124,19 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
     setFairyText('');
   };
 
-  const handlePieceStart = (e: React.MouseEvent | React.TouchEvent, piece: string) => {
+  const handlePieceStart = (e: React.PointerEvent, piece: string) => {
     e.preventDefault();
     if (crownPieces.includes(piece)) return;
+    
+    const target = e.currentTarget as HTMLElement;
+    target.setPointerCapture(e.pointerId);
     
     const container = containerRef.current;
     if (!container) return;
     
     const rect = container.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    
-    const x = ((clientX - rect.left) / rect.width) * 100;
-    const y = ((clientY - rect.top) / rect.height) * 100;
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
     
     setDraggingPiece(piece);
     setDragPosition({ x, y });
@@ -144,7 +144,7 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
     audioManager.playSound('ch2/audio/sfx/butterfly-flutter.mp3');
   };
 
-  const handlePieceMove = (e: React.MouseEvent | React.TouchEvent) => {
+  const handlePieceMove = (e: React.PointerEvent) => {
     if (!draggingPiece) return;
     e.preventDefault();
     
@@ -152,53 +152,53 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
     if (!container) return;
     
     const rect = container.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    
-    const x = ((clientX - rect.left) / rect.width) * 100;
-    const y = ((clientY - rect.top) / rect.height) * 100;
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
     
     setDragPosition({ x, y });
   };
 
-  const handlePieceEnd = async (e: React.MouseEvent | React.TouchEvent) => {
+  const handlePieceEnd = async (e: React.PointerEvent) => {
     if (!draggingPiece) return;
     e.preventDefault();
     
-    const container = containerRef.current;
-    if (!container) return;
+    const target = e.currentTarget as HTMLElement;
+    if (target.hasPointerCapture(e.pointerId)) {
+      target.releasePointerCapture(e.pointerId);
+    }
     
-    const rect = container.getBoundingClientRect();
-    const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
-    const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : e.clientY;
-    
-    const dropX = ((clientX - rect.left) / rect.width) * 100;
-    const dropY = ((clientY - rect.top) / rect.height) * 100;
-    
-    // Check if dropped on crown (center area)
-    const isOnCrown = dropX >= 42 && dropX <= 58 && dropY >= 28 && dropY <= 42;
-    
-    if (isOnCrown) {
-      // Placed on crown!
-      audioManager.playSound('ch2/audio/sfx/correct-match.mp3');
-      audioManager.playSound('audio/sfx/sparkle.mp3');
+    // Use real crown element rect for hit test
+    const crownElement = document.querySelector('.crown-assembly');
+    if (crownElement) {
+      const crownRect = crownElement.getBoundingClientRect();
+      const isOnCrown = 
+        e.clientX >= crownRect.left - 50 && 
+        e.clientX <= crownRect.right + 50 &&
+        e.clientY >= crownRect.top - 50 && 
+        e.clientY <= crownRect.bottom + 50;
       
-      const newPieces = [...crownPieces, draggingPiece];
-      setCrownPieces(newPieces);
-      
-      setProgress(prev => ({
-        ...prev,
-        chapter5: { ...prev.chapter5, crownPieces: newPieces },
-      }));
-      
-      const placeLine = `fairy-place-${draggingPiece}`;
-      setFairyText(audioManager.getText(placeLine, 'ch5'));
-      await audioManager.playSpeech(placeLine, 'ch5');
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setFairyText('');
-      
-      if (newPieces.length === 3) {
-        await completeCrown();
+      if (isOnCrown) {
+        // Placed on crown!
+        audioManager.playSound('ch2/audio/sfx/correct-match.mp3');
+        audioManager.playSound('audio/sfx/sparkle.mp3');
+        
+        const newPieces = [...crownPieces, draggingPiece];
+        setCrownPieces(newPieces);
+        
+        setProgress(prev => ({
+          ...prev,
+          chapter5: { ...prev.chapter5, crownPieces: newPieces },
+        }));
+        
+        const placeLine = `fairy-place-${draggingPiece}`;
+        setFairyText(audioManager.getText(placeLine, 'ch5'));
+        await audioManager.playSpeech(placeLine, 'ch5');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setFairyText('');
+        
+        if (newPieces.length === 3) {
+          await completeCrown();
+        }
       }
     }
     

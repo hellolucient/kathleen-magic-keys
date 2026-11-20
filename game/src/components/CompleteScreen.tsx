@@ -1,76 +1,47 @@
-import { useEffect } from 'react';
-import type { ChapterNumber } from '../types';
 import './CompleteScreen.css';
 
 interface CompleteScreenProps {
-  chapter: ChapterNumber;
+  chapter: number;
   onPlayAgain: () => void;
   onNextChapter: () => void;
   onBackToChapterPicker: () => void;
 }
 
-function CompleteScreen({ chapter, onPlayAgain, onNextChapter, onBackToChapterPicker }: CompleteScreenProps) {
-  useEffect(() => {
-    playCompleteNarration();
-  }, [chapter]);
-
-  const playCompleteNarration = async () => {
-    // Don't play narration here - it's already played in the chapter scenes
-  };
-
-  const getImageSrc = () => {
-    if (chapter === 1) return 'art/complete.jpg';
-    if (chapter === 2) return 'ch2/art/complete-ch2.jpg';
-    if (chapter === 3) return 'ch3/art/raw/bg-river.jpg';
-    if (chapter === 4) return 'ch4/art/raw/bg-forest.jpg';
-    if (chapter === 5) return 'ch5/art/raw/bg-clouds.jpg';
-    return 'art/complete.jpg';
-  };
-
-  const getTitle = () => {
-    if (chapter === 5) return 'The End of Book One!';
-    return `Chapter ${chapter} Complete!`;
-  };
-
-  const getMessage = () => {
-    if (chapter === 1) return 'Princess Kathleen found all five magic keys!';
-    if (chapter === 2) return 'The garden is full of colour again!';
-    if (chapter === 3) return 'The frogs loved your song!';
-    if (chapter === 4) return 'The baby animals found their mummies!';
-    if (chapter === 5) return 'Smudge has a friend forever! 💜';
-    return 'Well done, Princess Kathleen!';
-  };
-
-  const hasNextChapter = chapter < 5;
-
+function CompleteScreen({ onPlayAgain, onBackToChapterPicker }: CompleteScreenProps) {
+  // Only Chapter 5 lands here — clean full-screen end card
   return (
-    <div className="complete-screen">
+    <div className="complete-screen end-card">
       <div className="complete-bg">
-        <img src={getImageSrc()} alt="Chapter Complete" />
+        <img src="ch5/art/raw/bg-clouds.jpg" alt="" />
       </div>
-      <div className="complete-overlay">
-        <div className="complete-content">
-          <h1 className="complete-title">{getTitle()}</h1>
-          <p className="complete-message">{getMessage()}</p>
-          <div className="complete-buttons">
-            <button className="play-again-button" onClick={onPlayAgain}>
-              Play Again
-            </button>
-            {hasNextChapter && (
-              <button className="next-chapter-button" onClick={onNextChapter}>
-                Next Chapter ✨
-              </button>
-            )}
-            {chapter === 5 && (
-              <div className="ending-message">
-                <p>✨ Thank you for playing! ✨</p>
-                <p>Smudge will be back for more adventures!</p>
-              </div>
-            )}
-            <button className="back-button" onClick={onBackToChapterPicker}>
-              Chapter Picker
-            </button>
-          </div>
+      <div className="complete-card">
+        <h1 className="complete-title">The End of Book One</h1>
+        <div className="end-heroes">
+          <img
+            className="end-smudge"
+            src="ch5/art/sprites/smudge-laughing.png"
+            alt="Smudge"
+          />
+          <img
+            className="end-crown"
+            src="ch5/art/sprites/crown.png"
+            alt=""
+            aria-hidden
+          />
+          <img
+            className="end-pip"
+            src="ch5/art/sprites/fairy-cheer.png"
+            alt="Pip"
+          />
+        </div>
+        <p className="complete-message">Smudge has a friend forever!</p>
+        <div className="complete-buttons">
+          <button type="button" className="play-again-button" onClick={onPlayAgain}>
+            Play Again
+          </button>
+          <button type="button" className="back-button" onClick={onBackToChapterPicker}>
+            Chapter Picker
+          </button>
         </div>
       </div>
     </div>

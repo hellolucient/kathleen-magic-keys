@@ -60,22 +60,22 @@
     "file": "ch4/audio/narr-cry.mp3"
   },
   "fairy-light": {
-    "text": "Let's take a firefly light with us. Tap the lantern, Kathleen!",
-    "voice": "en-GB-MaisieNeural",
-    "speaker": "Pip",
-    "file": "ch4/audio/fairy-light.mp3"
+    "text": "Let's take a light with us. Tap the lantern, Kathleen!",
+    "file": "ch4/audio/fairy-light.mp3",
+    "duration": 5640,
+    "voice": "en-GB-MaisieNeural"
   },
   "fairy-light-got": {
-    "text": "A magic Firefly Light! Now let's find out who is crying.",
-    "voice": "en-GB-MaisieNeural",
-    "speaker": "Pip",
-    "file": "ch4/audio/fairy-light-got.mp3"
+    "text": "Perfect! Now let's find out who is crying.",
+    "file": "ch4/audio/fairy-light-got.mp3",
+    "duration": 4920,
+    "voice": "en-GB-MaisieNeural"
   },
   "narr-complete": {
-    "text": "So Princess Kathleen, Pip and their little light set off for Cloud Mountain... To be continued!",
-    "voice": "en-GB-SoniaNeural",
-    "speaker": "Narrator",
-    "file": "ch4/audio/narr-complete.mp3"
+    "text": "Far ahead, Cloud Mountain waited in the sky.",
+    "file": "ch4/audio/narr-complete.mp3",
+    "duration": 3912,
+    "voice": "en-GB-SoniaNeural"
   },
   "count-1": {
     "text": "1!",
@@ -136,5 +136,17 @@
     "voice": "en-GB-MaisieNeural",
     "speaker": "Pip",
     "file": "ch4/audio/count-10.mp3"
+  },
+  "fairy-treasure-light": {
+    "text": "That's our Firefly Light! We're collecting treasures for a very special friend.",
+    "file": "ch4/audio/fairy-treasure-light.mp3",
+    "duration": 6648,
+    "voice": "en-GB-MaisieNeural"
+  },
+  "fairy-follow-path": {
+    "text": "Tap the glowing path to Cloud Mountain, Kathleen!",
+    "file": "ch4/audio/fairy-follow-path.mp3",
+    "duration": 4560,
+    "voice": "en-GB-MaisieNeural"
   }
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { GameScreen, GameProgress, ChapterNumber } from './types';
 import { audioManager } from './audioManager';
-import { loadProgress, getInitialProgress } from './gameState';
+import { loadProgress, getInitialProgress, saveProgress } from './gameState';
 import LoadingScreen from './components/LoadingScreen';
 import TitleScreen from './components/TitleScreen';
 import ChapterPicker from './components/ChapterPicker';
@@ -13,13 +13,22 @@ import Chapter5Scene from './components/Chapter5Scene';
 import CompleteScreen from './components/CompleteScreen';
 import './App.css';
 
+/** Treasures earned by completing earlier chapters (for picker jumps). */
+function treasuresFromCompleted(completed: number[], existing: GameProgress['treasures']) {
+  return {
+    petal: existing.petal || completed.includes(2),
+    gem: existing.gem || completed.includes(3),
+    light: existing.light || completed.includes(4),
+  };
+}
+
 function App() {
   const [screen, setScreen] = useState<GameScreen>('loading');
   const [progress, setProgress] = useState<GameProgress>(getInitialProgress());
   const [orientation, setOrientation] = useState<'landscape' | 'portrait'>('landscape');
+  const [fading, setFading] = useState(false);
 
   useEffect(() => {
-    // Check orientation
     const checkOrientation = () => {
       if (window.innerWidth < window.innerHeight) {
         setOrientation('portrait');
@@ -41,7 +50,10 @@ function App() {
   const handleLoadComplete = () => {
     const saved = loadProgress();
     if (saved) {
-      setProgress(saved);
+      setProgress({
+        ...saved,
+        treasures: treasuresFromCompleted(saved.completedChapters, saved.treasures),
+      });
     }
     setScreen('title');
   };
@@ -51,46 +63,77 @@ function App() {
     setScreen('chapter-picker');
   };
 
-  // Every time a chapter starts, it starts from the beginning
+  // Every time a chapter starts, it starts from the beginning (keep treasures)
   const freshChapter = (prev: GameProgress, chapter: ChapterNumber): GameProgress => {
     const base = getInitialProgress();
-    if (chapter === 1) return { ...prev, currentChapter: 1, chapter1: base.chapter1 };
-    if (chapter === 2) return { ...prev, currentChapter: 2, chapter2: base.chapter2 };
-    if (chapter === 3) return { ...prev, currentChapter: 3, chapter3: base.chapter3 };
-    if (chapter === 4) return { ...prev, currentChapter: 4, chapter4: base.chapter4 };
-    return { ...prev, currentChapter: 5, chapter5: base.chapter5 };
+    const treasures = treasuresFromCompleted(prev.completedChapters, prev.treasures);
+    if (chapter === 1) return { ...prev, currentChapter: 1, chapter1: base.chapter1, treasures };
+    if (chapter === 2) return { ...prev, currentChapter: 2, chapter2: base.chapter2, treasures };
+    if (chapter === 3) return { ...prev, currentChapter: 3, chapter3: base.chapter3, treasures };
+    if (chapter === 4) return { ...prev, currentChapter: 4, chapter4: base.chapter4, treasures };
+    return { ...prev, currentChapter: 5, chapter5: base.chapter5, treasures };
   };
 
-  const handleChapterSelect = (chapter: ChapterNumber) => {
-    setProgress(prev => freshChapter(prev, chapter));
+  const handleChapterSelect = async (chapter: ChapterNumber) => {
+    await audioManager.unlock();
+    await audioManager.resumeContext();
+    setProgress(prev => {
+      const next = freshChapter(prev, chapter);
+      saveProgress(next);
+      return next;
+    });
     setScreen('game');
   };
 
+  const fadeToNextChapter = (fromChapter: ChapterNumber) => {
+    const nextChapter = (fromChapter + 1) as ChapterNumber;
+    audioManager.stopAllSounds();
+    // Cover fully first (solid veil), then swap chapter, then lift veil —
+    // avoids half-drawn / clipped frames mid-transition.
+    setFading(true);
+    window.setTimeout(() => {
+      setProgress(prev => {
+        const withComplete: GameProgress = {
+          ...prev,
+          completedChapters: prev.completedChapters.includes(fromChapter)
+            ? prev.completedChapters
+            : [...prev.completedChapters, fromChapter],
+        };
+        const next = freshChapter(withComplete, nextChapter);
+        saveProgress(next);
+        return next;
+      });
+      setScreen('game');
+      // Hold the veil briefly so the next scene paints fully underneath
+      window.setTimeout(() => setFading(false), 220);
+    }, 450);
+  };
+
+  // Ch1–4: action ends chapter → fade straight into next
+  const handleContinueToNext = () => {
+    const chapter = progress.currentChapter;
+    if (chapter < 5) {
+      fadeToNextChapter(chapter);
+    }
+  };
+
+  // Ch5: The End screen
   const handleGameComplete = () => {
     const chapter = progress.currentChapter;
-    setProgress(prev => ({
-      ...prev,
-      completedChapters: prev.completedChapters.includes(chapter)
-        ? prev.completedChapters
-        : [...prev.completedChapters, chapter],
-    }));
-    setScreen('complete');
-  };
-
-  // End of Chapter 1: tapping Pip at the door goes straight into Chapter 2
-  const handleFollowToChapter2 = () => {
-    setProgress(prev => freshChapter({
-      ...prev,
-      completedChapters: prev.completedChapters.includes(1) ? prev.completedChapters : [...prev.completedChapters, 1],
-    }, 2));
-    setScreen('game');
-  };
-
-  const handleNextChapter = () => {
-    const nextChapter = (progress.currentChapter + 1) as ChapterNumber;
-    if (nextChapter <= 5) {
-      setProgress(prev => freshChapter(prev, nextChapter));
-      setScreen('game');
+    setProgress(prev => {
+      const next = {
+        ...prev,
+        completedChapters: prev.completedChapters.includes(chapter)
+          ? prev.completedChapters
+          : [...prev.completedChapters, chapter],
+      };
+      saveProgress(next);
+      return next;
+    });
+    if (chapter === 5) {
+      setScreen('complete');
+    } else {
+      fadeToNextChapter(chapter);
     }
   };
 
@@ -99,10 +142,11 @@ function App() {
     setScreen('game');
   };
 
-  const handleBackToChapterPicker = () => {
-    setScreen('chapter-picker');
+  const handleBackToTitle = () => {
+    audioManager.stopAllSounds();
+    setScreen('title');
   };
-  
+
   const updateProgress = (updater: (prev: GameProgress) => GameProgress) => {
     setProgress(updater);
   };
@@ -120,7 +164,7 @@ function App() {
   }
 
   return (
-    <div className="app">
+    <div className={`app ${fading ? 'chapter-fading' : ''}`}>
       {screen === 'loading' && <LoadingScreen onComplete={handleLoadComplete} />}
       {screen === 'title' && <TitleScreen onStart={handleStartFromTitle} />}
       {screen === 'chapter-picker' && (
@@ -133,28 +177,28 @@ function App() {
         <GameScene
           progress={progress}
           setProgress={updateProgress}
-          onComplete={handleFollowToChapter2}
+          onComplete={handleContinueToNext}
         />
       )}
       {screen === 'game' && progress.currentChapter === 2 && (
         <Chapter2Scene
           progress={progress}
           setProgress={updateProgress}
-          onComplete={handleGameComplete}
+          onComplete={handleContinueToNext}
         />
       )}
       {screen === 'game' && progress.currentChapter === 3 && (
         <Chapter3Scene
           progress={progress}
           setProgress={updateProgress}
-          onComplete={handleGameComplete}
+          onComplete={handleContinueToNext}
         />
       )}
       {screen === 'game' && progress.currentChapter === 4 && (
         <Chapter4Scene
           progress={progress}
           setProgress={updateProgress}
-          onComplete={handleGameComplete}
+          onComplete={handleContinueToNext}
         />
       )}
       {screen === 'game' && progress.currentChapter === 5 && (
@@ -168,8 +212,8 @@ function App() {
         <CompleteScreen
           chapter={progress.currentChapter}
           onPlayAgain={handlePlayAgain}
-          onNextChapter={handleNextChapter}
-          onBackToChapterPicker={handleBackToChapterPicker}
+          onNextChapter={() => {}}
+          onBackToChapterPicker={handleBackToTitle}
         />
       )}
     </div>

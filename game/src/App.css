@@ -5,6 +5,27 @@
   overflow: hidden;
 }
 
+/* Solid veil during chapter swaps — no opacity:0 of the whole app
+   (that caused half-drawn / clipped mid-frames on iPad). */
+.app::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 9999;
+  background: #1a1028;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.app.chapter-fading {
+  pointer-events: none;
+}
+
+.app.chapter-fading::after {
+  opacity: 1;
+}
+
 .portrait-warning {
   width: 100%;
   height: 100%;

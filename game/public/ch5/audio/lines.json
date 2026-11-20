@@ -100,5 +100,11 @@
     "voice": "en-GB-SoniaNeural",
     "speaker": "Narrator",
     "file": "ch5/audio/narr-end.mp3"
+  },
+  "fairy-not-here": {
+    "text": "Not here!",
+    "file": "ch5/audio/fairy-not-here.mp3",
+    "duration": 1872,
+    "voice": "en-GB-MaisieNeural"
   }
 }

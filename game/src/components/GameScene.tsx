@@ -61,14 +61,15 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     return () => {
       if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
       if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+      audioManager.stopAllSounds();
     };
   }, []);
 
   useEffect(() => {
     saveProgress(progress);
     
-    // Check if all keys found
-    if (progress.chapter1.keysFound.length === 5 && !doorGlowStartedRef.current) {
+    // Check if all keys found (>= 5 so batched updates that skip exactly 5 still trigger)
+    if (progress.chapter1.keysFound.length >= 5 && !doorGlowStartedRef.current) {
       doorGlowStartedRef.current = true;
       triggerDoorGlow();
       // Door tapped while the 5th key was still flying to the counter
@@ -257,40 +258,41 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   };
 
   const collectKey = async (keyId: string) => {
-    const currentProgress = progressRef.current;
-    if (currentProgress.chapter1.keysFound.includes(keyId)) return;
-    
+    if (progressRef.current.chapter1.keysFound.includes(keyId)) return;
+
     recordInteraction();
-    
+
     audioManager.playSound('audio/sfx/sparkle.mp3');
-    
-    // Play key-found chime (don't await - let it play alongside)
     audioManager.playSoundEffect('audio/sfx/key-found.mp3');
-    
-    // Short beat for the chime, then straight on
+
     await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // Show fly animation
+    if (progressRef.current.chapter1.keysFound.includes(keyId)) return;
+
     keysInFlightRef.current++;
     setCollectingKey(keyId);
     await new Promise(resolve => setTimeout(resolve, 400));
     setCollectingKey(null);
-    
-    // Update progress with functional update
+
+    const alreadyHad = progressRef.current.chapter1.keysFound.length;
     setProgress(p => {
-      const newKeysFound = [...p.chapter1.keysFound, keyId];
-      return { ...p, chapter1: { ...p.chapter1, keysFound: newKeysFound } };
+      if (p.chapter1.keysFound.includes(keyId)) return p;
+      return {
+        ...p,
+        chapter1: { ...p.chapter1, keysFound: [...p.chapter1.keysFound, keyId] },
+      };
     });
     keysInFlightRef.current = Math.max(0, keysInFlightRef.current - 1);
-    
-    const newLength = currentProgress.chapter1.keysFound.length + 1;
-    
+
+    // Yield so progressRef updates via the effect
+    await new Promise(resolve => setTimeout(resolve, 50));
+    const praiseIndex = Math.min(5, Math.max(alreadyHad + 1, progressRef.current.chapter1.keysFound.length));
+
     setFairyCheer(true);
-    const foundLineId = `fairy-found-${newLength}`;
+    const foundLineId = `fairy-found-${praiseIndex}`;
     setFairyText(audioManager.getText(foundLineId));
     await audioManager.playSpeech(foundLineId);
     await new Promise(resolve => setTimeout(resolve, 400));
-    
+
     setFairyCheer(false);
     setFairyText('');
   };
@@ -357,58 +359,56 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const unlockDoor = async () => {
     if (progressRef.current.chapter1.keysFound.length < 5 || unlockingRef.current) return;
     unlockingRef.current = true;
-    
-    // Failsafe: Pip always ends up at the door asking to be followed, whatever happens to audio
+
+    // Failsafe: Pip always ends up at the door asking to be followed
     window.setTimeout(() => { if (!completedRef.current) setWaitingForFollow(true); }, 30000);
-    
+
     setUnlocking(true);
-    setDoorGlowing(false); // Remove glow while unlocking
+    setDoorGlowing(false);
     audioManager.stopLoop('audio/sfx/door-glow-loop.mp3');
-    
-    // Start narration (never waited on for longer than its length + margin)
+
+    // Let any in-flight line (e.g. fairy-door-glow) finish before the unlock sequence
+    audioManager.stopAllSounds();
+    await sleep(200);
+
+    // Play unlock narration fully BEFORE the door opens (fixes cut-off overlap)
+    setNarratorSpeaking(true);
     setFairyText(audioManager.getText('narr-unlock'));
-    const narrationPromise = audioManager.playSpeech('narr-unlock');
-    
-    // Animate keys flying to locks (starts immediately, runs alongside narration)
-    await sleep(1000);
-    
+    await audioManager.playSpeech('narr-unlock');
+    setNarratorSpeaking(false);
+    setFairyText('');
+    await sleep(300);
+
+    // Keys fly into locks, then the door opens
     for (let i = 0; i < 5; i++) {
       setFlyingKeysToLocks(prev => [...prev, i]);
       audioManager.playSound('audio/sfx/lock-click.mp3');
       await sleep(300);
     }
-    
-    // Wait a bit, then open door
-    await sleep(1500);
-    
+
+    await sleep(600);
+
     audioManager.playSound('audio/sfx/door-open-magic.mp3');
     audioManager.playSound('audio/sfx/celebration-fanfare.mp3');
     setDoorOpen(true);
-    
-    // Pip stays at the open door
+
     setFairyFlyingToDoor(false);
     setFairyAtDoor(true);
     audioManager.playSound('audio/sfx/sparkle.mp3');
-    
-    await Promise.race([narrationPromise, sleep(10000)]);
+
     await sleep(500);
-    
+
     setFairyCheer(true);
     setFairyText(audioManager.getText('fairy-final'));
-    await Promise.race([audioManager.playSpeech('fairy-final'), sleep(11000)]);
-    await sleep(600);
+    await audioManager.playSpeech('fairy-final');
+    await sleep(400);
     setFairyCheer(false);
 
-    // Pip waits at the door: tap her to follow her into Chapter 2
+    // Pip waits at the door: tap her to follow into Chapter 2
     setWaitingForFollow(true);
     if (followTappedRef.current) return;
     setFairyText(audioManager.getText('fairy-follow'));
-    await Promise.race([audioManager.playSpeech('fairy-follow'), sleep(6000)]);
-    // Say it once more if nobody has tapped yet
-    await sleep(9000);
-    if (followTappedRef.current || completedRef.current) return;
-    setFairyText(audioManager.getText('fairy-follow'));
-    await Promise.race([audioManager.playSpeech('fairy-follow'), sleep(6000)]);
+    await audioManager.playSpeech('fairy-follow');
   };
 
   const handleFollowPip = async () => {

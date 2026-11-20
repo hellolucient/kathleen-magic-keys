@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { GameProgress, Layout } from '../types';
 import { audioManager } from '../audioManager';
 import { saveProgress } from '../gameState';
+import { clientToPercent, hitTestRect, startPointerDrag } from '../pointerDrag';
 import LookForPreview from './LookForPreview';
+import TreasureBar from './TreasureBar';
 import './Chapter2Scene.css';
 
 interface Chapter2SceneProps {
@@ -13,8 +16,20 @@ interface Chapter2SceneProps {
 
 const COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
 
-// Dragon footprint trail: from the bottom path, between the flower beds, to the river bank (x%, y%, heading deg; 0 = up)
-const FOOTPRINT_TRAIL: [number, number, number][] = [[59, 95, -7], [58.5, 88, 7], [59, 81, 7], [59.5, 74, 17], [60.5, 68, 45], [63, 63.5, 64], [66.5, 60.5, 64], [70, 57.5, 68], [73.5, 55, 72], [77, 53, 72]];
+// Neat alternating L/R trail along the dirt path toward the river; evenly spaced, smaller into distance
+// [x%, y%, heading deg, scale]
+const FOOTPRINT_TRAIL: [number, number, number, number][] = [
+  [52.0, 88, 8, 1.0],
+  [54.0, 82, 14, 0.95],
+  [56.5, 76, 22, 0.90],
+  [59.5, 71, 32, 0.85],
+  [63.0, 66.5, 42, 0.80],
+  [67.0, 62.5, 52, 0.75],
+  [71.0, 59.0, 58, 0.70],
+  [75.0, 56.0, 62, 0.65],
+  [79.0, 53.5, 66, 0.60],
+  [83.0, 51.5, 68, 0.55],
+];
 
 function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps) {
   const [layout, setLayout] = useState<Layout | null>(null);
@@ -40,6 +55,12 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
   };
   const [backgroundSolved, setBackgroundSolved] = useState(false);
   const [sneezePuffVisible, setSneezePuffVisible] = useState(true);
+  const [gardenFullColour, setGardenFullColour] = useState(true);
+  const [sneezeGust, setSneezeGust] = useState(false);
+  const [pathTappable, setPathTappable] = useState(false);
+  const [pipAlongTrail, setPipAlongTrail] = useState(false);
+  const pathResolveRef = useRef<(() => void) | null>(null);
+  const treasureExplainedRef = useRef(false);
   
   const progressRef = useRef(progress);
   const lastInteractionRef = useRef<number>(Date.now());
@@ -49,7 +70,9 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
   const introRunningRef = useRef(false);
   const completedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const flowerRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const wrongAttemptCountRef = useRef(0);
+  const matchingRef = useRef(false);
 
   useEffect(() => {
     progressRef.current = progress;
@@ -61,6 +84,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
 
     return () => {
       if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
+      audioManager.stopAllSounds();
     };
   }, []);
 
@@ -99,6 +123,8 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
       return;
     }
     
+    // Start in full colour; sneeze gust blows colour away during dragon-sneeze line
+    setGardenFullColour(true);
     setNarratorSpeaking(true);
     setFairyText(audioManager.getText('narr-intro', 'ch2'));
     await audioManager.playSpeech('narr-intro', 'ch2');
@@ -111,7 +137,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
       startHintSystem();
       return;
     }
-    
+
     await new Promise(resolve => setTimeout(resolve, 500));
     if (introAbortedRef.current) {
       setFairyText('');
@@ -120,9 +146,15 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
       startHintSystem();
       return;
     }
-    
+
+    // Dragon-sneeze line: gust sweeps colour away → grey garden with flower hints
     setFairyText(audioManager.getText('fairy-intro', 'ch2'));
-    await audioManager.playSpeech('fairy-intro', 'ch2');
+    const sneezeLine = audioManager.playSpeech('fairy-intro', 'ch2');
+    setSneezeGust(true);
+    await new Promise(resolve => setTimeout(resolve, 900));
+    setGardenFullColour(false);
+    await sneezeLine;
+    setSneezeGust(false);
     if (introAbortedRef.current) {
       setFairyText('');
       introRunningRef.current = false;
@@ -220,115 +252,66 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
     
     setFairyText(audioManager.getText('fairy-footprints', 'ch2'));
     setPetalTappable(true);
+    // Pip flies along the footprint trail while the line plays
+    setPipAlongTrail(true);
     const tapped = new Promise<void>(resolve => { petalResolveRef.current = resolve; });
     await audioManager.playSpeech('fairy-footprints', 'ch2');
-    // Wait for Kathleen to tap the petal (auto-collect after 25s so the story never stalls)
     const wasTapped = await Promise.race([tapped.then(() => true), new Promise<boolean>(resolve => setTimeout(() => resolve(false), 25000))]);
     petalResolveRef.current = null;
     if (!wasTapped) collectPetal();
     setFairyCheer(true);
     await new Promise(resolve => setTimeout(resolve, wasTapped ? 300 : 900));
-    setFairyText(audioManager.getText('fairy-petal-got', 'ch2'));
-    await audioManager.playSpeech('fairy-petal-got', 'ch2');
+
+    // First treasure explain
+    if (!treasureExplainedRef.current) {
+      treasureExplainedRef.current = true;
+      setFairyText(audioManager.getText('fairy-treasure-petal', 'ch2'));
+      await audioManager.playSpeech('fairy-treasure-petal', 'ch2');
+      await new Promise(resolve => setTimeout(resolve, 300));
+    } else {
+      setFairyText(audioManager.getText('fairy-petal-got', 'ch2'));
+      await audioManager.playSpeech('fairy-petal-got', 'ch2');
+    }
     setFairyCheer(false);
     setFairyText('');
     await new Promise(resolve => setTimeout(resolve, 300));
-    
-    setNarratorSpeaking(true);
-    setFairyText(audioManager.getText('narr-complete', 'ch2'));
-    await audioManager.playSpeech('narr-complete', 'ch2');
-    await new Promise(resolve => setTimeout(resolve, 800));
+
+    // End action: tap the glowing footprints → next chapter
+    setPathTappable(true);
+    setFairyText(audioManager.getText('fairy-follow-path', 'ch2'));
+    const pathTapped = new Promise<void>(resolve => { pathResolveRef.current = resolve; });
+    await audioManager.playSpeech('fairy-follow-path', 'ch2');
+    await Promise.race([pathTapped, new Promise(resolve => setTimeout(resolve, 30000))]);
+    pathResolveRef.current = null;
     setFairyText('');
-    setNarratorSpeaking(false);
-    
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    setPathTappable(false);
     onComplete();
   };
 
-  const handleButterflyStart = (e: React.MouseEvent | React.TouchEvent, color: string) => {
-    e.preventDefault();
-    if (progress.chapter2.matchedFlowers.includes(color)) return;
-    
-    recordInteraction();
-    
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const rect = container.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    
-    const x = ((clientX - rect.left) / rect.width) * 100;
-    const y = ((clientY - rect.top) / rect.height) * 100;
-    
-    const butterfly = layout?.objects.find(obj => obj.id === `butterfly-${color}`);
-    if (butterfly) {
-      setDragOffset({
-        x: x - butterfly.x,
-        y: y - butterfly.y,
-      });
-    }
-    
-    setDraggingButterfly(color);
-    setDragPosition({ x, y });
-    setButterflyFlapping(prev => ({ ...prev, [color]: true }));
-    
-    audioManager.playSound('ch2/audio/sfx/butterfly-flutter.mp3');
-  };
+  const finishButterflyDrop = async (color: string, clientX: number, clientY: number) => {
+    if (matchingRef.current) return;
+    matchingRef.current = true;
 
-  const handleButterflyMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!draggingButterfly) return;
-    e.preventDefault();
-    
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const rect = container.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    
-    const x = ((clientX - rect.left) / rect.width) * 100;
-    const y = ((clientY - rect.top) / rect.height) * 100;
-    
-    setDragPosition({ x, y });
-  };
+    const flowerEl = flowerRefs.current[color];
+    const isMatch = hitTestRect(flowerEl ?? null, clientX, clientY, 50);
 
-  const handleButterflyEnd = async (e: React.MouseEvent | React.TouchEvent) => {
-    if (!draggingButterfly) return;
-    e.preventDefault();
-    
-    const container = containerRef.current;
-    if (!container || !layout) return;
-    
-    const rect = container.getBoundingClientRect();
-    const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
-    const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : e.clientY;
-    
-    const dropX = ((clientX - rect.left) / rect.width) * 100;
-    const dropY = ((clientY - rect.top) / rect.height) * 100;
-    
-    const matchingFlower = layout.objects.find(obj => 
-      obj.id.startsWith('flower-') && 
-      obj.id.includes('-grey') &&
-      obj.color === draggingButterfly &&
-      dropX >= obj.x && dropX <= obj.x + obj.w &&
-      dropY >= obj.y && dropY <= obj.y + obj.h
-    );
-    
-    if (matchingFlower) {
+    setDraggingButterfly(null);
+    setButterflyFlapping(prev => ({ ...prev, [color]: false }));
+
+    if (isMatch) {
       audioManager.playSound('ch2/audio/sfx/correct-match.mp3');
       audioManager.playSound('audio/sfx/sparkle.mp3');
-      
+
       setProgress(p => ({
         ...p,
         chapter2: {
           ...p.chapter2,
-          matchedFlowers: [...p.chapter2.matchedFlowers, draggingButterfly],
+          matchedFlowers: [...p.chapter2.matchedFlowers, color],
         },
       }));
-      
+
       setFairyCheer(true);
-      const matchLineId = `fairy-match-${draggingButterfly}`;
+      const matchLineId = `fairy-match-${color}`;
       setFairyText(audioManager.getText(matchLineId, 'ch2'));
       await audioManager.playSpeech(matchLineId, 'ch2');
       await new Promise(resolve => setTimeout(resolve, 400));
@@ -336,7 +319,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
       setFairyText('');
     } else {
       audioManager.playSound('ch2/audio/sfx/wrong-boop.mp3');
-      
+
       wrongAttemptCountRef.current++;
       setProgress(p => ({
         ...p,
@@ -345,7 +328,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
           wrongAttempts: p.chapter2.wrongAttempts + 1,
         },
       }));
-      
+
       if (wrongAttemptCountRef.current <= 3) {
         const wrongLineId = `fairy-wrong-${wrongAttemptCountRef.current}`;
         setFairyText(audioManager.getText(wrongLineId, 'ch2'));
@@ -354,9 +337,39 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
         setFairyText('');
       }
     }
-    
-    setDraggingButterfly(null);
-    setButterflyFlapping(prev => ({ ...prev, [draggingButterfly]: false }));
+
+    matchingRef.current = false;
+  };
+
+  const handleButterflyPointerDown = (e: ReactPointerEvent, color: string) => {
+    if (progress.chapter2.matchedFlowers.includes(color) || matchingRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    recordInteraction();
+
+    const pct = clientToPercent(container, e.clientX, e.clientY);
+    const butterfly = layout?.objects.find(obj => obj.id === `butterfly-${color}`);
+    if (butterfly) {
+      setDragOffset({
+        x: pct.x - butterfly.x,
+        y: pct.y - butterfly.y,
+      });
+    }
+
+    setDraggingButterfly(color);
+    setDragPosition(pct);
+    setButterflyFlapping(prev => ({ ...prev, [color]: true }));
+    audioManager.playSound('ch2/audio/sfx/butterfly-flutter.mp3');
+
+    startPointerDrag(e, {
+      onMove: (cx, cy) => {
+        setDragPosition(clientToPercent(container, cx, cy));
+      },
+      onEnd: (cx, cy) => {
+        void finishButterflyDrop(color, cx, cy);
+      },
+    });
   };
 
   const toggleMute = () => {
@@ -401,20 +414,35 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
     <div 
       className="game-scene chapter2-scene"
       ref={containerRef}
-      onMouseMove={handleButterflyMove}
-      onMouseUp={handleButterflyEnd}
-      onTouchMove={handleButterflyMove}
-      onTouchEnd={handleButterflyEnd}
       style={{ touchAction: 'none' }}
     >
       <div className="game-container">
-        <img 
-          src={backgroundSolved ? 'ch2/art/bg-garden-colour.jpg' : 'ch2/art/bg-garden-grey.jpg'}
-          alt="Garden" 
-          className={`game-bg ${backgroundSolved ? 'fade-in' : ''}`}
+        {/* Base layer: always keep a solid bg underneath so fades never reveal a black void */}
+        <img
+          src="ch2/art/bg-garden-grey.jpg"
+          alt=""
+          className="game-bg"
+          aria-hidden
         />
-        
-        {sneezePuffVisible && (
+        {/* Full-colour layer: visible at open, after sneeze drains, and again when restored */}
+        <img
+          src="ch2/art/bg-garden-colour-full.jpg"
+          alt="Garden"
+          className={`game-bg colour-layer ${gardenFullColour || backgroundSolved ? 'colour-visible' : 'colour-hidden'}`}
+        />
+
+        {sneezeGust && (
+          <div className="sneeze-gust" aria-hidden>
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className={`gust-puff gust-puff-${i}`} />
+            ))}
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={`s${i}`} className={`gust-streak gust-streak-${i}`} />
+            ))}
+          </div>
+        )}
+
+        {sneezePuffVisible && !sneezeGust && (
           <div 
             className="sprite sneeze-puff fade-out-slow"
             style={getObjectStyle(layout.objects.find(o => o.id === 'sneeze-puff'))}
@@ -437,37 +465,33 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
                 </div>
               )}
               
-              {!isMatched && (
+              {!isMatched && !gardenFullColour && (
                 <div
+                  ref={(el) => { flowerRefs.current[color] = el; }}
                   className={`sprite flower-hint flower-hint-${color}`}
                   style={getObjectStyle(layout.objects.find(o => o.id === `flower-${color}`))}
                 >
                   <img src={`ch2/art/sprites/flower-${color}-colour.png`} alt="" />
                 </div>
               )}
-
-              {!isMatched && draggingButterfly !== color && (
+              {/* Keep flower hit targets even before colour drains (invisible) */}
+              {!isMatched && gardenFullColour && (
                 <div
-                  className="sprite butterfly float clickable"
-                  style={getButterflyStyle(color)}
-                  onMouseDown={(e) => handleButterflyStart(e, color)}
-                  onTouchStart={(e) => handleButterflyStart(e, color)}
-                >
-                  <img 
-                    src={`ch2/art/sprites/butterfly-${color}${butterflyFlapping[color] ? '-flap' : ''}.png`} 
-                    alt={`${color} butterfly`}
-                  />
-                </div>
+                  ref={(el) => { flowerRefs.current[color] = el; }}
+                  style={{ ...getObjectStyle(layout.objects.find(o => o.id === `flower-${color}`)), opacity: 0, pointerEvents: 'none' }}
+                />
               )}
-              
-              {!isMatched && draggingButterfly === color && (
+
+              {!isMatched && (
                 <div
-                  className="sprite butterfly"
-                  style={getButterflyStyle(color)}
+                  className={`sprite butterfly clickable ${draggingButterfly === color ? '' : 'float'}`}
+                  style={{ ...getButterflyStyle(color), touchAction: 'none' }}
+                  onPointerDown={(e) => handleButterflyPointerDown(e, color)}
                 >
                   <img 
-                    src={`ch2/art/sprites/butterfly-${color}-flap.png`} 
+                    src={`ch2/art/sprites/butterfly-${color}${draggingButterfly === color || butterflyFlapping[color] ? '-flap' : ''}.png`} 
                     alt={`${color} butterfly`}
+                    draggable={false}
                   />
                 </div>
               )}
@@ -493,21 +517,38 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
         
         {petalRevealed && (
           <>
-            {FOOTPRINT_TRAIL.map((pt, i) => (
-              <img
-                key={i}
-                className="footprint-step"
-                src="ch2/art/sprites/footprint-single.png"
-                alt=""
-                style={{
-                  left: `${pt[0] + (i % 2 ? 0.9 : -0.9)}%`,
-                  top: `${pt[1]}%`,
-                  transform: `translate(-50%, -50%) rotate(${pt[2] - 48}deg)`,
-                  animationDelay: `${i * 0.22}s`,
+            {FOOTPRINT_TRAIL.map((pt, i) => {
+              const side = i % 2 === 0 ? -1.1 : 1.1;
+              return (
+                <img
+                  key={i}
+                  className={`footprint-step ${pathTappable ? 'path-glow' : ''}`}
+                  src="ch2/art/sprites/footprint-single.png"
+                  alt=""
+                  style={{
+                    left: `${pt[0] + side}%`,
+                    top: `${pt[1]}%`,
+                    width: `${3.2 * pt[3]}%`,
+                    transform: `translate(-50%, -50%) rotate(${pt[2] - 48}deg) scaleX(${i % 2 === 0 ? 1 : -1})`,
+                    animationDelay: `${i * 0.18}s`,
+                  }}
+                />
+              );
+            })}
+
+            {pathTappable && (
+              <div
+                className="path-continue-hit clickable"
+                style={{ touchAction: 'none' }}
+                onPointerDown={() => {
+                  if (pathResolveRef.current) pathResolveRef.current();
+                }}
+                onClick={() => {
+                  if (pathResolveRef.current) pathResolveRef.current();
                 }}
               />
-            ))}
-            
+            )}
+
             <div
               className={`sprite rainbow-petal fade-in sparkle ${petalTappable ? 'tappable' : ''} ${petalCollected ? 'collected' : ''}`}
               style={getObjectStyle(layout.objects.find(o => o.id === 'rainbow-petal'))}
@@ -519,11 +560,11 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
             </div>
           </>
         )}
-        
+
         {fairyVisible && (
           <div 
-            className={`sprite fairy ${fairyCheer ? 'cheer' : 'float'}`}
-            style={getObjectStyle(layout.objects.find(o => o.id === 'fairy'))}
+            className={`sprite fairy ${fairyCheer ? 'cheer' : 'float'} ${pipAlongTrail ? 'pip-along-trail' : ''}`}
+            style={pipAlongTrail ? undefined : getObjectStyle(layout.objects.find(o => o.id === 'fairy'))}
           >
             <img 
               src={fairyCheer 
@@ -552,6 +593,8 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
           />
         )}
         
+        <TreasureBar treasures={progress.treasures} spriteBase="ch2/art/sprites" />
+
         <div className="flower-counter">
           <div className="flower-icons">
             {COLORS.map((color) => (

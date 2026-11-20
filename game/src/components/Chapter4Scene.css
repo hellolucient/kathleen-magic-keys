@@ -198,28 +198,75 @@
   animation: snuggle-in 0.6s ease-out;
 }
 
+.chapter4-scene .baby-animal.snuggled {
+  position: absolute;
+  left: 55%;
+  top: 40%;
+  width: 55%;
+  pointer-events: none;
+}
+
 @keyframes snuggle-in {
   0% { transform: scale(1.2); opacity: 0.8; }
   50% { transform: scale(1.1); }
   100% { transform: scale(1); opacity: 1; }
 }
 
-/* Cave glow */
+/* Cave / mountain glow pulse */
 .chapter4-scene .cave-glow {
   position: absolute;
-  top: 8%;
-  right: 12%;
-  width: 15%;
-  height: 15%;
-  background: radial-gradient(circle, rgba(180, 100, 255, 0.7) 0%, transparent 70%);
-  animation: cave-pulse 2s ease-in-out 3;
+  top: 4%;
+  right: 8%;
+  width: 22%;
+  height: 28%;
+  background: radial-gradient(circle, rgba(255, 220, 120, 0.55) 0%, rgba(180, 100, 255, 0.35) 40%, transparent 70%);
+  animation: cave-pulse 2s ease-in-out infinite;
   pointer-events: none;
   z-index: 5;
 }
 
+.chapter4-scene .cave-glow.mountain-pulse {
+  animation: cave-pulse 1.6s ease-in-out infinite, sparkle-burst-soft 2.4s ease-in-out infinite;
+}
+
 @keyframes cave-pulse {
-  0%, 100% { opacity: 0.3; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1.2); }
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.25); }
+}
+
+@keyframes sparkle-burst-soft {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.35); }
+}
+
+.chapter4-scene .speech-bubble.narrator {
+  background: rgba(60, 30, 80, 0.82);
+  color: #fff8e7;
+  font-style: italic;
+  border: 2px solid rgba(255, 215, 120, 0.8);
+}
+
+.chapter4-scene .ch4-path-continue {
+  position: absolute;
+  top: 2%;
+  right: 4%;
+  width: 28%;
+  height: 35%;
+  z-index: 70;
+  cursor: pointer;
+  border-radius: 40%;
+  box-shadow: 0 0 40px rgba(255, 220, 100, 0.5);
+  animation: path-glow-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes path-glow-pulse {
+  0%, 100% { box-shadow: 0 0 18px rgba(255, 220, 100, 0.35); }
+  50% { box-shadow: 0 0 40px rgba(255, 220, 100, 0.8); }
+}
+
+.chapter4-scene .lantern-glow {
+  opacity: 0.12;
+  transition: opacity 0.45s ease;
 }
 
 /* Fairy */
@@ -268,43 +315,7 @@
   100% { transform: scale(1); opacity: 1; }
 }
 
-/* Treasure bar with slots */
-.chapter4-scene .treasure-bar {
-  position: absolute;
-  top: 2%;
-  left: 3%;
-  display: flex;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 6px 10px;
-  border-radius: 15px;
-  border: 3px solid #8b4513;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  z-index: 90;
-}
-
-.chapter4-scene .treasure-slot {
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: rgba(240, 240, 240, 0.5);
-  border: 2px dashed rgba(139, 69, 19, 0.3);
-}
-
-.chapter4-scene .treasure-slot.filled {
-  background: rgba(255, 250, 220, 0.8);
-  border: 2px solid rgba(218, 165, 32, 0.6);
-}
-
-.chapter4-scene .treasure-slot img {
-  max-width: 90%;
-  max-height: 90%;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
+/* Legacy treasure-bar rules removed — TreasureBar.gold-frames owns styling */
 
 /* Firefly counter */
 .chapter4-scene .firefly-counter {

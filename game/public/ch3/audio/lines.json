@@ -55,14 +55,26 @@
   },
   "fairy-gem-got": {
     "text": "A Purple Dragon Gem! Just like the little dragon's purple scales. Let's keep it safe!",
-    "voice": "en-GB-MaisieNeural",
-    "speaker": "Pip",
-    "file": "ch3/audio/fairy-gem-got.mp3"
+    "file": "ch3/audio/fairy-gem-got.mp3",
+    "duration": 8544,
+    "voice": "en-GB-MaisieNeural"
   },
   "narr-complete": {
-    "text": "The frogs croaked goodbye. Far away, in the Twinkle Forest, tiny lights began to glow... To be continued!",
-    "voice": "en-GB-SoniaNeural",
-    "speaker": "Narrator",
-    "file": "ch3/audio/narr-complete.mp3"
+    "text": "The frogs croaked goodbye as the path ahead began to glow.",
+    "file": "ch3/audio/narr-complete.mp3",
+    "duration": 4440,
+    "voice": "en-GB-SoniaNeural"
+  },
+  "fairy-treasure-gem": {
+    "text": "That's our Purple Dragon Gem! We're collecting treasures for a very special friend.",
+    "file": "ch3/audio/fairy-treasure-gem.mp3",
+    "duration": 6912,
+    "voice": "en-GB-MaisieNeural"
+  },
+  "fairy-follow-path": {
+    "text": "Tap the glowing path, Kathleen! On to the Twinkle Forest!",
+    "file": "ch3/audio/fairy-follow-path.mp3",
+    "duration": 6096,
+    "voice": "en-GB-MaisieNeural"
   }
 }

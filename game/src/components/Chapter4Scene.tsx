@@ -4,6 +4,7 @@ import type { GameProgress } from '../types';
 import { audioManager } from '../audioManager';
 import { saveProgress } from '../gameState';
 import { clientToPercent, hitTestRect, startPointerDrag } from '../pointerDrag';
+import TreasureBar from './TreasureBar';
 import './Chapter4Scene.css';
 
 interface Chapter4SceneProps {
@@ -12,56 +13,74 @@ interface Chapter4SceneProps {
   onComplete: () => void;
 }
 
-interface FireflyPosition {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
+interface FireflyState {
+  id: number;
+  cx: number;
+  cy: number;
+  ampX: number;
+  ampY: number;
+  period: number;
+  phase: number;
+  caught: boolean;
 }
 
 const ANIMALS = ['owl', 'rabbit', 'deer'];
 const BABIES = ['owlet', 'bunny', 'fawn'];
 
+const PARENT_SPOTS: Record<string, { left: string; top: string }> = {
+  owl: { left: '8%', top: '58%' },
+  rabbit: { left: '42%', top: '62%' },
+  deer: { left: '72%', top: '55%' },
+};
+
+const BABY_HIDE_SPOTS = [
+  { left: '18%', top: '38%' },
+  { left: '55%', top: '42%' },
+  { left: '78%', top: '35%' },
+];
+
 function Chapter4Scene({ progress, setProgress, onComplete }: Chapter4SceneProps) {
   const [fairyText, setFairyText] = useState('');
+  const [narratorSpeaking, setNarratorSpeaking] = useState(false);
   const [muted, setMuted] = useState(false);
   const [phase, setPhase] = useState<'intro' | 'fireflies' | 'animals' | 'crying' | 'complete'>('intro');
-  const [fireflies, setFireflies] = useState<FireflyPosition[]>([]);
+  const [fireflies, setFireflies] = useState<FireflyState[]>([]);
   const [firefliesCaught, setFirefliesCaught] = useState(0);
-  const [darkness, setDarkness] = useState(0.6);
-  const [babyPositions, setBabyPositions] = useState<string[]>([]);
   const [draggingBaby, setDraggingBaby] = useState<string | null>(null);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [matchedAnimals, setMatchedAnimals] = useState<string[]>([]);
+  const [babyPositions, setBabyPositions] = useState<string[]>([]);
   const [lightRevealed, setLightRevealed] = useState(false);
   const [lightCollected, setLightCollected] = useState(false);
   const [caveGlowing, setCaveGlowing] = useState(false);
   const [showNumber, setShowNumber] = useState('');
-  
+  const [pathTappable, setPathTappable] = useState(false);
+  const [tick, setTick] = useState(0);
+
   const progressRef = useRef(progress);
   const containerRef = useRef<HTMLDivElement>(null);
   const parentRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const animationFrameRef = useRef<number | null>(null);
   const introRunningRef = useRef(false);
   const matchingRef = useRef(false);
+  const catchingRef = useRef(false);
+  const pathResolveRef = useRef<(() => void) | null>(null);
+  const treasureExplainedRef = useRef(false);
+  const collectingRef = useRef(false);
+  const startTimeRef = useRef(performance.now());
 
   useEffect(() => {
     progressRef.current = progress;
   }, [progress]);
 
   useEffect(() => {
-    // Reset chapter state
     setProgress(prev => ({
       ...prev,
       chapter4: { firefliesCaught: 0, matchedAnimals: [] },
     }));
-    
+
     startIntro();
-    
+
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
       audioManager.stopAllSounds();
     };
   }, []);
@@ -70,126 +89,112 @@ function Chapter4Scene({ progress, setProgress, onComplete }: Chapter4SceneProps
     saveProgress(progress);
   }, [progress]);
 
+  // Slow CSS-driven drift via rAF updating a tick (positions computed from sine)
   useEffect(() => {
-    if (phase === 'fireflies' && fireflies.length > 0) {
-      animateFireflies();
-    }
-  }, [phase, fireflies]);
+    if (phase !== 'fireflies') return;
+    let raf = 0;
+    const loop = () => {
+      setTick(t => t + 1);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [phase]);
+
+  const showCaption = async (lineId: string, isNarrator = false) => {
+    const text = audioManager.getText(lineId, 'ch4');
+    setNarratorSpeaking(isNarrator);
+    setFairyText(text);
+    await audioManager.playSpeech(lineId, 'ch4');
+  };
 
   const startIntro = async () => {
     if (introRunningRef.current) return;
     introRunningRef.current = true;
-    
+
     await new Promise(resolve => setTimeout(resolve, 500));
-    await audioManager.playSpeech('narr-title', 'ch4');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    await audioManager.playSpeech('narr-intro', 'ch4');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    setFairyText(audioManager.getText('fairy-intro', 'ch4'));
-    await audioManager.playSpeech('fairy-intro', 'ch4');
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await showCaption('narr-title', true);
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
-    
+
+    await showCaption('narr-intro', true);
+    await new Promise(resolve => setTimeout(resolve, 400));
+    setFairyText('');
+
+    await showCaption('fairy-intro');
+    await new Promise(resolve => setTimeout(resolve, 400));
+    setFairyText('');
+
     introRunningRef.current = false;
     startFireflyPhase();
   };
 
   const startFireflyPhase = () => {
     setPhase('fireflies');
-    
-    // Create 10 fireflies at random positions spread across the clearing
-    const newFireflies: FireflyPosition[] = [];
+    startTimeRef.current = performance.now();
+    const list: FireflyState[] = [];
     for (let i = 0; i < 10; i++) {
-      newFireflies.push({
-        x: Math.random() * 70 + 15,  // x: 15-85%
-        y: Math.random() * 50 + 25,  // y: 25-75%
-        vx: (Math.random() - 0.5) * 0.25,
-        vy: (Math.random() - 0.5) * 0.25,
+      list.push({
+        id: i,
+        cx: 18 + (i % 5) * 14 + Math.random() * 4,
+        cy: 28 + Math.floor(i / 5) * 22 + Math.random() * 6,
+        ampX: 2 + Math.random() * 3,
+        ampY: 1.5 + Math.random() * 2.5,
+        period: 6 + Math.random() * 4, // 6–10s loops
+        phase: Math.random() * Math.PI * 2,
+        caught: false,
       });
     }
-    setFireflies(newFireflies);
+    setFireflies(list);
   };
 
-  const animateFireflies = () => {
-    setFireflies(prev => {
-      return prev.map(ff => {
-        let newX = ff.x + ff.vx;
-        let newY = ff.y + ff.vy;
-        let newVx = ff.vx;
-        let newVy = ff.vy;
-        
-        // Bounce off edges
-        if (newX < 5 || newX > 90) {
-          newVx = -newVx;
-          newX = Math.max(5, Math.min(90, newX));
-        }
-        if (newY < 15 || newY > 75) {
-          newVy = -newVy;
-          newY = Math.max(15, Math.min(75, newY));
-        }
-        
-        return { x: newX, y: newY, vx: newVx, vy: newVy };
-      });
-    });
-    
-    animationFrameRef.current = requestAnimationFrame(animateFireflies);
+  const fireflyPos = (ff: FireflyState) => {
+    const t = (performance.now() - startTimeRef.current) / 1000;
+    const ang = (t / ff.period) * Math.PI * 2 + ff.phase;
+    // ease-in-out-ish via sine
+    return {
+      x: ff.cx + Math.sin(ang) * ff.ampX,
+      y: ff.cy + Math.sin(ang * 0.85 + 1.2) * ff.ampY,
+    };
   };
 
-  const catchFirefly = async (index: number) => {
-    if (phase !== 'fireflies') return;
-    
-    const newFireflies = fireflies.filter((_, i) => i !== index);
-    setFireflies(newFireflies);
-    
+  const catchFirefly = async (id: number) => {
+    if (phase !== 'fireflies' || catchingRef.current) return;
+    const ff = fireflies.find(f => f.id === id && !f.caught);
+    if (!ff) return;
+    catchingRef.current = true;
+
+    setFireflies(prev => prev.map(f => (f.id === id ? { ...f, caught: true } : f)));
     const newCount = firefliesCaught + 1;
     setFirefliesCaught(newCount);
-    
-    // Play chime and speak number
+
     audioManager.playSound('audio/sfx/sparkle.mp3');
     setShowNumber(`${newCount}`);
     await audioManager.playSpeech(`count-${newCount}`, 'ch4');
-    await new Promise(resolve => setTimeout(resolve, 300));
     setShowNumber('');
-    
-    // Lighten scene
-    const newDarkness = Math.max(0, 0.6 - (newCount * 0.06));
-    setDarkness(newDarkness);
-    
+
     setProgress(prev => ({
       ...prev,
       chapter4: { ...prev.chapter4, firefliesCaught: newCount },
     }));
-    
+
+    catchingRef.current = false;
+
     if (newCount === 10) {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      
+      await new Promise(resolve => setTimeout(resolve, 400));
+      await showCaption('fairy-ten');
       await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setFairyText(audioManager.getText('fairy-ten', 'ch4'));
-      await audioManager.playSpeech('fairy-ten', 'ch4');
-      await new Promise(resolve => setTimeout(resolve, 800));
       setFairyText('');
-      
       startAnimalPhase();
     }
   };
 
   const startAnimalPhase = async () => {
     setPhase('animals');
-    
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Shuffle babies
-    const shuffled = [...BABIES].sort(() => Math.random() - 0.5);
-    setBabyPositions(shuffled);
-    
-    setFairyText(audioManager.getText('fairy-animals', 'ch4'));
-    await audioManager.playSpeech('fairy-animals', 'ch4');
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 400));
+    setBabyPositions([...BABIES].sort(() => Math.random() - 0.5));
+    await showCaption('fairy-animals');
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
   };
 
@@ -199,41 +204,28 @@ function Chapter4Scene({ progress, setProgress, onComplete }: Chapter4SceneProps
 
     const babyIndex = BABIES.indexOf(baby);
     const parent = ANIMALS[babyIndex];
-    const parentEl = parentRefs.current[parent];
-    const isMatch = hitTestRect(parentEl ?? null, clientX, clientY, 50);
-
+    const isMatch = hitTestRect(parentRefs.current[parent] ?? null, clientX, clientY, 50);
     setDraggingBaby(null);
 
     if (isMatch) {
       audioManager.playSound('ch2/audio/sfx/correct-match.mp3');
       audioManager.playSound('audio/sfx/sparkle.mp3');
-
       const newMatched = [...matchedAnimals, baby];
       setMatchedAnimals(newMatched);
-
       setProgress(prev => ({
         ...prev,
         chapter4: { ...prev.chapter4, matchedAnimals: newMatched },
       }));
-
-      const matchLine = `fairy-match-${parent}`;
-      setFairyText(audioManager.getText(matchLine, 'ch4'));
-      await audioManager.playSpeech(matchLine, 'ch4');
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await showCaption(`fairy-match-${parent}`);
+      await new Promise(resolve => setTimeout(resolve, 400));
       setFairyText('');
-
-      if (newMatched.length === 3) {
-        await completeanimalPhase();
-      }
+      if (newMatched.length === 3) await completeAnimalPhase();
     } else {
       audioManager.playSound('ch2/audio/sfx/wrong-boop.mp3');
-
-      setFairyText(audioManager.getText('fairy-wrong', 'ch4'));
-      await audioManager.playSpeech('fairy-wrong', 'ch4');
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await showCaption('fairy-wrong');
+      await new Promise(resolve => setTimeout(resolve, 400));
       setFairyText('');
     }
-
     matchingRef.current = false;
   };
 
@@ -241,139 +233,122 @@ function Chapter4Scene({ progress, setProgress, onComplete }: Chapter4SceneProps
     if (matchedAnimals.includes(baby) || matchingRef.current) return;
     const container = containerRef.current;
     if (!container) return;
-
-    const pct = clientToPercent(container, e.clientX, e.clientY);
     setDraggingBaby(baby);
-    setDragPosition(pct);
+    setDragPosition(clientToPercent(container, e.clientX, e.clientY));
     audioManager.playSound('ch2/audio/sfx/butterfly-flutter.mp3');
-
     startPointerDrag(e, {
-      onMove: (cx, cy) => {
-        setDragPosition(clientToPercent(container, cx, cy));
-      },
-      onEnd: (cx, cy) => {
-        void finishBabyDrop(baby, cx, cy);
-      },
+      onMove: (cx, cy) => setDragPosition(clientToPercent(container, cx, cy)),
+      onEnd: (cx, cy) => { void finishBabyDrop(baby, cx, cy); },
     });
   };
 
-  const completeanimalPhase = async () => {
+  const completeAnimalPhase = async () => {
     setPhase('crying');
-    
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    // Mountain/cave glow pulse while the cry line plays
     setCaveGlowing(true);
-    await audioManager.playSpeech('narr-cry', 'ch4');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    setCaveGlowing(false);
-    setLightRevealed(true);
-    
-    setFairyText(audioManager.getText('fairy-light', 'ch4'));
-    await audioManager.playSpeech('fairy-light', 'ch4');
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await showCaption('narr-cry', true);
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
-    
-    // Auto-collect after 25s
+    setCaveGlowing(false);
+
+    setLightRevealed(true);
+    await showCaption('fairy-light');
+    await new Promise(resolve => setTimeout(resolve, 400));
+
     setTimeout(() => {
-      if (!lightCollected) {
-        collectLight();
-      }
+      if (!lightCollected && !collectingRef.current) void collectLight();
     }, 25000);
   };
 
   const collectLight = async () => {
-    if (lightCollected) return;
-    
+    if (lightCollected || collectingRef.current) return;
+    collectingRef.current = true;
     setLightCollected(true);
     audioManager.playSound('audio/sfx/sparkle.mp3');
-    
+
     setProgress(p => ({
       ...p,
       treasures: { ...p.treasures, light: true },
     }));
-    
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setFairyText(audioManager.getText('fairy-light-got', 'ch4'));
-    await audioManager.playSpeech('fairy-light-got', 'ch4');
-    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    await new Promise(resolve => setTimeout(resolve, 600));
+
+    // No repeated "A magic Firefly Light"
+    if (!treasureExplainedRef.current) {
+      treasureExplainedRef.current = true;
+      await showCaption('fairy-treasure-light');
+    } else {
+      await showCaption('fairy-light-got');
+    }
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
-    
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    await audioManager.playSpeech('narr-complete', 'ch4');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
+    setPathTappable(true);
+    setCaveGlowing(true);
+    await showCaption('fairy-follow-path');
+    const tapped = new Promise<void>(resolve => { pathResolveRef.current = resolve; });
+    await Promise.race([tapped, new Promise(resolve => setTimeout(resolve, 30000))]);
+    pathResolveRef.current = null;
+    setFairyText('');
+    setPathTappable(false);
     onComplete();
   };
 
-  const toggleMute = () => {
-    const newMuted = audioManager.toggleMute();
-    setMuted(newMuted);
-  };
+  const toggleMute = () => setMuted(audioManager.toggleMute());
 
-  // Natural spots for mums around the forest
-  const PARENT_SPOTS: Record<string, { left: string; top: string }> = {
-    owl: { left: '8%', top: '58%' },      // left by tree roots
-    rabbit: { left: '42%', top: '62%' },  // middle by the path
-    deer: { left: '72%', top: '55%' },    // right by mushrooms
-  };
+  // Lantern glow: faint at 0, full at 10
+  const lanternGlow = Math.min(1, 0.12 + (firefliesCaught / 10) * 0.88);
+  const darkness = Math.max(0, 0.62 - firefliesCaught * 0.055);
 
-  const BABY_HIDE_SPOTS = [
-    { left: '18%', top: '38%' },
-    { left: '55%', top: '42%' },
-    { left: '78%', top: '35%' },
-  ];
+  // silence unused tick warning by reading it
+  void tick;
 
   return (
-    <div 
+    <div
       className="game-scene chapter4-scene"
       ref={containerRef}
       style={{ touchAction: 'none' }}
     >
       <div className="game-container">
         <img src="ch4/art/raw/bg-forest.jpg" alt="Twinkle Forest" className="game-bg" />
-        
-        {/* Darkness overlay */}
-        <div 
-          className="darkness-overlay" 
-          style={{ opacity: darkness, transition: 'opacity 0.5s' }}
-        />
-        
-        {/* Fireflies */}
-        {phase === 'fireflies' && fireflies.map((ff, index) => (
-          <div
-            key={index}
-            className="firefly clickable"
-            style={{
-              left: `${ff.x}%`,
-              top: `${ff.y}%`,
-            }}
-            onClick={() => catchFirefly(index)}
-            onTouchStart={(e) => { e.preventDefault(); catchFirefly(index); }}
-          >
-            <img src="ch4/art/sprites/firefly.png" alt="Firefly" />
-          </div>
-        ))}
-        
-        {/* Lantern */}
-        <div className={`lantern ${firefliesCaught >= 10 ? 'glowing' : ''} ${lightRevealed && !lightCollected ? 'clickable' : ''}`}
-             onClick={lightRevealed && !lightCollected ? collectLight : undefined}
-             onTouchStart={lightRevealed && !lightCollected ? (e) => { e.preventDefault(); collectLight(); } : undefined}>
+
+        <div className="darkness-overlay" style={{ opacity: darkness, transition: 'opacity 0.5s' }} />
+
+        {phase === 'fireflies' && fireflies.filter(f => !f.caught).map((ff) => {
+          const pos = fireflyPos(ff);
+          return (
+            <div
+              key={ff.id}
+              className="firefly clickable"
+              style={{ left: `${pos.x}%`, top: `${pos.y}%`, touchAction: 'none' }}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                void catchFirefly(ff.id);
+              }}
+            >
+              <img src="ch4/art/sprites/firefly.png" alt="Firefly" draggable={false} />
+            </div>
+          );
+        })}
+
+        <div
+          className={`lantern ${firefliesCaught >= 10 ? 'glowing' : ''} ${lightRevealed && !lightCollected ? 'clickable' : ''}`}
+          onPointerDown={
+            lightRevealed && !lightCollected
+              ? (e) => { e.preventDefault(); void collectLight(); }
+              : undefined
+          }
+          style={{ touchAction: 'none' }}
+        >
           <img src="ch4/art/sprites/lantern.png" alt="Lantern" />
-          <div className="lantern-glow" style={{ opacity: Math.min(1, firefliesCaught / 10) }} />
+          <div className="lantern-glow" style={{ opacity: lanternGlow }} />
         </div>
-        
-        {/* Number display */}
-        {showNumber && (
-          <div className="number-display">
-            {showNumber}
-          </div>
-        )}
-        
-        {/* Animals phase — mums in natural spots; babies hide until revealed by lantern light */}
-        {phase === 'animals' || phase === 'crying' ? (
+
+        {showNumber && <div className="number-display">{showNumber}</div>}
+
+        {(phase === 'animals' || phase === 'crying' || phase === 'complete') && (
           <>
             {ANIMALS.map((animal) => {
               const spot = PARENT_SPOTS[animal];
@@ -397,10 +372,8 @@ function Chapter4Scene({ progress, setProgress, onComplete }: Chapter4SceneProps
             })}
 
             {babyPositions.map((baby, index) => {
-              const isMatched = matchedAnimals.includes(baby);
+              if (matchedAnimals.includes(baby) && draggingBaby !== baby) return null;
               const isDragging = draggingBaby === baby;
-              if (isMatched && !isDragging) return null;
-
               const hide = BABY_HIDE_SPOTS[index % BABY_HIDE_SPOTS.length];
               return (
                 <div
@@ -423,51 +396,42 @@ function Chapter4Scene({ progress, setProgress, onComplete }: Chapter4SceneProps
               );
             })}
           </>
-        ) : null}
-        
-        {/* Cave glow */}
-        {caveGlowing && (
-          <div className="cave-glow" />
         )}
-        
-        {/* Pip */}
+
+        {caveGlowing && <div className="cave-glow mountain-pulse" />}
+
+        {pathTappable && (
+          <div
+            className="ch4-path-continue clickable"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              pathResolveRef.current?.();
+            }}
+            style={{ touchAction: 'none' }}
+          />
+        )}
+
         <div className="sprite fairy float">
           <img src="ch4/art/sprites/fairy-talk.png" alt="Pip the Fairy" />
         </div>
-        
-        {/* Speech bubble */}
+
         {fairyText && (
-          <div className="speech-bubble">
+          <div className={`speech-bubble ${narratorSpeaking ? 'narrator' : ''}`}>
             {fairyText}
           </div>
         )}
-        
-        {/* Treasure bar with slots */}
-        <div className="treasure-bar">
-          <div className={`treasure-slot ${progress.treasures.petal ? 'filled' : 'empty'}`}>
-            {progress.treasures.petal && <img src="ch4/art/sprites/rainbow-petal.png" alt="Rainbow Petal" />}
-          </div>
-          <div className={`treasure-slot ${progress.treasures.gem ? 'filled' : 'empty'}`}>
-            {progress.treasures.gem && <img src="ch4/art/sprites/purple-gem.png" alt="Purple Gem" />}
-          </div>
-          <div className={`treasure-slot ${progress.treasures.light ? 'filled' : 'empty'}`}>
-            {progress.treasures.light && <img src="ch4/art/sprites/firefly.png" alt="Firefly Light" />}
-          </div>
-        </div>
-        
-        {/* Firefly counter */}
+
+        <TreasureBar
+          treasures={progress.treasures}
+          spriteBase="ch4/art/sprites"
+          lightSrc="firefly.png"
+        />
+
         {phase === 'fireflies' && (
-          <div className="firefly-counter">
-            {firefliesCaught} / 10
-          </div>
+          <div className="firefly-counter">{firefliesCaught} / 10</div>
         )}
-        
-        {/* Mute button */}
-        <button 
-          className="mute-button"
-          onClick={toggleMute}
-          title={muted ? 'Unmute' : 'Mute'}
-        >
+
+        <button className="mute-button" onClick={toggleMute} title={muted ? 'Unmute' : 'Mute'}>
           {muted ? '🔇' : '🔊'}
         </button>
       </div>

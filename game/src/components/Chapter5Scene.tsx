@@ -4,6 +4,7 @@ import type { GameProgress } from '../types';
 import { audioManager } from '../audioManager';
 import { saveProgress } from '../gameState';
 import { clientToPercent, hitTestRect, elementCenter, startPointerDrag } from '../pointerDrag';
+import TreasureBar from './TreasureBar';
 import './Chapter5Scene.css';
 
 interface Chapter5SceneProps {
@@ -111,9 +112,11 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
 
     if (index !== smudgePosition) {
       setWrongCloud(index);
-      setFairyText('Not here!');
+      setCaptionIsNarrator(false);
+      setFairyText(audioManager.getText('fairy-not-here', 'ch5') || 'Not here!');
       audioManager.playSound('ch2/audio/sfx/wrong-boop.mp3');
-      await new Promise(resolve => setTimeout(resolve, 700));
+      void audioManager.playSpeech('fairy-not-here', 'ch5');
+      await new Promise(resolve => setTimeout(resolve, 900));
       setWrongCloud(null);
       setFairyText('');
       return;
@@ -430,17 +433,7 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
           </div>
         )}
 
-        <div className="treasure-bar">
-          <div className={`treasure-slot ${progress.treasures.petal ? 'filled' : 'empty'}`}>
-            {progress.treasures.petal && <img src="ch5/art/sprites/rainbow-petal.png" alt="Rainbow Petal" />}
-          </div>
-          <div className={`treasure-slot ${progress.treasures.gem ? 'filled' : 'empty'}`}>
-            {progress.treasures.gem && <img src="ch5/art/sprites/purple-gem.png" alt="Purple Gem" />}
-          </div>
-          <div className={`treasure-slot ${progress.treasures.light ? 'filled' : 'empty'}`}>
-            {progress.treasures.light && <img src="ch5/art/sprites/firefly.png" alt="Firefly Light" />}
-          </div>
-        </div>
+        <TreasureBar treasures={progress.treasures} spriteBase="ch5/art/sprites" />
 
         {showTheEnd && (
           <div className="the-end-overlay">

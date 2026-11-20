@@ -14,7 +14,20 @@ export function loadProgress(): GameProgress | null {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
-      return JSON.parse(data);
+      // Fill in anything an older save is missing (e.g. saves from before Chapter 2 existed)
+      const saved = JSON.parse(data) as Partial<GameProgress>;
+      const base = getInitialProgress();
+      return {
+        ...base,
+        ...saved,
+        completedChapters: Array.isArray(saved.completedChapters) ? saved.completedChapters : [],
+        chapter1: {
+          ...base.chapter1,
+          ...(saved.chapter1 || {}),
+          puzzleStates: { ...base.chapter1.puzzleStates, ...(saved.chapter1?.puzzleStates || {}) },
+        },
+        chapter2: { ...base.chapter2, ...(saved.chapter2 || {}) },
+      };
     }
   } catch (error) {
     console.error('Failed to load progress:', error);

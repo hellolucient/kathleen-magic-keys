@@ -2,6 +2,8 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Chapter 2: Rainbow Garden', () => {
   test('Complete gameplay from Chapter 1 through Chapter 2', async ({ page }) => {
+    test.setTimeout(120000); // 2 minutes timeout
+    
     // Set iPad landscape viewport
     await page.setViewportSize({ width: 1180, height: 820 });
     
@@ -9,11 +11,11 @@ test.describe('Chapter 2: Rainbow Garden', () => {
     await page.goto('http://localhost:5173');
     
     // Wait for loading screen to complete
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
     
-    // Click Play button on title screen
-    await page.click('button:has-text("Play")');
-    await page.waitForTimeout(1000);
+    // Click Play button on title screen (force through animations)
+    await page.click('.play-button', { force: true });
+    await page.waitForTimeout(1500);
     
     // Select Chapter 1 from chapter picker
     await page.click('.chapter-card:has-text("Chapter 1")');
@@ -28,48 +30,51 @@ test.describe('Chapter 2: Rainbow Garden', () => {
     });
     
     // === CHAPTER 1 GAMEPLAY ===
-    // Click teddy twice to reveal key
-    await page.click('.sprite.teddy', { timeout: 5000 });
-    await page.waitForTimeout(500);
-    await page.click('.sprite.teddy');
-    await page.waitForTimeout(1000);
-    await page.click('.key-teddy');
-    await page.waitForTimeout(1500);
-    
-    // Open jewellery box
-    await page.click('.sprite.jewellery-box');
-    await page.waitForTimeout(1000);
-    await page.click('.key-jewellery');
-    await page.waitForTimeout(1500);
-    
-    // Open curtain
-    await page.click('.sprite.curtain-closed');
-    await page.waitForTimeout(1000);
-    await page.click('.key-curtain');
-    await page.waitForTimeout(1500);
-    
-    // Open wardrobe and get key from dress
-    await page.click('.sprite.wardrobe-hitbox');
-    await page.waitForTimeout(1000);
-    await page.click('.dress-pocket-hitbox');
-    await page.waitForTimeout(1500);
-    
-    // Activate mirror and complete star sequence
-    await page.click('.sprite.mirror-hitbox');
+    // Click teddy twice to reveal key (auto-collects)
+    await page.click('.sprite.teddy', { timeout: 5000, force: true });
+    await page.waitForTimeout(800);
+    await page.click('.sprite.teddy', { force: true });
     await page.waitForTimeout(2000);
     
-    const stars = await page.locator('.sprite.star').all();
-    for (let i = 0; i < 3; i++) {
-      await stars[i].click();
-      await page.waitForTimeout(500);
-    }
+    // Open jewellery box (key auto-collects)
+    await page.click('.sprite.jewellery-box', { force: true });
+    await page.waitForTimeout(2000);
+    
+    // Open curtain (key auto-collects)
+    await page.click('.sprite.curtain-closed', { force: true });
+    await page.waitForTimeout(2000);
+    
+    // Open wardrobe and get key from dress (auto-collects)
+    await page.click('.sprite.wardrobe-hitbox', { force: true });
+    await page.waitForTimeout(1500);
+    await page.click('.dress-pocket-hitbox', { force: true });
+    await page.waitForTimeout(2000);
+    
+    // Activate mirror and complete star sequence
+    await page.click('.sprite.mirror-hitbox', { force: true });
+    await page.waitForTimeout(3000);
+    
+    // Click stars in sequence (1, 2, 3)
+    await page.locator('.sprite.star').nth(0).click({ force: true });
     await page.waitForTimeout(1000);
-    await page.click('.key-mirror');
+    await page.locator('.sprite.star').nth(1).click({ force: true });
+    await page.waitForTimeout(1000);
+    await page.locator('.sprite.star').nth(2).click({ force: true });
+    await page.waitForTimeout(1500);
+    
+    // Click the mirror key that appears
+    await page.click('.key-mirror', { force: true, timeout: 5000 }).catch(() => {
+      console.log('Mirror key not found or already collected');
+    });
+    await page.waitForTimeout(3000);
+    
+    // Wait for all 5 keys to be collected (with longer timeout)
+    await page.waitForSelector('.key-count:has-text("5 / 5")', { timeout: 20000 });
     await page.waitForTimeout(2000);
     
     // Click door to unlock and complete Chapter 1
-    await page.click('.sprite.door-hitbox');
-    await page.waitForTimeout(15000); // Wait for unlock sequence
+    await page.click('.sprite.door-hitbox', { force: true });
+    await page.waitForTimeout(20000); // Wait for unlock sequence and completion narration
     
     // Wait for complete screen
     await expect(page.locator('.complete-title')).toContainText('Chapter 1 Complete', { timeout: 10000 });

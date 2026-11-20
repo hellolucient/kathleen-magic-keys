@@ -146,36 +146,41 @@
   animation: cheer 0.8s ease-in-out;
 }
 
-.chapter2-scene .speech-bubble {
-  position: absolute;
-  bottom: 105%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  border: 3px solid #8b4513;
-  border-radius: 15px;
-  padding: 10px 15px;
-  font-family: 'Georgia', serif;
-  font-size: clamp(0.8rem, 1.5vw, 1rem);
-  color: #8b4513;
-  white-space: nowrap;
-  max-width: 300px;
-  text-align: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  z-index: 100;
+@keyframes pop-in-anim {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-.chapter2-scene .speech-bubble::after {
-  content: '';
+.chapter2-scene .speech-bubble {
   position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 10px solid #8b4513;
+  width: max-content;
+  max-width: 38%;
+  padding: 1.2rem 1.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-size: 1.3rem;
+  line-height: 1.5;
+  color: #333;
+  z-index: 100;
+  pointer-events: none;
+  animation: pop-in-anim 0.3s ease;
+  text-align: center;
+  font-family: 'Georgia', serif;
+}
+
+/* Top left: keeps clear of Pip (who floats center-top) and butterflies in the sky */
+.chapter2-scene .speech-bubble.pos-top-left {
+  left: 3%;
+  top: 12%;
+}
+
+/* Bottom right: when the garden bursts into color and we show the footprints/petal */
+.chapter2-scene .speech-bubble.pos-bottom-right {
+  right: 3%;
+  bottom: 5%;
+  max-width: 35%;
 }
 
 .chapter2-scene .flower-counter {
@@ -250,9 +255,9 @@
 
 @media (max-width: 768px) {
   .chapter2-scene .speech-bubble {
-    font-size: 0.7rem;
-    padding: 8px 12px;
-    max-width: 200px;
+    max-width: 45%;
+    font-size: 1.1rem;
+    padding: 1rem;
   }
   
   .chapter2-scene .flower-counter {

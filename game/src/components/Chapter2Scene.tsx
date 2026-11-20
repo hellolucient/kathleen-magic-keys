@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { GameProgress, Layout } from '../types';
 import { audioManager } from '../audioManager';
 import { saveProgress } from '../gameState';
+import LookForPreview from './LookForPreview';
 import './Chapter2Scene.css';
 
 interface Chapter2SceneProps {
@@ -15,6 +16,7 @@ const COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
 function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps) {
   const [layout, setLayout] = useState<Layout | null>(null);
   const [fairyText, setFairyText] = useState('');
+  const [showButterflyPreview, setShowButterflyPreview] = useState(false);
   const [fairyVisible, setFairyVisible] = useState(false);
   const [fairyCheer, setFairyCheer] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -122,7 +124,9 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
     }
     
     setFairyText(audioManager.getText('fairy-start', 'ch2'));
+    setShowButterflyPreview(true);
     await audioManager.playSpeech('fairy-start', 'ch2');
+    setShowButterflyPreview(false);
     if (introAbortedRef.current) {
       setFairyText('');
       introRunningRef.current = false;
@@ -473,14 +477,24 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
                 ? 'ch2/art/sprites/fairy-cheer.png' 
                 : 'ch2/art/sprites/fairy-talk.png'
               } 
-              alt="Fairy" 
+              alt="Pip the Fairy" 
             />
-            {fairyText && (
-              <div className="speech-bubble">
-                {fairyText}
-              </div>
-            )}
           </div>
+        )}
+        
+        {fairyText && (
+          <div className={`speech-bubble ${
+            progress.chapter2.matchedFlowers.length >= 4 ? 'pos-bottom-right' : 'pos-top-left'
+          }`}>
+            {fairyText}
+          </div>
+        )}
+        
+        {showButterflyPreview && (
+          <LookForPreview 
+            imageSrc="ch2/art/sprites/butterfly-purple.png" 
+            alt="A colorful butterfly"
+          />
         )}
         
         <div className="flower-counter">

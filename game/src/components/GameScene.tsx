@@ -887,6 +887,54 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
           onClick={handleDoorClick}
         />
         
+        {/* Sparkles around door when glowing */}
+        {doorGlowing && (
+          <>
+            <div 
+              className="door-sparkle"
+              style={{
+                position: 'absolute',
+                left: '83%',
+                top: '20%',
+                fontSize: '1.5rem',
+                animation: 'sparkle-twinkle 1.2s ease-in-out infinite',
+                pointerEvents: 'none',
+                zIndex: 100,
+              }}
+            >
+              ✨
+            </div>
+            <div 
+              className="door-sparkle"
+              style={{
+                position: 'absolute',
+                left: '98%',
+                top: '35%',
+                fontSize: '1.8rem',
+                animation: 'sparkle-twinkle 1.5s ease-in-out 0.3s infinite',
+                pointerEvents: 'none',
+                zIndex: 100,
+              }}
+            >
+              ✨
+            </div>
+            <div 
+              className="door-sparkle"
+              style={{
+                position: 'absolute',
+                left: '82%',
+                top: '50%',
+                fontSize: '1.3rem',
+                animation: 'sparkle-twinkle 1.8s ease-in-out 0.6s infinite',
+                pointerEvents: 'none',
+                zIndex: 100,
+              }}
+            >
+              ✨
+            </div>
+          </>
+        )}
+        
         {/* Door open overlay */}
         {doorOpen && (
           <div 

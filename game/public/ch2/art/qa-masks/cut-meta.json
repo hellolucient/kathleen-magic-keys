@@ -1,0 +1,90 @@
+{
+  "flowers": {
+    "red": {
+      "x": 0.0,
+      "y": 52.04,
+      "w": 27.97,
+      "h": 47.96
+    },
+    "orange": {
+      "x": 22.5,
+      "y": 45.56,
+      "w": 21.82,
+      "h": 36.57
+    },
+    "yellow": {
+      "x": 34.48,
+      "y": 55.74,
+      "w": 29.01,
+      "h": 44.26
+    },
+    "green": {
+      "x": 47.19,
+      "y": 34.72,
+      "w": 22.24,
+      "h": 36.48
+    },
+    "blue": {
+      "x": 59.79,
+      "y": 47.5,
+      "w": 23.49,
+      "h": 38.98
+    },
+    "purple": {
+      "x": 77.24,
+      "y": 52.22,
+      "w": 22.76,
+      "h": 47.78
+    }
+  },
+  "butterflies": {
+    "butterfly-red.png": [
+      342,
+      397
+    ],
+    "butterfly-orange.png": [
+      370,
+      394
+    ],
+    "butterfly-yellow.png": [
+      362,
+      395
+    ],
+    "butterfly-green.png": [
+      324,
+      401
+    ],
+    "butterfly-blue.png": [
+      356,
+      404
+    ],
+    "butterfly-purple.png": [
+      387,
+      405
+    ],
+    "butterfly-red-flap.png": [
+      293,
+      419
+    ],
+    "butterfly-orange-flap.png": [
+      331,
+      410
+    ],
+    "butterfly-yellow-flap.png": [
+      298,
+      405
+    ],
+    "butterfly-green-flap.png": [
+      262,
+      398
+    ],
+    "butterfly-blue-flap.png": [
+      314,
+      401
+    ],
+    "butterfly-purple-flap.png": [
+      297,
+      397
+    ]
+  }
+}

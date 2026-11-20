@@ -918,18 +918,22 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
           onClick={handleDoorClick}
         />
         
+        {doorGlowing && (
+          <img className="door-glow-overlay" src="art/sprites/door-glow.png" alt="" />
+        )}
+
         {/* Sparkles around door when glowing */}
         {doorGlowing && (
           <>
-            <div className="door-sparkle" style={{ position: 'absolute', left: '83%', top: '15%', fontSize: '3.5rem', animation: 'sparkle-twinkle 1.2s ease-in-out 0s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
-            <div className="door-sparkle" style={{ position: 'absolute', left: '98%', top: '22%', fontSize: '3rem', animation: 'sparkle-twinkle 1.5s ease-in-out 0.15s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
-            <div className="door-sparkle" style={{ position: 'absolute', left: '82%', top: '28%', fontSize: '4rem', animation: 'sparkle-twinkle 1.3s ease-in-out 0.3s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
-            <div className="door-sparkle" style={{ position: 'absolute', left: '97%', top: '38%', fontSize: '3.2rem', animation: 'sparkle-twinkle 1.7s ease-in-out 0.45s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
-            <div className="door-sparkle" style={{ position: 'absolute', left: '84%', top: '45%', fontSize: '3.8rem', animation: 'sparkle-twinkle 1.4s ease-in-out 0.6s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
-            <div className="door-sparkle" style={{ position: 'absolute', left: '99%', top: '52%', fontSize: '3.3rem', animation: 'sparkle-twinkle 1.6s ease-in-out 0.75s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
-            <div className="door-sparkle" style={{ position: 'absolute', left: '83%', top: '60%', fontSize: '4.2rem', animation: 'sparkle-twinkle 1.35s ease-in-out 0.9s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
-            <div className="door-sparkle" style={{ position: 'absolute', left: '96%', top: '68%', fontSize: '3.6rem', animation: 'sparkle-twinkle 1.55s ease-in-out 1.05s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
-            <div className="door-sparkle" style={{ position: 'absolute', left: '85%', top: '75%', fontSize: '3.4rem', animation: 'sparkle-twinkle 1.45s ease-in-out 1.2s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '-12%', top: '8%', fontSize: '2.6rem', animation: 'sparkle-twinkle 1.2s ease-in-out 0s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '92%', top: '4%', fontSize: '3rem', animation: 'sparkle-twinkle 1.5s ease-in-out 0.15s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '-16%', top: '26%', fontSize: '4rem', animation: 'sparkle-twinkle 1.3s ease-in-out 0.3s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '100%', top: '22%', fontSize: '3.2rem', animation: 'sparkle-twinkle 1.7s ease-in-out 0.45s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '-14%', top: '44%', fontSize: '3.8rem', animation: 'sparkle-twinkle 1.4s ease-in-out 0.6s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '102%', top: '42%', fontSize: '3.3rem', animation: 'sparkle-twinkle 1.6s ease-in-out 0.75s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '-16%', top: '62%', fontSize: '4.2rem', animation: 'sparkle-twinkle 1.35s ease-in-out 0.9s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '100%', top: '60%', fontSize: '3.6rem', animation: 'sparkle-twinkle 1.55s ease-in-out 1.05s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '-12%', top: '80%', fontSize: '3.4rem', animation: 'sparkle-twinkle 1.45s ease-in-out 1.2s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
             <div className="door-sparkle" style={{ position: 'absolute', left: '98%', top: '80%', fontSize: '3.7rem', animation: 'sparkle-twinkle 1.25s ease-in-out 1.35s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
           </>
         )}

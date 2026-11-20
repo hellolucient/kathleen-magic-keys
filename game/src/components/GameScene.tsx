@@ -17,6 +17,8 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const [fairyText, setFairyText] = useState('');
   const [fairyVisible, setFairyVisible] = useState(false);
   const [fairyCheer, setFairyCheer] = useState(false);
+  const [fairyFlyingToDoor, setFairyFlyingToDoor] = useState(false);
+  const [fairyAtDoor, setFairyAtDoor] = useState(false);
   const [doorGlowing, setDoorGlowing] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const [doorOpen, setDoorOpen] = useState(false);
@@ -234,12 +236,17 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     recordInteraction();
     
     audioManager.playSound('audio/sfx/sparkle.mp3');
-    audioManager.playSound('audio/sfx/key-found.mp3');
+    
+    // Play key-found chime (don't await - let it play alongside)
+    audioManager.playSoundEffect('audio/sfx/key-found.mp3');
+    
+    // Wait for chime to mostly finish, then small delay before narration
+    await new Promise(resolve => setTimeout(resolve, 800));
     
     // Show fly animation
     keysInFlightRef.current++;
     setCollectingKey(keyId);
-    await new Promise(resolve => setTimeout(resolve, 600));
+    await new Promise(resolve => setTimeout(resolve, 400));
     setCollectingKey(null);
     
     // Update progress with functional update
@@ -265,7 +272,20 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     // Glow right away; the fairy's line waits for the 5th-key praise (5.5s) to finish
     setDoorGlowing(true);
     audioManager.playSound('audio/sfx/door-glow-loop.mp3', true);
-    await new Promise(resolve => setTimeout(resolve, 6000));
+    
+    // Start fairy flying to door after a brief moment
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setFairyCheer(false);
+    setFairyFlyingToDoor(true);
+    audioManager.playSound('audio/sfx/sparkle.mp3');
+    
+    // Wait for fairy to reach door (1.5s animation)
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setFairyFlyingToDoor(false);
+    setFairyAtDoor(true);
+    
+    // Wait a bit more for total 6s (to let 5th-key praise finish)
+    await new Promise(resolve => setTimeout(resolve, 2500));
     if (unlockingRef.current) return; // door already tapped, don't talk over the finale
     
     setFairyText(audioManager.getText('fairy-door-glow'));
@@ -313,6 +333,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     audioManager.playSound('audio/sfx/celebration-fanfare.mp3');
     setDoorOpen(true);
     
+    // Fairy flies through doorway
+    setFairyAtDoor(false);
+    setFairyFlyingToDoor(false);
+    audioManager.playSound('audio/sfx/sparkle.mp3');
+    
     await Promise.race([narrationPromise, sleep(10000)]);
     await sleep(500);
     
@@ -322,6 +347,10 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     await sleep(1500);
     
     setFairyText('');
+    
+    // Fairy leads the way through the door
+    setFairyVisible(false);
+    
     finishGame();
   };
 
@@ -871,7 +900,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         {/* Fairy */}
         {fairyVisible && (
           <div 
-            className={`sprite fairy ${fairyCheer ? 'cheer' : 'float'}`}
+            className={`sprite fairy ${
+              fairyFlyingToDoor ? 'flying-to-door' : 
+              fairyAtDoor ? 'at-door' : 
+              fairyCheer ? 'cheer' : 'float'
+            }`}
             style={getObjectStyle(layout.objects.find(o => o.id === 'fairy'))}
           >
             <img 

@@ -273,16 +273,41 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     setDoorGlowing(true);
     audioManager.playSound('audio/sfx/door-glow-loop.mp3', true);
     
+    // Check for early door tap before fairy flies
+    if (pendingDoorRef.current && !unlockingRef.current) {
+      pendingDoorRef.current = false;
+      unlockDoor();
+      return;
+    }
+    
     // Start fairy flying to door after a brief moment
     await new Promise(resolve => setTimeout(resolve, 2000));
     setFairyCheer(false);
     setFairyFlyingToDoor(true);
     audioManager.playSound('audio/sfx/sparkle.mp3');
     
+    // Check for door tap during fairy flight
+    if (pendingDoorRef.current && !unlockingRef.current) {
+      pendingDoorRef.current = false;
+      // Let fairy finish flying
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setFairyFlyingToDoor(false);
+      setFairyAtDoor(true);
+      unlockDoor();
+      return;
+    }
+    
     // Wait for fairy to reach door (1.5s animation)
     await new Promise(resolve => setTimeout(resolve, 1500));
     setFairyFlyingToDoor(false);
     setFairyAtDoor(true);
+    
+    // Check again after fairy lands
+    if (pendingDoorRef.current && !unlockingRef.current) {
+      pendingDoorRef.current = false;
+      unlockDoor();
+      return;
+    }
     
     // Wait a bit more for total 6s (to let 5th-key praise finish)
     await new Promise(resolve => setTimeout(resolve, 2500));
@@ -573,11 +598,17 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const handleDoorClick = async () => {
     recordInteraction();
     
-    if (progressRef.current.keysFound.length === 5) {
-      await unlockDoor();
-    } else if (progressRef.current.keysFound.length + keysInFlightRef.current >= 5) {
-      // 5th key is still flying to the counter: open the door as soon as it lands
+    const totalKeys = progressRef.current.keysFound.length + keysInFlightRef.current;
+    
+    if (totalKeys >= 5) {
+      // Remember this tap - if unlocking can't start yet, triggerDoorGlow will handle it
       pendingDoorRef.current = true;
+      
+      // Try to unlock immediately if ready
+      if (progressRef.current.keysFound.length === 5 && !unlockingRef.current) {
+        pendingDoorRef.current = false;
+        await unlockDoor();
+      }
     } else {
       // Skip speech during intro
       if (introRunningRef.current) return;
@@ -890,48 +921,16 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         {/* Sparkles around door when glowing */}
         {doorGlowing && (
           <>
-            <div 
-              className="door-sparkle"
-              style={{
-                position: 'absolute',
-                left: '83%',
-                top: '20%',
-                fontSize: '1.5rem',
-                animation: 'sparkle-twinkle 1.2s ease-in-out infinite',
-                pointerEvents: 'none',
-                zIndex: 100,
-              }}
-            >
-              ✨
-            </div>
-            <div 
-              className="door-sparkle"
-              style={{
-                position: 'absolute',
-                left: '98%',
-                top: '35%',
-                fontSize: '1.8rem',
-                animation: 'sparkle-twinkle 1.5s ease-in-out 0.3s infinite',
-                pointerEvents: 'none',
-                zIndex: 100,
-              }}
-            >
-              ✨
-            </div>
-            <div 
-              className="door-sparkle"
-              style={{
-                position: 'absolute',
-                left: '82%',
-                top: '50%',
-                fontSize: '1.3rem',
-                animation: 'sparkle-twinkle 1.8s ease-in-out 0.6s infinite',
-                pointerEvents: 'none',
-                zIndex: 100,
-              }}
-            >
-              ✨
-            </div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '83%', top: '15%', fontSize: '3.5rem', animation: 'sparkle-twinkle 1.2s ease-in-out 0s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '98%', top: '22%', fontSize: '3rem', animation: 'sparkle-twinkle 1.5s ease-in-out 0.15s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '82%', top: '28%', fontSize: '4rem', animation: 'sparkle-twinkle 1.3s ease-in-out 0.3s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '97%', top: '38%', fontSize: '3.2rem', animation: 'sparkle-twinkle 1.7s ease-in-out 0.45s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '84%', top: '45%', fontSize: '3.8rem', animation: 'sparkle-twinkle 1.4s ease-in-out 0.6s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '99%', top: '52%', fontSize: '3.3rem', animation: 'sparkle-twinkle 1.6s ease-in-out 0.75s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '83%', top: '60%', fontSize: '4.2rem', animation: 'sparkle-twinkle 1.35s ease-in-out 0.9s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '96%', top: '68%', fontSize: '3.6rem', animation: 'sparkle-twinkle 1.55s ease-in-out 1.05s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '85%', top: '75%', fontSize: '3.4rem', animation: 'sparkle-twinkle 1.45s ease-in-out 1.2s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
+            <div className="door-sparkle" style={{ position: 'absolute', left: '98%', top: '80%', fontSize: '3.7rem', animation: 'sparkle-twinkle 1.25s ease-in-out 1.35s infinite', pointerEvents: 'none', zIndex: 100 }}>✨</div>
           </>
         )}
         

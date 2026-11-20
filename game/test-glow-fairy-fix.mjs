@@ -131,6 +131,9 @@ async function testGlowAndFairy() {
     
     await solvePuzzles(page);
     
+    // Wait for the door to start glowing (5th key landed)
+    await page.waitForSelector('.door-hitbox.glow-pulse', { timeout: 5000 });
+    
     console.log(`Test: Door tap at ${timing.name}...`);
     await page.waitForTimeout(timing.delay);
     
@@ -163,6 +166,9 @@ async function testGlowAndFairy() {
   await page.waitForTimeout(3000);
   
   await solvePuzzles(page);
+  
+  // Wait for the door to start glowing (5th key landed)
+  await page.waitForSelector('.door-hitbox.glow-pulse', { timeout: 5000 });
   await page.waitForTimeout(2000);
   
   await page.click('.mute-button');

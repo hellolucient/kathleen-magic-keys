@@ -242,7 +242,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     audioManager.playSound('audio/sfx/sparkle.mp3');
     
     // Play key-found chime (don't await - let it play alongside)
-    audioManager.playSound('audio/sfx/key-found.mp3');
+    audioManager.playSoundEffect('audio/sfx/key-found.mp3');
     
     // Wait for chime to mostly finish, then small delay before narration
     await new Promise(resolve => setTimeout(resolve, 800));

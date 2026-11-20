@@ -1,0 +1,116 @@
+{
+ "narr-title": {
+  "text": "Princess Kathleen and the Five Magic Keys. Chapter Two: The Rainbow Garden.",
+  "voice": "en-GB-SoniaNeural",
+  "speaker": "narrator",
+  "file": "audio/narr-title.mp3"
+ },
+ "narr-intro": {
+  "text": "Princess Kathleen and her fairy friend Pip stepped through the golden door... and into the castle garden. But oh! The garden had turned grey. All the pretty colours had gone.",
+  "voice": "en-GB-SoniaNeural",
+  "speaker": "narrator",
+  "file": "audio/narr-intro.mp3"
+ },
+ "fairy-intro": {
+  "text": "Oh, Princess Kathleen! A little dragon's sneezes blew all the colours away. The flowers look so sad and grey.",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-intro.mp3"
+ },
+ "fairy-start": {
+  "text": "Look! Colourful butterflies! Catch a butterfly and take it to the flower that matches its colour. That will bring the colours back!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-start.mp3"
+ },
+ "fairy-match-red": {
+  "text": "The red flower is blooming again! Beautiful, Kathleen!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-match-red.mp3"
+ },
+ "fairy-match-orange": {
+  "text": "Orange! What a lovely sunny colour!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-match-orange.mp3"
+ },
+ "fairy-match-yellow": {
+  "text": "Yellow as sunshine! Well done, Kathleen!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-match-yellow.mp3"
+ },
+ "fairy-match-green": {
+  "text": "Green is back! The garden is waking up!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-match-green.mp3"
+ },
+ "fairy-match-blue": {
+  "text": "Blue as the sky! You're so clever, Kathleen!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-match-blue.mp3"
+ },
+ "fairy-match-purple": {
+  "text": "Purple! My favourite! Hooray!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-match-purple.mp3"
+ },
+ "fairy-wrong-1": {
+  "text": "Oops, not that flower. Let's find the one that matches the butterfly's colour!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-wrong-1.mp3"
+ },
+ "fairy-wrong-2": {
+  "text": "Almost! Try a flower the same colour as your butterfly.",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-wrong-2.mp3"
+ },
+ "fairy-wrong-3": {
+  "text": "Hmm, that butterfly wants a different flower. You can do it!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-wrong-3.mp3"
+ },
+ "hint-1": {
+  "text": "Try catching a colourful butterfly, Kathleen!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-1.mp3"
+ },
+ "hint-2": {
+  "text": "Drag the butterfly to the flower that is the same colour.",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-2.mp3"
+ },
+ "hint-3": {
+  "text": "Look carefully... which flower matches your butterfly?",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/hint-3.mp3"
+ },
+ "narr-burst": {
+  "text": "And then, with a shimmer and a sparkle, the whole garden burst back into colour!",
+  "voice": "en-GB-SoniaNeural",
+  "speaker": "narrator",
+  "file": "audio/narr-burst.mp3"
+ },
+ "fairy-footprints": {
+  "text": "Kathleen, look! Tiny purple footprints... and a magic Rainbow Petal! Let's keep the petal safe.",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-footprints.mp3"
+ },
+ "narr-complete": {
+  "text": "The little footprints led towards the river. Princess Kathleen and Pip followed them... To be continued!",
+  "voice": "en-GB-SoniaNeural",
+  "speaker": "narrator",
+  "file": "audio/narr-complete.mp3"
+ }
+}

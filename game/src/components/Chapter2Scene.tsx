@@ -13,6 +13,9 @@ interface Chapter2SceneProps {
 
 const COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
 
+// Dragon footprint trail: from the bottom path, between the flower beds, to the river bank (x%, y%, heading deg; 0 = up)
+const FOOTPRINT_TRAIL: [number, number, number][] = [[59, 95, -7], [58.5, 88, 7], [59, 81, 7], [59.5, 74, 17], [60.5, 68, 45], [63, 63.5, 64], [66.5, 60.5, 64], [70, 57.5, 68], [73.5, 55, 72], [77, 53, 72]];
+
 function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps) {
   const [layout, setLayout] = useState<Layout | null>(null);
   const [fairyText, setFairyText] = useState('');
@@ -26,6 +29,14 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [butterflyFlapping, setButterflyFlapping] = useState<Record<string, boolean>>({});
   const [petalRevealed, setPetalRevealed] = useState(false);
+  const [petalTappable, setPetalTappable] = useState(false);
+  const [petalCollected, setPetalCollected] = useState(false);
+  const petalResolveRef = useRef<(() => void) | null>(null);
+  const collectPetal = () => {
+    setPetalTappable(false);
+    setPetalCollected(true);
+    audioManager.playSound('audio/sfx/sparkle.mp3');
+  };
   const [backgroundSolved, setBackgroundSolved] = useState(false);
   const [sneezePuffVisible, setSneezePuffVisible] = useState(true);
   
@@ -207,10 +218,19 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
     await new Promise(resolve => setTimeout(resolve, 500));
     
     setFairyText(audioManager.getText('fairy-footprints', 'ch2'));
+    setPetalTappable(true);
+    const tapped = new Promise<void>(resolve => { petalResolveRef.current = resolve; });
     await audioManager.playSpeech('fairy-footprints', 'ch2');
-    await new Promise(resolve => setTimeout(resolve, 600));
+    // Wait for Kathleen to tap the petal (auto-collect after 25s so the story never stalls)
+    const wasTapped = await Promise.race([tapped.then(() => true), new Promise<boolean>(resolve => setTimeout(() => resolve(false), 25000))]);
+    petalResolveRef.current = null;
+    if (!wasTapped) collectPetal();
+    setFairyCheer(true);
+    await new Promise(resolve => setTimeout(resolve, wasTapped ? 300 : 900));
+    setFairyText(audioManager.getText('fairy-petal-got', 'ch2'));
+    await audioManager.playSpeech('fairy-petal-got', 'ch2');
+    setFairyCheer(false);
     setFairyText('');
-    
     await new Promise(resolve => setTimeout(resolve, 300));
     
     setNarratorSpeaking(true);
@@ -472,16 +492,27 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
         
         {petalRevealed && (
           <>
-            <div
-              className="sprite footprints fade-in"
-              style={getObjectStyle(layout.objects.find(o => o.id === 'footprints'))}
-            >
-              <img src="ch2/art/sprites/footprints.png" alt="Dragon footprints" />
-            </div>
+            {FOOTPRINT_TRAIL.map((pt, i) => (
+              <img
+                key={i}
+                className="footprint-step"
+                src="ch2/art/sprites/footprint-single.png"
+                alt=""
+                style={{
+                  left: `${pt[0] + (i % 2 ? 0.9 : -0.9)}%`,
+                  top: `${pt[1]}%`,
+                  transform: `translate(-50%, -50%) rotate(${pt[2] - 48}deg)`,
+                  animationDelay: `${i * 0.22}s`,
+                }}
+              />
+            ))}
             
             <div
-              className="sprite rainbow-petal fade-in sparkle"
+              className={`sprite rainbow-petal fade-in sparkle ${petalTappable ? 'tappable' : ''} ${petalCollected ? 'collected' : ''}`}
               style={getObjectStyle(layout.objects.find(o => o.id === 'rainbow-petal'))}
+              onPointerDown={() => {
+                if (petalTappable && petalResolveRef.current) { collectPetal(); petalResolveRef.current(); }
+              }}
             >
               <img src="ch2/art/sprites/rainbow-petal.png" alt="Rainbow petal" />
             </div>

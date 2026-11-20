@@ -47,7 +47,7 @@ function TitleScreen({ onStart }: TitleScreenProps) {
               <span className="title-and">and the</span><br />
               Five Magic Keys
             </h1>
-            <h2 className="chapter-title">Chapter 1: The Princess's Bedroom</h2>
+            <h2 className="title-chapter-line">Chapter 1: The Princess's Bedroom</h2>
           </div>
           <button 
             className="play-button" 

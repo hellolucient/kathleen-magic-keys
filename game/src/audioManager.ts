@@ -12,6 +12,7 @@ class AudioManager {
   private sharedAudioElement: HTMLAudioElement | null = null;
   private speechToken = 0;
   private finishCurrent: (() => void) | null = null;
+  private sfxElements: Map<string, HTMLAudioElement> = new Map();
 
   async init() {
     if (this.context) return;
@@ -114,6 +115,58 @@ class AudioManager {
       }
       this.currentLoops.delete(url);
     }
+  }
+
+  async playSoundEffect(url: string): Promise<void> {
+    if (this.muted) return;
+    
+    // Create or reuse audio element for this SFX
+    let audio = this.sfxElements.get(url);
+    if (!audio) {
+      audio = new Audio(url);
+      this.sfxElements.set(url, audio);
+    }
+    
+    audio.volume = 1.0;
+    audio.currentTime = 0;
+    
+    try {
+      await audio.play();
+      
+      // Wait for audio to complete
+      return new Promise((resolve) => {
+        const onEnded = () => {
+          audio!.removeEventListener('ended', onEnded);
+          resolve();
+        };
+        audio!.addEventListener('ended', onEnded);
+      });
+    } catch (error) {
+      console.error('Failed to play sound effect:', url, error);
+    }
+  }
+
+  fadeOutSoundEffect(url: string, durationMs = 200): void {
+    const audio = this.sfxElements.get(url);
+    if (!audio || audio.paused) return;
+    
+    const startVolume = audio.volume;
+    const startTime = Date.now();
+    
+    const fade = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / durationMs, 1);
+      audio.volume = startVolume * (1 - progress);
+      
+      if (progress < 1) {
+        requestAnimationFrame(fade);
+      } else {
+        audio.pause();
+        audio.volume = 1.0;
+      }
+    };
+    
+    requestAnimationFrame(fade);
   }
 
   stopAllSounds(): void {

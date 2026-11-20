@@ -17,6 +17,8 @@ export interface LayoutObject {
   d?: number;
   order?: number;
   anchor?: string;
+  color?: string;
+  fit?: string;
 }
 
 export interface Layout {
@@ -49,17 +51,27 @@ export interface GameState {
   lastInteractionTime: number;
 }
 
-export type GameScreen = 'loading' | 'title' | 'game' | 'complete';
+export type GameScreen = 'loading' | 'title' | 'chapter-picker' | 'game' | 'complete';
+
+export type ChapterNumber = 1 | 2 | 3 | 4 | 5;
 
 export interface GameProgress {
-  keysFound: string[];
-  puzzleStates: {
-    teddyWiggled: boolean;
-    teddyMoved: boolean;
-    jewelleryOpen: boolean;
-    curtainOpen: boolean;
-    wardrobeOpen: boolean;
-    mirrorGlow: boolean;
-    mirrorSequence: number[];
+  currentChapter: ChapterNumber;
+  completedChapters: ChapterNumber[];
+  chapter1: {
+    keysFound: string[];
+    puzzleStates: {
+      teddyWiggled: boolean;
+      teddyMoved: boolean;
+      jewelleryOpen: boolean;
+      curtainOpen: boolean;
+      wardrobeOpen: boolean;
+      mirrorGlow: boolean;
+      mirrorSequence: number[];
+    };
+  };
+  chapter2: {
+    matchedFlowers: string[];
+    wrongAttempts: number;
   };
 }

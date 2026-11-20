@@ -32,15 +32,23 @@ export function resetProgress(): void {
 
 export function getInitialProgress(): GameProgress {
   return {
-    keysFound: [],
-    puzzleStates: {
-      teddyWiggled: false,
-      teddyMoved: false,
-      jewelleryOpen: false,
-      curtainOpen: false,
-      wardrobeOpen: false,
-      mirrorGlow: false,
-      mirrorSequence: [],
+    currentChapter: 1,
+    completedChapters: [],
+    chapter1: {
+      keysFound: [],
+      puzzleStates: {
+        teddyWiggled: false,
+        teddyMoved: false,
+        jewelleryOpen: false,
+        curtainOpen: false,
+        wardrobeOpen: false,
+        mirrorGlow: false,
+        mirrorSequence: [],
+      },
+    },
+    chapter2: {
+      matchedFlowers: [],
+      wrongAttempts: 0,
     },
   };
 }

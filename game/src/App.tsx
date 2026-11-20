@@ -64,6 +64,16 @@ function App() {
     setScreen('complete');
   };
 
+  // End of Chapter 1: tapping Pip at the door goes straight into Chapter 2
+  const handleFollowToChapter2 = () => {
+    setProgress(prev => ({
+      ...prev,
+      completedChapters: prev.completedChapters.includes(1) ? prev.completedChapters : [...prev.completedChapters, 1],
+      currentChapter: 2,
+    }));
+    setScreen('game');
+  };
+
   const handleNextChapter = () => {
     const nextChapter = (progress.currentChapter + 1) as ChapterNumber;
     if (nextChapter <= 2) {
@@ -110,7 +120,7 @@ function App() {
         <GameScene
           progress={progress}
           setProgress={updateProgress}
-          onComplete={handleGameComplete}
+          onComplete={handleFollowToChapter2}
         />
       )}
       {screen === 'game' && progress.currentChapter === 2 && (

@@ -274,5 +274,11 @@
   "voice": "en-GB-SoniaNeural",
   "speaker": "narrator",
   "file": "audio/narr-title.mp3"
+ },
+ "fairy-follow": {
+  "text": "Tap me, Princess Kathleen, and follow me through the door!",
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "audio/fairy-follow.mp3"
  }
 }

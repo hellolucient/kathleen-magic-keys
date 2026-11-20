@@ -407,6 +407,15 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
                 </div>
               )}
               
+              {!isMatched && (
+                <div
+                  className={`sprite flower-hint flower-hint-${color}`}
+                  style={getObjectStyle(layout.objects.find(o => o.id === `flower-${color}`))}
+                >
+                  <img src={`ch2/art/sprites/flower-${color}-colour.png`} alt="" />
+                </div>
+              )}
+
               {!isMatched && draggingButterfly !== color && (
                 <div
                   className="sprite butterfly float clickable"

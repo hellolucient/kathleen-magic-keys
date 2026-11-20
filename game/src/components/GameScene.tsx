@@ -24,6 +24,8 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const [doorGlowing, setDoorGlowing] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const [doorOpen, setDoorOpen] = useState(false);
+  const [waitingForFollow, setWaitingForFollow] = useState(false);
+  const followTappedRef = useRef(false);
   const [muted, setMuted] = useState(false);
   const [kittenPlaying, setKittenPlaying] = useState(false);
   const [toyChestOpen, setToyChestOpen] = useState(false);
@@ -335,8 +337,8 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     if (progressRef.current.chapter1.keysFound.length < 5 || unlockingRef.current) return;
     unlockingRef.current = true;
     
-    // Failsafe: the complete screen always comes, whatever happens to audio
-    window.setTimeout(finishGame, 30000);
+    // Failsafe: Pip always ends up at the door asking to be followed, whatever happens to audio
+    window.setTimeout(() => { if (!completedRef.current) setWaitingForFollow(true); }, 30000);
     
     setUnlocking(true);
     setDoorGlowing(false); // Remove glow while unlocking
@@ -362,9 +364,9 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     audioManager.playSound('audio/sfx/celebration-fanfare.mp3');
     setDoorOpen(true);
     
-    // Fairy flies through doorway
-    setFairyAtDoor(false);
+    // Pip stays at the open door
     setFairyFlyingToDoor(false);
+    setFairyAtDoor(true);
     audioManager.playSound('audio/sfx/sparkle.mp3');
     
     await Promise.race([narrationPromise, sleep(10000)]);
@@ -373,13 +375,30 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     setFairyCheer(true);
     setFairyText(audioManager.getText('fairy-final'));
     await Promise.race([audioManager.playSpeech('fairy-final'), sleep(11000)]);
-    await sleep(1500);
-    
+    await sleep(600);
+    setFairyCheer(false);
+
+    // Pip waits at the door: tap her to follow her into Chapter 2
+    setWaitingForFollow(true);
+    if (followTappedRef.current) return;
+    setFairyText(audioManager.getText('fairy-follow'));
+    await Promise.race([audioManager.playSpeech('fairy-follow'), sleep(6000)]);
+    // Say it once more if nobody has tapped yet
+    await sleep(9000);
+    if (followTappedRef.current || completedRef.current) return;
+    setFairyText(audioManager.getText('fairy-follow'));
+    await Promise.race([audioManager.playSpeech('fairy-follow'), sleep(6000)]);
+  };
+
+  const handleFollowPip = async () => {
+    if (!waitingForFollow || followTappedRef.current) return;
+    followTappedRef.current = true;
+    audioManager.playSound('audio/sfx/sparkle.mp3');
     setFairyText('');
-    
-    // Fairy leads the way through the door
+    setFairyCheer(true);
+    await sleep(900);
     setFairyVisible(false);
-    
+    await sleep(300);
     finishGame();
   };
 
@@ -955,12 +974,13 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         {/* Fairy */}
         {fairyVisible && (
           <div 
-            className={`sprite fairy ${
+ className={`sprite fairy ${waitingForFollow ? 'follow-me clickable' : ''} ${
               fairyFlyingToDoor ? 'flying-to-door' : 
               fairyAtDoor ? 'at-door' : 
               fairyCheer ? 'cheer' : 'float'
             }`}
-            style={getObjectStyle(layout.objects.find(o => o.id === 'fairy'))}
+ style={getObjectStyle(layout.objects.find(o => o.id === 'fairy'))}
+            onClick={handleFollowPip}
           >
             <img 
               src={fairyCheer 

@@ -286,3 +286,19 @@
     font-size: 1.2rem;
   }
 }
+
+/* Colour hint on each unmatched flower so it's clear where each butterfly goes */
+.chapter2-scene .flower-hint img {
+  opacity: 0.55;
+  animation: flower-hint-pulse 2.4s ease-in-out infinite;
+}
+.chapter2-scene .flower-hint-red img    { --hint: rgba(255, 70, 70, 0.95); }
+.chapter2-scene .flower-hint-orange img { --hint: rgba(255, 150, 40, 0.95); }
+.chapter2-scene .flower-hint-yellow img { --hint: rgba(255, 220, 40, 0.95); }
+.chapter2-scene .flower-hint-green img  { --hint: rgba(110, 210, 70, 0.95); }
+.chapter2-scene .flower-hint-blue img   { --hint: rgba(70, 150, 255, 0.95); }
+.chapter2-scene .flower-hint-purple img { --hint: rgba(180, 100, 255, 0.95); }
+@keyframes flower-hint-pulse {
+  0%, 100% { opacity: 0.5;  filter: drop-shadow(0 0 4px var(--hint)); }
+  50%      { opacity: 0.8;  filter: drop-shadow(0 0 14px var(--hint)); }
+}

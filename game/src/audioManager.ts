@@ -193,7 +193,10 @@ class AudioManager {
     if (!lines) return '';
     
     const line = lines[lineId];
-    if (!line) return '';
+    if (!line) {
+      console.warn(`Audio line not found: ${lineId} in ${chapter}`);
+      return '';
+    }
 
     // Finish any current speech
     if (this.finishCurrent) {

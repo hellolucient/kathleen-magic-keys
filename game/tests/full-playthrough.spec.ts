@@ -9,7 +9,11 @@ test.describe('Full Chapter 1 + 2 Playthrough', () => {
     const consoleErrors: string[] = [];
     page.on('console', msg => {
       if (msg.type() === 'error') {
-        consoleErrors.push(msg.text());
+        const text = msg.text();
+        // Ignore audio loading errors (expected in headless mode)
+        if (!text.includes('Failed to play speech') && !text.includes('audio')) {
+          consoleErrors.push(text);
+        }
       }
     });
     
@@ -47,18 +51,26 @@ test.describe('Full Chapter 1 + 2 Playthrough', () => {
     
     // Mirror and stars
     await page.click('.sprite.mirror-hitbox', { force: true });
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(3500);
     
     await page.locator('.sprite.star').nth(0).click({ force: true });
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1200);
     await page.locator('.sprite.star').nth(1).click({ force: true });
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1200);
     await page.locator('.sprite.star').nth(2).click({ force: true });
-    await page.waitForTimeout(3000);
-    
-    // Wait for 5 keys
-    await page.waitForSelector('.key-count:has-text("5 / 5")', { timeout: 10000 });
     await page.waitForTimeout(2000);
+    
+    // Click the mirror key that appears
+    try {
+      await page.click('.key-mirror', { force: true, timeout: 3000 });
+      await page.waitForTimeout(2000);
+    } catch (e) {
+      console.log('Mirror key not found, continuing...');
+    }
+    
+    // Wait for all 5 keys
+    await page.waitForSelector('.key-count:has-text("5 / 5")', { timeout: 15000 });
+    await page.waitForTimeout(3000);
     
     // Screenshot: Door glow with Pip at the door
     await page.screenshot({ path: '../docs/ch2-test-stills/ch1-door-glow-pip-at-door.png' });

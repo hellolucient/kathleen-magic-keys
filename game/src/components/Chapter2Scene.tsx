@@ -13,11 +13,15 @@ interface Chapter2SceneProps {
 
 const COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
 
+// Dragon footprint trail: from the bottom path, between the flower beds, to the river bank (x%, y%, heading deg; 0 = up)
+const FOOTPRINT_TRAIL: [number, number, number][] = [[59, 95, -7], [58.5, 88, 7], [59, 81, 7], [59.5, 74, 17], [60.5, 68, 45], [63, 63.5, 64], [66.5, 60.5, 64], [70, 57.5, 68], [73.5, 55, 72], [77, 53, 72]];
+
 function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps) {
   const [layout, setLayout] = useState<Layout | null>(null);
   const [fairyText, setFairyText] = useState('');
   const [showButterflyPreview, setShowButterflyPreview] = useState(false);
   const [fairyVisible, setFairyVisible] = useState(false);
+  const [narratorSpeaking, setNarratorSpeaking] = useState(false);
   const [fairyCheer, setFairyCheer] = useState(false);
   const [muted, setMuted] = useState(false);
   const [draggingButterfly, setDraggingButterfly] = useState<string | null>(null);
@@ -25,7 +29,15 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [butterflyFlapping, setButterflyFlapping] = useState<Record<string, boolean>>({});
   const [petalRevealed, setPetalRevealed] = useState(false);
+  const [petalTappable, setPetalTappable] = useState(false);
   const [petalCollected, setPetalCollected] = useState(false);
+  const petalResolveRef = useRef<(() => void) | null>(null);
+  const collectPetal = () => {
+    setPetalTappable(false);
+    setPetalCollected(true);
+    audioManager.playSound('audio/sfx/sparkle.mp3');
+    setProgress(p => ({ ...p, treasures: { ...p.treasures, petal: true } }));
+  };
   const [backgroundSolved, setBackgroundSolved] = useState(false);
   const [sneezePuffVisible, setSneezePuffVisible] = useState(true);
   
@@ -87,7 +99,11 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
       return;
     }
     
+    setNarratorSpeaking(true);
+    setFairyText(audioManager.getText('narr-intro', 'ch2'));
     await audioManager.playSpeech('narr-intro', 'ch2');
+    setNarratorSpeaking(false);
+    setFairyText('');
     if (introAbortedRef.current) {
       setFairyText('');
       introRunningRef.current = false;
@@ -115,7 +131,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
       return;
     }
     
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 500));
     if (introAbortedRef.current) {
       setFairyText('');
       introRunningRef.current = false;
@@ -182,29 +198,6 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
     introAbortedRef.current = true;
   };
 
-  const collectPetal = async () => {
-    if (petalCollected) return;
-    
-    recordInteraction();
-    setPetalCollected(true);
-    audioManager.playSound('audio/sfx/sparkle.mp3');
-    
-    setProgress(p => ({
-      ...p,
-      treasures: { ...p.treasures, petal: true },
-    }));
-    
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setFairyText(audioManager.getText('narr-complete', 'ch2'));
-    await audioManager.playSpeech('narr-complete', 'ch2');
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setFairyText('');
-    
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    onComplete();
-  };
-
   const triggerCompletion = async () => {
     await new Promise(resolve => setTimeout(resolve, 500));
     
@@ -212,31 +205,44 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
     setBackgroundSolved(true);
     setSneezePuffVisible(false);
     
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 600));
     
+    setNarratorSpeaking(true);
     setFairyText(audioManager.getText('narr-burst', 'ch2'));
     await audioManager.playSpeech('narr-burst', 'ch2');
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
+    setNarratorSpeaking(false);
     
     setPetalRevealed(true);
     
     await new Promise(resolve => setTimeout(resolve, 500));
     
     setFairyText(audioManager.getText('fairy-footprints', 'ch2'));
+    setPetalTappable(true);
+    const tapped = new Promise<void>(resolve => { petalResolveRef.current = resolve; });
     await audioManager.playSpeech('fairy-footprints', 'ch2');
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Wait for Kathleen to tap the petal (auto-collect after 25s so the story never stalls)
+    const wasTapped = await Promise.race([tapped.then(() => true), new Promise<boolean>(resolve => setTimeout(() => resolve(false), 25000))]);
+    petalResolveRef.current = null;
+    if (!wasTapped) collectPetal();
+    setFairyCheer(true);
+    await new Promise(resolve => setTimeout(resolve, wasTapped ? 300 : 900));
+    setFairyText(audioManager.getText('fairy-petal-got', 'ch2'));
+    await audioManager.playSpeech('fairy-petal-got', 'ch2');
+    setFairyCheer(false);
     setFairyText('');
+    await new Promise(resolve => setTimeout(resolve, 300));
     
-    // Auto-collect after 25 seconds if not tapped
-    const autoCollectTimer = setTimeout(() => {
-      if (!petalCollected) {
-        collectPetal();
-      }
-    }, 25000);
+    setNarratorSpeaking(true);
+    setFairyText(audioManager.getText('narr-complete', 'ch2'));
+    await audioManager.playSpeech('narr-complete', 'ch2');
+    await new Promise(resolve => setTimeout(resolve, 800));
+    setFairyText('');
+    setNarratorSpeaking(false);
     
-    // Store timer ref for cleanup
-    return () => clearTimeout(autoCollectTimer);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    onComplete();
   };
 
   const handleButterflyStart = (e: React.MouseEvent | React.TouchEvent, color: string) => {
@@ -325,7 +331,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
       const matchLineId = `fairy-match-${draggingButterfly}`;
       setFairyText(audioManager.getText(matchLineId, 'ch2'));
       await audioManager.playSpeech(matchLineId, 'ch2');
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 400));
       setFairyCheer(false);
       setFairyText('');
     } else {
@@ -487,23 +493,30 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
         
         {petalRevealed && (
           <>
-            <div
-              className="sprite footprints fade-in"
-              style={getObjectStyle(layout.objects.find(o => o.id === 'footprints'))}
-            >
-              <img src="ch2/art/sprites/footprints.png" alt="Dragon footprints" />
-            </div>
+            {FOOTPRINT_TRAIL.map((pt, i) => (
+              <img
+                key={i}
+                className="footprint-step"
+                src="ch2/art/sprites/footprint-single.png"
+                alt=""
+                style={{
+                  left: `${pt[0] + (i % 2 ? 0.9 : -0.9)}%`,
+                  top: `${pt[1]}%`,
+                  transform: `translate(-50%, -50%) rotate(${pt[2] - 48}deg)`,
+                  animationDelay: `${i * 0.22}s`,
+                }}
+              />
+            ))}
             
-            {!petalCollected && (
-              <div
-                className="sprite rainbow-petal fade-in sparkle clickable"
-                style={getObjectStyle(layout.objects.find(o => o.id === 'rainbow-petal'))}
-                onClick={collectPetal}
-                onTouchStart={(e) => { e.preventDefault(); collectPetal(); }}
-              >
-                <img src="ch2/art/sprites/rainbow-petal.png" alt="Rainbow petal" />
-              </div>
-            )}
+            <div
+              className={`sprite rainbow-petal fade-in sparkle ${petalTappable ? 'tappable' : ''} ${petalCollected ? 'collected' : ''}`}
+              style={getObjectStyle(layout.objects.find(o => o.id === 'rainbow-petal'))}
+              onPointerDown={() => {
+                if (petalTappable && petalResolveRef.current) { collectPetal(); petalResolveRef.current(); }
+              }}
+            >
+              <img src="ch2/art/sprites/rainbow-petal.png" alt="Rainbow petal" />
+            </div>
           </>
         )}
         
@@ -523,7 +536,9 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
         )}
         
         {fairyText && (
-          <div className={`speech-bubble ${
+          <div className={`speech-bubble ${narratorSpeaking ? 'narrator' : ''} ${
+            // Footprints and petal sit bottom right at the end, so keep words off them
+            narratorSpeaking || petalRevealed ? 'pos-top-left' :
             progress.chapter2.matchedFlowers.length >= 4 ? 'pos-bottom-right' : 'pos-top-left'
           }`}>
             {fairyText}

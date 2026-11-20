@@ -24,31 +24,31 @@
   "file": "audio/fairy-start.mp3"
  },
  "fairy-found-1": {
-  "text": "You found one! Hooray! Four more to go!",
+  "text": "You found one! Four more to go!",
   "voice": "en-GB-MaisieNeural",
   "speaker": "fairy",
   "file": "audio/fairy-found-1.mp3"
  },
  "fairy-found-2": {
-  "text": "Another magic key! Two keys! You're so clever, Kathleen!",
+  "text": "Two keys! You're so clever!",
   "voice": "en-GB-MaisieNeural",
   "speaker": "fairy",
   "file": "audio/fairy-found-2.mp3"
  },
  "fairy-found-3": {
-  "text": "Three keys! Wow, you're a wonderful explorer! Only two more!",
+  "text": "Three keys! Only two more!",
   "voice": "en-GB-MaisieNeural",
   "speaker": "fairy",
   "file": "audio/fairy-found-3.mp3"
  },
  "fairy-found-4": {
-  "text": "Four keys! Just one more to find. I know you can do it!",
+  "text": "Four keys! Just one more!",
   "voice": "en-GB-MaisieNeural",
   "speaker": "fairy",
   "file": "audio/fairy-found-4.mp3"
  },
  "fairy-found-5": {
-  "text": "Five keys! You found them all, Princess Kathleen!",
+  "text": "Five keys! You found them all!",
   "voice": "en-GB-MaisieNeural",
   "speaker": "fairy",
   "file": "audio/fairy-found-5.mp3"
@@ -252,13 +252,13 @@
   "file": "audio/fairy-door-glow.mp3"
  },
  "narr-unlock": {
-  "text": "One by one, the five magic keys flew into the golden locks... click, click, click, click, click! And the enchanted door swung open.",
+  "text": "The five magic keys flew into the golden locks, and the enchanted door swung open!",
   "voice": "en-GB-SoniaNeural",
   "speaker": "narrator",
   "file": "audio/narr-unlock.mp3"
  },
  "fairy-final": {
-  "text": "You did it, Princess Kathleen! You're a wonderful treasure hunter! Now our magical adventure can begin!",
+  "text": "You did it, Princess Kathleen! Now our adventure can begin!",
   "voice": "en-GB-MaisieNeural",
   "speaker": "fairy",
   "file": "audio/fairy-final.mp3"

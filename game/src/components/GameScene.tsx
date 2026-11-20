@@ -18,6 +18,8 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const [fairyText, setFairyText] = useState('');
   const [showKeyPreview, setShowKeyPreview] = useState(false);
   const [fairyVisible, setFairyVisible] = useState(false);
+  const [fairyArriving, setFairyArriving] = useState(false);
+  const [narratorSpeaking, setNarratorSpeaking] = useState(false);
   const [fairyCheer, setFairyCheer] = useState(false);
   const [fairyFlyingToDoor, setFairyFlyingToDoor] = useState(false);
   const [fairyAtDoor, setFairyAtDoor] = useState(false);
@@ -93,10 +95,12 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     }
     
     introRunningRef.current = true;
-    setFairyVisible(true);
+    // Pip stays hidden until the narrator says she appears
+    setFairyVisible(false);
     
     await new Promise(resolve => setTimeout(resolve, 500));
     if (introAbortedRef.current) {
+      setFairyVisible(true);
       setFairyText('');
       introRunningRef.current = false;
       lastInteractionRef.current = Date.now();
@@ -104,8 +108,12 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       return;
     }
     
+    setNarratorSpeaking(true);
+    setFairyText(audioManager.getText('narr-intro'));
     await audioManager.playSpeech('narr-intro');
     if (introAbortedRef.current) {
+      setNarratorSpeaking(false);
+      setFairyVisible(true);
       setFairyText('');
       introRunningRef.current = false;
       lastInteractionRef.current = Date.now();
@@ -122,8 +130,21 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       return;
     }
     
-    await audioManager.playSpeech('narr-fairy-arrives');
+    setFairyText(audioManager.getText('narr-fairy-arrives'));
+    const arrivesLine = audioManager.playSpeech('narr-fairy-arrives');
+    // Big arrival on "with a twinkle and a shimmer"
+    await new Promise(resolve => setTimeout(resolve, 1400));
+    audioManager.playSound('audio/sfx/sparkle.mp3');
+    setFairyArriving(true);
+    setFairyVisible(true);
+    window.setTimeout(() => setFairyArriving(false), 2600);
+    await Promise.race([arrivesLine, new Promise(resolve => setTimeout(resolve, 6000))]);
+    setNarratorSpeaking(false);
+    setFairyText('');
+    // Let the entrance finish before Pip speaks
+    await new Promise(resolve => setTimeout(resolve, 900));
     if (introAbortedRef.current) {
+      setFairyVisible(true);
       setFairyText('');
       introRunningRef.current = false;
       lastInteractionRef.current = Date.now();
@@ -150,7 +171,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       return;
     }
     
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 500));
     if (introAbortedRef.current) {
       setFairyText('');
       introRunningRef.current = false;
@@ -246,8 +267,8 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     // Play key-found chime (don't await - let it play alongside)
     audioManager.playSoundEffect('audio/sfx/key-found.mp3');
     
-    // Wait for chime to mostly finish, then small delay before narration
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Short beat for the chime, then straight on
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     // Show fly animation
     keysInFlightRef.current++;
@@ -268,7 +289,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     const foundLineId = `fairy-found-${newLength}`;
     setFairyText(audioManager.getText(foundLineId));
     await audioManager.playSpeech(foundLineId);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 400));
     
     setFairyCheer(false);
     setFairyText('');
@@ -287,7 +308,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     }
     
     // Start fairy flying to door after a brief moment
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 800));
     setFairyCheer(false);
     setFairyFlyingToDoor(true);
     audioManager.playSound('audio/sfx/sparkle.mp3');
@@ -315,8 +336,8 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       return;
     }
     
-    // Wait a bit more for total 6s (to let 5th-key praise finish)
-    await new Promise(resolve => setTimeout(resolve, 2500));
+    // Short wait so the (now shorter) 5th-key praise can finish
+    await new Promise(resolve => setTimeout(resolve, 700));
     if (unlockingRef.current) return; // door already tapped, don't talk over the finale
     
     setFairyText(audioManager.getText('fairy-door-glow'));
@@ -974,7 +995,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         {/* Fairy */}
         {fairyVisible && (
           <div 
- className={`sprite fairy ${waitingForFollow ? 'follow-me clickable' : ''} ${
+ className={`sprite fairy ${fairyArriving ? 'arriving' : ''} ${waitingForFollow ? 'follow-me clickable' : ''} ${
               fairyFlyingToDoor ? 'flying-to-door' : 
               fairyAtDoor ? 'at-door' : 
               fairyCheer ? 'cheer' : 'float'
@@ -994,7 +1015,8 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
 
         {/* Speech box: fixed spot away from the action, never on top of Pip */}
         {fairyText && (
-          <div className={`speech-bubble ${
+          <div className={`speech-bubble ${narratorSpeaking ? 'narrator' : ''} ${
+            narratorSpeaking ? 'pos-narrator' :
             progress.chapter1.keysFound.length === 5 || fairyFlyingToDoor || fairyAtDoor ? 'pos-bottom-left' : 'pos-top'
           }`}>
             {fairyText}

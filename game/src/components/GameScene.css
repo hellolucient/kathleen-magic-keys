@@ -622,3 +622,41 @@
   0%   { box-shadow: 0 0 0 0 rgba(255, 222, 140, 0.85); }
   100% { box-shadow: 0 0 0 28px rgba(255, 222, 140, 0); }
 }
+
+/* Narrator's words on screen: storybook caption along the bottom */
+.speech-bubble.narrator {
+  background: rgba(60, 30, 80, 0.82);
+  color: #fff8e7;
+  font-style: italic;
+  border: 2px solid rgba(255, 215, 120, 0.8);
+}
+.speech-bubble.pos-narrator { left: 15%; right: 15%; bottom: 6%; top: auto; width: auto; max-width: none; }
+
+/* Pip's big arrival */
+.fairy.arriving img {
+  animation: fairy-arrive 1.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+@keyframes fairy-arrive {
+  0%   { transform: scale(0) rotate(-540deg); opacity: 0; filter: brightness(3) drop-shadow(0 0 30px gold); }
+  60%  { transform: scale(1.5) rotate(10deg); opacity: 1; filter: brightness(1.8) drop-shadow(0 0 40px gold); }
+  80%  { transform: scale(0.9) rotate(-5deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; filter: none; }
+}
+.fairy.arriving::after {
+  content: '✨ ✨ ✨';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 300%; height: 300%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3rem; letter-spacing: 1rem;
+  transform: translate(-50%, -50%) scale(0.2);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 250, 210, 0.95) 0%, rgba(255, 215, 0, 0.55) 30%, rgba(255, 182, 230, 0.25) 55%, transparent 70%);
+  animation: fairy-burst 1.8s ease-out both;
+  pointer-events: none;
+}
+@keyframes fairy-burst {
+  0%   { transform: translate(-50%, -50%) scale(0.2) rotate(0deg); opacity: 1; }
+  50%  { opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.2) rotate(90deg); opacity: 0; }
+}

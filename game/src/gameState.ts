@@ -14,16 +14,23 @@ export function loadProgress(): GameProgress | null {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
-      const saved = JSON.parse(data);
-      // Merge with defaults to handle new fields
-      const defaults = getInitialProgress();
+      // Fill in anything an older save is missing (e.g. saves from before Chapter 2 existed)
+      const saved = JSON.parse(data) as Partial<GameProgress>;
+      const base = getInitialProgress();
       return {
-        ...defaults,
+        ...base,
         ...saved,
-        treasures: { ...defaults.treasures, ...saved.treasures },
-        chapter3: { ...defaults.chapter3, ...saved.chapter3 },
-        chapter4: { ...defaults.chapter4, ...saved.chapter4 },
-        chapter5: { ...defaults.chapter5, ...saved.chapter5 },
+        completedChapters: Array.isArray(saved.completedChapters) ? saved.completedChapters : [],
+        chapter1: {
+          ...base.chapter1,
+          ...(saved.chapter1 || {}),
+          puzzleStates: { ...base.chapter1.puzzleStates, ...(saved.chapter1?.puzzleStates || {}) },
+        },
+        chapter2: { ...base.chapter2, ...(saved.chapter2 || {}) },
+        treasures: { ...base.treasures, ...(saved.treasures || {}) },
+        chapter3: { ...base.chapter3, ...(saved.chapter3 || {}) },
+        chapter4: { ...base.chapter4, ...(saved.chapter4 || {}) },
+        chapter5: { ...base.chapter5, ...(saved.chapter5 || {}) },
       };
     }
   } catch (error) {

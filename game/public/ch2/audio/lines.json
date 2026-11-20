@@ -102,15 +102,21 @@
   "file": "ch2/audio/narr-burst.mp3"
  },
  "fairy-footprints": {
-  "text": "Kathleen, look! Tiny purple footprints... and a magic Rainbow Petal! Let's keep the petal safe.",
+  "text": "Look! Little purple footprints... and a magic Rainbow Petal! Tap the petal to keep it safe!",
   "voice": "en-GB-MaisieNeural",
   "speaker": "fairy",
   "file": "ch2/audio/fairy-footprints.mp3"
  },
  "narr-complete": {
-  "text": "The little footprints led towards the river. Princess Kathleen and Pip followed them... To be continued!",
+  "text": "The little footprints led all the way to the river. Princess Kathleen and Pip followed them... To be continued!",
   "voice": "en-GB-SoniaNeural",
   "speaker": "narrator",
   "file": "ch2/audio/narr-complete.mp3"
+ },
+ "fairy-petal-got": {
+  "voice": "en-GB-MaisieNeural",
+  "speaker": "fairy",
+  "file": "ch2/audio/fairy-petal-got.mp3",
+  "text": "Hooray! The Rainbow Petal is ours. Let's follow the footprints!"
  }
 }

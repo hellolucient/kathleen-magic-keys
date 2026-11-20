@@ -274,10 +274,10 @@
     {
       "id": "rainbow-petal",
       "src": "art/sprites/rainbow-petal.png",
-      "x": 55.5,
-      "y": 68.0,
-      "w": 8.8,
-      "h": 15.5,
+      "x": 62.5,
+      "y": 80,
+      "w": 7,
+      "h": 12.5,
       "z": 30,
       "fit": "contain",
       "note": "Hidden until the end, with the footprints. The magic Rainbow Petal Kathleen keeps (needed in Chapter 5). Can be tapped/collected after fairy-footprints."

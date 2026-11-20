@@ -88,6 +88,8 @@ function App() {
   const fadeToNextChapter = (fromChapter: ChapterNumber) => {
     const nextChapter = (fromChapter + 1) as ChapterNumber;
     audioManager.stopAllSounds();
+    // Cover fully first (solid veil), then swap chapter, then lift veil —
+    // avoids half-drawn / clipped frames mid-transition.
     setFading(true);
     window.setTimeout(() => {
       setProgress(prev => {
@@ -102,8 +104,9 @@ function App() {
         return next;
       });
       setScreen('game');
-      window.setTimeout(() => setFading(false), 80);
-    }, 600);
+      // Hold the veil briefly so the next scene paints fully underneath
+      window.setTimeout(() => setFading(false), 220);
+    }, 450);
   };
 
   // Ch1–4: action ends chapter → fade straight into next

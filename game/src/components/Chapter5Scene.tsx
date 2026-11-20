@@ -13,10 +13,11 @@ interface Chapter5SceneProps {
   onComplete: () => void;
 }
 
+/** Cloud bank positions — lower half, spaced across the painted cloud floor */
 const CLOUD_POSITIONS = [
-  { x: 15, y: 35 },
-  { x: 45, y: 25 },
-  { x: 72, y: 40 },
+  { x: 10, y: 60 },
+  { x: 38, y: 64 },
+  { x: 66, y: 58 },
 ];
 
 const PIECES = ['petal', 'gem', 'light'] as const;
@@ -26,7 +27,7 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
   const [fairyText, setFairyText] = useState('');
   const [captionIsNarrator, setCaptionIsNarrator] = useState(false);
   const [muted, setMuted] = useState(false);
-  const [phase, setPhase] = useState<'intro' | 'hideseek' | 'crown' | 'ending'>('intro');
+  const [phase, setPhase] = useState<'intro' | 'hideseek' | 'crown' | 'crowned' | 'ending'>('intro');
   const [smudgePosition, setSmudgePosition] = useState(0);
   const [timesFound, setTimesFound] = useState(0);
   const [smudgeSprite, setSmudgeSprite] = useState('peeking');
@@ -38,7 +39,7 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
   const [smudgeFlying, setSmudgeFlying] = useState(false);
   const [wrongCloud, setWrongCloud] = useState<number | null>(null);
   const [revealedCloud, setRevealedCloud] = useState<number | null>(null);
-  const [showTheEnd, setShowTheEnd] = useState(false);
+  const [showSparkles, setShowSparkles] = useState(false);
 
   const progressRef = useRef(progress);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -81,20 +82,20 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
 
     await new Promise(resolve => setTimeout(resolve, 500));
     await showLine('narr-title', true);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
 
     await showLine('narr-intro', true);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
 
     audioManager.playSound('audio/sfx/sparkle.mp3');
     await showLine('smudge-cry');
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
 
     await showLine('fairy-intro');
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
 
     introRunningRef.current = false;
@@ -122,7 +123,6 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
       return;
     }
 
-    // Correct cloud — puff aside and reveal Smudge
     setRevealedCloud(index);
     audioManager.playSound('audio/sfx/sparkle.mp3');
 
@@ -134,14 +134,12 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
       chapter5: { ...prev.chapter5, timesFound: newFound },
     }));
 
-    const praiseLine = `fairy-found-${newFound}`;
-    await showLine(praiseLine);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await showLine(`fairy-found-${newFound}`);
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
 
     if (newFound < 3) {
       setRevealedCloud(null);
-      // Pick a different cloud next time when possible
       let next = Math.floor(Math.random() * 3);
       if (next === smudgePosition) next = (next + 1) % 3;
       setSmudgePosition(next);
@@ -157,11 +155,11 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
     await new Promise(resolve => setTimeout(resolve, 500));
 
     await showLine('smudge-sorry');
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
 
     await showLine('fairy-crown');
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
   };
 
@@ -180,9 +178,8 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
       chapter5: { ...prev.chapter5, crownPieces: newPieces },
     }));
 
-    const placeLine = `fairy-place-${piece}`;
-    await showLine(placeLine);
-    await new Promise(resolve => setTimeout(resolve, 400));
+    await showLine(`fairy-place-${piece}`);
+    await new Promise(resolve => setTimeout(resolve, 350));
     setFairyText('');
 
     placingRef.current = false;
@@ -222,16 +219,14 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
 
     startPointerDrag(e, {
       onMove: (cx, cy) => {
-        const p = clientToPercent(container, cx, cy);
-        setDragPosition(p);
+        setDragPosition(clientToPercent(container, cx, cy));
       },
       onEnd: (cx, cy, wasTap) => {
         if (wasTap) {
-          // Single tap → fly to crown
           flyPieceToCrown(piece);
           return;
         }
-        const nearCrown = hitTestRect(crownTargetRef.current, cx, cy, 60);
+        const nearCrown = hitTestRect(crownTargetRef.current, cx, cy, 70);
         setDraggingPiece(null);
         if (nearCrown) {
           void placePiece(piece);
@@ -244,52 +239,53 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
     if (completedRef.current) return;
     completedRef.current = true;
 
-    setPhase('ending');
-
-    await new Promise(resolve => setTimeout(resolve, 500));
-
+    // Show Smudge wearing the finished crown, laughing, with sparkles
+    setPhase('crowned');
     setSmudgeSprite('laughing');
+    setShowSparkles(true);
     audioManager.playSound('audio/sfx/sparkle.mp3');
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1200));
 
     await showLine('smudge-happy');
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
 
     await showLine('fairy-friends');
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
 
     setShowRainbow(true);
     audioManager.playSound('audio/sfx/sparkle.mp3');
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 900));
 
     await showLine('narr-rainbow', true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 600));
     setFairyText('');
 
+    // Fly across — wait for the full CSS animation (4s) before leaving
+    setPhase('ending');
+    setShowSparkles(false);
     setSmudgeSprite('flying');
     setSmudgeFlying(true);
 
     await showLine('smudge-ride');
-    await new Promise(resolve => setTimeout(resolve, 2000));
     setFairyText('');
+
+    // fly-across is 4s — wait for it to finish
+    await new Promise(resolve => setTimeout(resolve, 4200));
 
     await showLine('narr-end', true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 600));
     setFairyText('');
 
-    setShowTheEnd(true);
-    await new Promise(resolve => setTimeout(resolve, 2500));
-
+    // Hand off to CompleteScreen (clean end card) — no in-scene The End overlay
     onComplete();
   };
 
   const toggleMute = () => {
-    const newMuted = audioManager.toggleMute();
-    setMuted(newMuted);
+    setMuted(audioManager.toggleMute());
   };
 
   const pieceSrc = (piece: string) => {
@@ -304,6 +300,8 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
     return 'Firefly Light';
   };
 
+  const showSmudgeSitting = phase === 'crown' || phase === 'crowned';
+
   return (
     <div
       className="game-scene chapter5-scene"
@@ -313,9 +311,9 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
       <div className="game-container">
         <img src="ch5/art/raw/bg-clouds.jpg" alt="Cloud Castle" className="game-bg" />
 
-        {showRainbow && <div className="rainbow fade-in" />}
+        {showRainbow && <div className="rainbow rainbow-fade" />}
 
-        {/* Hide-and-seek: cloud puffs covering Smudge */}
+        {/* Hide-and-seek: painted cloud puffs on the cloud bank */}
         {phase === 'hideseek' && (
           <>
             {CLOUD_POSITIONS.map((pos, index) => {
@@ -331,6 +329,7 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
                     e.preventDefault();
                     void tapCloud(index);
                   }}
+                  onClick={() => { void tapCloud(index); }}
                 >
                   {hasSmudge && (
                     <div className={`smudge-behind ${isRevealed ? 'revealed' : 'hidden-peek'}`}>
@@ -338,28 +337,87 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
                       {!isRevealed && <div className="smudge-giggle" aria-hidden />}
                     </div>
                   )}
-                  <div className={`cloud-puff ${isRevealed ? 'aside' : ''}`}>
-                    <div className="cloud-blob cloud-blob-a" />
-                    <div className="cloud-blob cloud-blob-b" />
-                    <div className="cloud-blob cloud-blob-c" />
-                  </div>
+                  {/* Tail tip behind the puff, peeking from the edge */}
                   {hasSmudge && !isRevealed && (
-                    <div className="tail-tip" aria-hidden />
+                    <img
+                      className="tail-tip-sprite"
+                      src="ch5/art/sprites/smudge-tail-tip.png"
+                      alt=""
+                      aria-hidden
+                      draggable={false}
+                    />
                   )}
+                  {/* Soft painted peach/pink/cream puff sitting on the cloud bank */}
+                  <div className={`cloud-puff cloud-puff-${(index % 3) + 1} ${isRevealed ? 'aside' : ''}`}>
+                    <img
+                      src={`ch5/art/sprites/cloud-puff-${(index % 3) + 1}.png`}
+                      alt="Cloud"
+                      className="cloud-puff-img"
+                      draggable={false}
+                    />
+                  </div>
                 </div>
               );
             })}
           </>
         )}
 
-        {phase === 'crown' && (
-          <div className={`smudge-sitting ${crownPieces.length === 3 ? 'with-crown' : ''}`}>
-            <img src={`ch5/art/sprites/smudge-${smudgeSprite}.png`} alt="Smudge" />
-            {crownPieces.length === 3 && (
+        {/* Smudge sitting — crown + crowned phases */}
+        {showSmudgeSitting && !smudgeFlying && (
+          <div className={`smudge-sitting ${phase === 'crowned' ? 'with-crown crowned-happy' : ''}`}>
+            <img
+              src={`ch5/art/sprites/smudge-${smudgeSprite}.png`}
+              alt="Smudge"
+            />
+            {phase === 'crowned' && (
               <div className="crown-on-head">
                 <img src="ch5/art/sprites/crown.png" alt="Crown" />
               </div>
             )}
+            {showSparkles && (
+              <div className="crown-sparkles" aria-hidden>
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <span key={i} className={`sparkle-dot sparkle-dot-${i}`} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Crown drop target — dashed gold ghost + faint crown.png, slots fill as pieces land */}
+        {phase === 'crown' && (
+          <div className="crown-assembly" ref={crownTargetRef}>
+            <div className="crown-ghost">
+              <svg className="crown-outline" viewBox="0 0 120 80" aria-hidden>
+                <path
+                  d="M10 62 L18 28 L40 48 L60 16 L80 48 L102 28 L110 62 Z"
+                  fill="none"
+                  stroke="#d4af37"
+                  strokeWidth="3"
+                  strokeDasharray="6 4"
+                  strokeLinejoin="round"
+                />
+                <circle cx="18" cy="28" r="4" fill="#f0d060" opacity="0.85" />
+                <circle cx="60" cy="16" r="5" fill="#f0d060" opacity="0.9" />
+                <circle cx="102" cy="28" r="4" fill="#f0d060" opacity="0.85" />
+              </svg>
+              <img src="ch5/art/sprites/crown.png" alt="" className="crown-ghost-img" />
+            </div>
+            <div className="crown-slots">
+              {PIECES.map((piece, index) => {
+                const filled = crownPieces.includes(piece);
+                return (
+                  <div
+                    key={piece}
+                    className={`crown-slot crown-slot-${index} ${filled ? 'filled' : 'empty'}`}
+                  >
+                    {filled && (
+                      <img src={pieceSrc(piece)} alt={pieceAlt(piece)} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -372,21 +430,7 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
           </div>
         )}
 
-        {/* Crown drop target */}
-        {phase === 'crown' && crownPieces.length < 3 && (
-          <div className="crown-assembly" ref={crownTargetRef}>
-            <div className="crown-base">
-              {crownPieces.length === 0 && <div className="crown-empty-circle" />}
-              {crownPieces.map((piece, index) => (
-                <div key={piece} className={`crown-piece-placed crown-piece-${index}`}>
-                  <img src={pieceSrc(piece)} alt={pieceAlt(piece)} />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Treasure tray — pointer-draggable pieces */}
+        {/* Treasure tray */}
         {phase === 'crown' && (
           <div className="treasure-tray">
             {PIECES.map((piece) => {
@@ -434,12 +478,6 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
         )}
 
         <TreasureBar treasures={progress.treasures} spriteBase="ch5/art/sprites" />
-
-        {showTheEnd && (
-          <div className="the-end-overlay">
-            <h1>The End of Book One</h1>
-          </div>
-        )}
 
         <button
           className="mute-button"

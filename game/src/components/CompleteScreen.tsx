@@ -1,36 +1,47 @@
-import type { ChapterNumber } from '../types';
 import './CompleteScreen.css';
 
 interface CompleteScreenProps {
-  chapter: ChapterNumber;
+  chapter: number;
   onPlayAgain: () => void;
   onNextChapter: () => void;
   onBackToChapterPicker: () => void;
 }
 
-function CompleteScreen({ chapter, onPlayAgain, onBackToChapterPicker }: CompleteScreenProps) {
-  // Only Chapter 5 lands here — The End of Book One
+function CompleteScreen({ onPlayAgain, onBackToChapterPicker }: CompleteScreenProps) {
+  // Only Chapter 5 lands here — clean full-screen end card
   return (
-    <div className="complete-screen">
+    <div className="complete-screen end-card">
       <div className="complete-bg">
-        <img src="ch5/art/raw/bg-clouds.jpg" alt="The End" />
+        <img src="ch5/art/raw/bg-clouds.jpg" alt="" />
       </div>
-      <div className="complete-overlay">
-        <div className="complete-content">
-          <h1 className="complete-title">The End of Book One</h1>
-          <p className="complete-message">Smudge has a friend forever!</p>
-          <div className="complete-buttons">
-            <button className="play-again-button" onClick={onPlayAgain}>
-              Play Chapter {chapter} Again
-            </button>
-            <div className="ending-message">
-              <p>Thank you for playing!</p>
-              <p>Smudge will be back for more adventures!</p>
-            </div>
-            <button className="back-button" onClick={onBackToChapterPicker}>
-              Back to Title
-            </button>
-          </div>
+      <div className="complete-card">
+        <h1 className="complete-title">The End of Book One</h1>
+        <div className="end-heroes">
+          <img
+            className="end-smudge"
+            src="ch5/art/sprites/smudge-laughing.png"
+            alt="Smudge"
+          />
+          <img
+            className="end-crown"
+            src="ch5/art/sprites/crown.png"
+            alt=""
+            aria-hidden
+          />
+          <img
+            className="end-pip"
+            src="ch5/art/sprites/fairy-cheer.png"
+            alt="Pip"
+          />
+        </div>
+        <p className="complete-message">Smudge has a friend forever!</p>
+        <div className="complete-buttons">
+          <button type="button" className="play-again-button" onClick={onPlayAgain}>
+            Play Again
+          </button>
+          <button type="button" className="back-button" onClick={onBackToChapterPicker}>
+            Chapter Picker
+          </button>
         </div>
       </div>
     </div>

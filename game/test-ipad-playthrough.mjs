@@ -170,6 +170,13 @@ async function main() {
     await wait(page, 250);
   }
 
+  // Transition Ch1→Ch2: capture any half-drawn overlay frames
+  for (let t = 0; t < 4; t++) {
+    await wait(page, 120);
+    await shot(page, `05b-trans-1to2-f${t}`);
+    if (await page.locator('.chapter2-scene').count()) break;
+  }
+
   // ========== CH2 ==========
   await page.waitForSelector('.chapter2-scene', { timeout: 30000 });
   await wait(page, 400);
@@ -220,6 +227,13 @@ async function main() {
     await page.mouse.click(820, 520);
   }
 
+  // Transition Ch2→Ch3
+  for (let t = 0; t < 4; t++) {
+    await wait(page, 120);
+    await shot(page, `10b-trans-2to3-f${t}`);
+    if (await page.locator('.chapter3-scene').count()) break;
+  }
+
   // ========== CH3 ==========
   await page.waitForSelector('.chapter3-scene', { timeout: 30000 });
   await wait(page, 800);
@@ -261,6 +275,13 @@ async function main() {
       break;
     }
     await wait(page, 300);
+  }
+
+  // Transition Ch3→Ch4
+  for (let t = 0; t < 4; t++) {
+    await wait(page, 120);
+    await shot(page, `13b-trans-3to4-f${t}`);
+    if (await page.locator('.chapter4-scene').count()) break;
   }
 
   // ========== CH4 ==========
@@ -325,11 +346,23 @@ async function main() {
   }
   await shot(page, '18b-ch4-after-lantern').catch(() => {});
 
+  // Transition Ch4→Ch5
+  for (let t = 0; t < 4; t++) {
+    await wait(page, 120);
+    await shot(page, `18c-trans-4to5-f${t}`);
+    if (await page.locator('.chapter5-scene').count()) break;
+  }
+
   // ========== CH5 ==========
   await page.waitForSelector('.chapter5-scene', { timeout: 45000 });
   await wait(page, 1000);
   await shot(page, '19-ch5-start');
-  await wait(page, 2000);
+  // Wait until hide-and-seek clouds are on screen
+  for (let i = 0; i < 40; i++) {
+    if (await page.locator('.cloud-hiding-spot').count()) break;
+    await wait(page, 250);
+  }
+  await shot(page, '19b-ch5-clouds');
 
   for (let find = 0; find < 3; find++) {
     if (find === 0) {
@@ -342,6 +375,7 @@ async function main() {
     }
     const right = page.locator('.cloud-hiding-spot.has-smudge').first();
     if (await right.count()) {
+      await shot(page, `21-ch5-before-find-${find + 1}`);
       await right.click({ force: true });
       await wait(page, 900);
       await shot(page, `21-ch5-find-${find + 1}`);
@@ -362,22 +396,36 @@ async function main() {
     const piece = page.locator('.treasure-piece.clickable').first();
     if (!(await piece.count())) break;
     const from = await piece.boundingBox();
-    const crown = page.locator('.crown-assembly').first();
-    const to = (await crown.boundingBox()) || { x: 540, y: 280, width: 120, height: 90 };
+    const crown = page.locator('.crown-assembly, .crown-ghost').first();
+    const to = (await crown.boundingBox()) || { x: 540, y: 200, width: 120, height: 90 };
     if (from) {
-      // drag onto crown
       await pointerDragBoxes(page, from, to);
       await wait(page, 900);
     }
   }
+  // Crowned-happy beat (Smudge wearing crown + sparkles)
+  for (let i = 0; i < 20; i++) {
+    if (await page.locator('.smudge-sitting.with-crown, .crowned-happy').count()) break;
+    await wait(page, 200);
+  }
   await shot(page, '23-ch5-after-crown');
 
-  for (let i = 0; i < 40; i++) {
-    if (await page.locator('.the-end-overlay, .complete-screen').count()) break;
+  // Capture mid fly-across, then wait for CompleteScreen (after animation finishes)
+  for (let i = 0; i < 12; i++) {
+    if (await page.locator('.smudge-flying-across').count()) {
+      await wait(page, 800);
+      await shot(page, '23b-ch5-flying');
+      break;
+    }
+    if (await page.locator('.complete-screen').count()) break;
+    await wait(page, 300);
+  }
+  for (let i = 0; i < 50; i++) {
+    if (await page.locator('.complete-screen').count()) break;
     await wait(page, 400);
   }
   await shot(page, '24-the-end');
-  await wait(page, 2000);
+  await wait(page, 800);
   if (await page.locator('.complete-screen').count()) {
     await shot(page, '25-complete-screen');
   }

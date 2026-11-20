@@ -275,7 +275,7 @@ function Chapter3Scene({ progress, setProgress, onComplete }: Chapter3SceneProps
       <div className="game-container">
         <img src="ch3/art/raw/bg-river.jpg" alt="Sparkling river" className="game-bg" />
         
-        {/* Lily pads */}
+        {/* Lily pads - floating in the open water */}
         <div className="lily-pads">
           {LILY_COLORS.map((color, index) => (
             <div
@@ -291,9 +291,21 @@ function Chapter3Scene({ progress, setProgress, onComplete }: Chapter3SceneProps
           ))}
         </div>
         
-        {/* Frogs */}
+        {/* Three frogs on the near bank */}
         <div className="frog-group">
           <div className="frog frog-1">
+            <img 
+              src={`ch3/art/sprites/frog-${frogState === 'singing' ? 'singing' : frogState === 'happy' ? 'happy' : 'closed'}.png`}
+              alt="Frog" 
+            />
+          </div>
+          <div className="frog frog-2">
+            <img 
+              src={`ch3/art/sprites/frog-${frogState === 'singing' ? 'singing' : frogState === 'happy' ? 'happy' : 'closed'}.png`}
+              alt="Frog" 
+            />
+          </div>
+          <div className="frog frog-3">
             <img 
               src={`ch3/art/sprites/frog-${frogState === 'singing' ? 'singing' : frogState === 'happy' ? 'happy' : 'closed'}.png`}
               alt="Frog" 
@@ -331,18 +343,17 @@ function Chapter3Scene({ progress, setProgress, onComplete }: Chapter3SceneProps
           </div>
         )}
         
-        {/* Treasure bar */}
+        {/* Treasure bar with slots */}
         <div className="treasure-bar">
-          {progress.treasures.petal && (
-            <div className="treasure-icon">
-              <img src="ch3/art/sprites/rainbow-petal.png" alt="Rainbow Petal" />
-            </div>
-          )}
-          {progress.treasures.gem && (
-            <div className="treasure-icon">
-              <img src="ch3/art/sprites/purple-gem.png" alt="Purple Gem" />
-            </div>
-          )}
+          <div className={`treasure-slot ${progress.treasures.petal ? 'filled' : 'empty'}`}>
+            {progress.treasures.petal && <img src="ch3/art/sprites/rainbow-petal.png" alt="Rainbow Petal" />}
+          </div>
+          <div className={`treasure-slot ${progress.treasures.gem ? 'filled' : 'empty'}`}>
+            {progress.treasures.gem && <img src="ch3/art/sprites/purple-gem.png" alt="Purple Gem" />}
+          </div>
+          <div className="treasure-slot empty">
+            {/* Firefly light slot - not yet collected */}
+          </div>
         </div>
         
         {/* Round counter */}

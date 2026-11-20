@@ -86,23 +86,24 @@
 /* Hide-and-seek clouds */
 .chapter5-scene .cloud-hiding-spot {
   position: absolute;
-  width: 18%;
-  height: 18%;
+  width: 20%;
+  height: auto;
   z-index: 20;
 }
 
 .chapter5-scene .smudge-peeking {
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: 14%;
+  height: auto;
   animation: peek-wiggle 2s ease-in-out infinite;
+  cursor: pointer;
 }
 
 .chapter5-scene .smudge-peeking img {
   width: 100%;
-  height: 100%;
+  height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 4px 10px rgba(180, 100, 255, 0.4));
+  filter: drop-shadow(0 4px 10px rgba(180, 100, 255, 0.6));
 }
 
 @keyframes peek-wiggle {
@@ -340,32 +341,40 @@
   100% { transform: scale(1); opacity: 1; }
 }
 
-/* Treasure bar */
+/* Treasure bar with slots */
 .chapter5-scene .treasure-bar {
   position: absolute;
   top: 2%;
   left: 3%;
   display: flex;
-  gap: 8px;
+  gap: 6px;
   background: rgba(255, 255, 255, 0.9);
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 15px;
   border: 3px solid #8b4513;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   z-index: 90;
 }
 
-.chapter5-scene .treasure-icon {
-  width: 35px;
-  height: 35px;
+.chapter5-scene .treasure-slot {
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 8px;
+  background: rgba(240, 240, 240, 0.5);
+  border: 2px dashed rgba(139, 69, 19, 0.3);
 }
 
-.chapter5-scene .treasure-icon img {
-  max-width: 100%;
-  max-height: 100%;
+.chapter5-scene .treasure-slot.filled {
+  background: rgba(255, 250, 220, 0.8);
+  border: 2px solid rgba(218, 165, 32, 0.6);
+}
+
+.chapter5-scene .treasure-slot img {
+  max-width: 90%;
+  max-height: 90%;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }

@@ -49,7 +49,7 @@
   touch-action: none;
 }
 
-/* Lily pads arranged in an arc */
+/* Lily pads floating in the open water (lower middle of river) */
 .chapter3-scene .lily-pads {
   position: absolute;
   width: 100%;
@@ -59,10 +59,11 @@
 
 .chapter3-scene .lily-pad {
   position: absolute;
-  width: 12%;
+  width: 16%;
   height: auto;
   transition: transform 0.2s, filter 0.2s;
   pointer-events: none;
+  cursor: pointer;
 }
 
 .chapter3-scene .lily-pad.clickable {
@@ -72,14 +73,15 @@
 .chapter3-scene .lily-pad img {
   width: 100%;
   height: auto;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
 }
 
-.chapter3-scene .lily-pad-0 { left: 15%; top: 52%; }
-.chapter3-scene .lily-pad-1 { left: 28%; top: 48%; }
-.chapter3-scene .lily-pad-2 { left: 43%; top: 46%; }
-.chapter3-scene .lily-pad-3 { left: 58%; top: 48%; }
-.chapter3-scene .lily-pad-4 { left: 71%; top: 52%; }
+/* Spread across the open water y 55-80%, x 25-80% */
+.chapter3-scene .lily-pad-0 { left: 28%; top: 58%; }
+.chapter3-scene .lily-pad-1 { left: 40%; top: 62%; }
+.chapter3-scene .lily-pad-2 { left: 52%; top: 56%; }
+.chapter3-scene .lily-pad-3 { left: 64%; top: 64%; }
+.chapter3-scene .lily-pad-4 { left: 76%; top: 60%; }
 
 .chapter3-scene .lily-pad.glowing {
   filter: brightness(1.4) drop-shadow(0 0 20px rgba(255, 255, 255, 0.8));
@@ -107,7 +109,7 @@
   animation: bounce 0.4s ease-out;
 }
 
-/* Frogs */
+/* Three frogs on the near bank */
 .chapter3-scene .frog-group {
   position: absolute;
   width: 100%;
@@ -117,19 +119,30 @@
 
 .chapter3-scene .frog {
   position: absolute;
-  width: 10%;
+  width: 13%;
   height: auto;
 }
 
 .chapter3-scene .frog img {
   width: 100%;
   height: auto;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.4));
 }
 
+/* Three frogs sitting on near bank/rocks */
 .chapter3-scene .frog-1 {
-  left: 12%;
-  top: 60%;
+  left: 8%;
+  top: 68%;
+}
+
+.chapter3-scene .frog-2 {
+  left: 22%;
+  top: 72%;
+}
+
+.chapter3-scene .frog-3 {
+  left: 14%;
+  top: 78%;
 }
 
 /* Fairy */
@@ -235,32 +248,40 @@
   z-index: 55;
 }
 
-/* Treasure bar */
+/* Treasure bar with slots */
 .chapter3-scene .treasure-bar {
   position: absolute;
   top: 2%;
   left: 3%;
   display: flex;
-  gap: 8px;
+  gap: 6px;
   background: rgba(255, 255, 255, 0.9);
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 15px;
   border: 3px solid #8b4513;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   z-index: 90;
 }
 
-.chapter3-scene .treasure-icon {
-  width: 35px;
-  height: 35px;
+.chapter3-scene .treasure-slot {
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 8px;
+  background: rgba(240, 240, 240, 0.5);
+  border: 2px dashed rgba(139, 69, 19, 0.3);
 }
 
-.chapter3-scene .treasure-icon img {
-  max-width: 100%;
-  max-height: 100%;
+.chapter3-scene .treasure-slot.filled {
+  background: rgba(255, 250, 220, 0.8);
+  border: 2px solid rgba(218, 165, 32, 0.6);
+}
+
+.chapter3-scene .treasure-slot img {
+  max-width: 90%;
+  max-height: 90%;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }

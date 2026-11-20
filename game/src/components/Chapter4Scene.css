@@ -60,40 +60,41 @@
   touch-action: none;
 }
 
-/* Fireflies */
+/* Fireflies - big and glowing, easy to see and tap */
 .chapter4-scene .firefly {
   position: absolute;
-  width: 4%;
+  width: 8%;
   height: auto;
   z-index: 10;
   transition: none;
   animation: firefly-glow 2s ease-in-out infinite;
+  cursor: pointer;
 }
 
 .chapter4-scene .firefly img {
   width: 100%;
   height: auto;
-  filter: drop-shadow(0 0 10px rgba(255, 220, 100, 0.8));
+  filter: drop-shadow(0 0 15px rgba(255, 220, 100, 0.9));
 }
 
 @keyframes firefly-glow {
   0%, 100% { 
-    filter: brightness(1) drop-shadow(0 0 8px rgba(255, 220, 100, 0.6));
+    filter: brightness(1.3) drop-shadow(0 0 12px rgba(255, 220, 100, 0.8));
     transform: scale(1);
   }
   50% { 
-    filter: brightness(1.5) drop-shadow(0 0 15px rgba(255, 220, 100, 1));
-    transform: scale(1.1);
+    filter: brightness(1.8) drop-shadow(0 0 25px rgba(255, 220, 100, 1));
+    transform: scale(1.15);
   }
 }
 
-/* Lantern */
+/* Lantern - big and visible at bottom center */
 .chapter4-scene .lantern {
   position: absolute;
-  bottom: 8%;
+  bottom: 4%;
   left: 50%;
   transform: translateX(-50%);
-  width: 12%;
+  width: 14%;
   height: auto;
   z-index: 15;
 }
@@ -101,7 +102,7 @@
 .chapter4-scene .lantern img {
   width: 100%;
   height: auto;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
 }
 
 .chapter4-scene .lantern-glow {
@@ -267,32 +268,40 @@
   100% { transform: scale(1); opacity: 1; }
 }
 
-/* Treasure bar */
+/* Treasure bar with slots */
 .chapter4-scene .treasure-bar {
   position: absolute;
   top: 2%;
   left: 3%;
   display: flex;
-  gap: 8px;
+  gap: 6px;
   background: rgba(255, 255, 255, 0.9);
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 15px;
   border: 3px solid #8b4513;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   z-index: 90;
 }
 
-.chapter4-scene .treasure-icon {
-  width: 35px;
-  height: 35px;
+.chapter4-scene .treasure-slot {
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 8px;
+  background: rgba(240, 240, 240, 0.5);
+  border: 2px dashed rgba(139, 69, 19, 0.3);
 }
 
-.chapter4-scene .treasure-icon img {
-  max-width: 100%;
-  max-height: 100%;
+.chapter4-scene .treasure-slot.filled {
+  background: rgba(255, 250, 220, 0.8);
+  border: 2px solid rgba(218, 165, 32, 0.6);
+}
+
+.chapter4-scene .treasure-slot img {
+  max-width: 90%;
+  max-height: 90%;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }

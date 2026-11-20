@@ -421,23 +421,17 @@ function Chapter5Scene({ progress, setProgress, onComplete }: Chapter5SceneProps
           </div>
         )}
         
-        {/* Treasure bar */}
+        {/* Treasure bar with slots */}
         <div className="treasure-bar">
-          {progress.treasures.petal && (
-            <div className="treasure-icon">
-              <img src="ch5/art/sprites/rainbow-petal.png" alt="Rainbow Petal" />
-            </div>
-          )}
-          {progress.treasures.gem && (
-            <div className="treasure-icon">
-              <img src="ch5/art/sprites/purple-gem.png" alt="Purple Gem" />
-            </div>
-          )}
-          {progress.treasures.light && (
-            <div className="treasure-icon">
-              <img src="ch5/art/sprites/firefly.png" alt="Firefly Light" />
-            </div>
-          )}
+          <div className={`treasure-slot ${progress.treasures.petal ? 'filled' : 'empty'}`}>
+            {progress.treasures.petal && <img src="ch5/art/sprites/rainbow-petal.png" alt="Rainbow Petal" />}
+          </div>
+          <div className={`treasure-slot ${progress.treasures.gem ? 'filled' : 'empty'}`}>
+            {progress.treasures.gem && <img src="ch5/art/sprites/purple-gem.png" alt="Purple Gem" />}
+          </div>
+          <div className={`treasure-slot ${progress.treasures.light ? 'filled' : 'empty'}`}>
+            {progress.treasures.light && <img src="ch5/art/sprites/firefly.png" alt="Firefly Light" />}
+          </div>
         </div>
         
         {/* Mute button */}

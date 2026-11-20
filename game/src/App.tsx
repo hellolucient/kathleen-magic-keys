@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import type { GameScreen, GameProgress } from './types';
+import type { GameScreen, GameProgress, ChapterNumber } from './types';
 import { audioManager } from './audioManager';
 import { loadProgress, getInitialProgress } from './gameState';
 import LoadingScreen from './components/LoadingScreen';
 import TitleScreen from './components/TitleScreen';
+import ChapterPicker from './components/ChapterPicker';
 import GameScene from './components/GameScene';
+import Chapter2Scene from './components/Chapter2Scene';
 import CompleteScreen from './components/CompleteScreen';
 import './App.css';
 
@@ -34,7 +36,6 @@ function App() {
   }, []);
 
   const handleLoadComplete = () => {
-    // Load saved progress
     const saved = loadProgress();
     if (saved) {
       setProgress(saved);
@@ -42,19 +43,41 @@ function App() {
     setScreen('title');
   };
 
-  const handleStartGame = async () => {
+  const handleStartFromTitle = async () => {
     await audioManager.unlock();
+    setScreen('chapter-picker');
+  };
+
+  const handleChapterSelect = (chapter: ChapterNumber) => {
+    setProgress(prev => ({ ...prev, currentChapter: chapter }));
     setScreen('game');
   };
 
   const handleGameComplete = () => {
+    const chapter = progress.currentChapter;
+    setProgress(prev => ({
+      ...prev,
+      completedChapters: prev.completedChapters.includes(chapter)
+        ? prev.completedChapters
+        : [...prev.completedChapters, chapter],
+    }));
     setScreen('complete');
   };
 
+  const handleNextChapter = () => {
+    const nextChapter = (progress.currentChapter + 1) as ChapterNumber;
+    if (nextChapter <= 2) {
+      setProgress(prev => ({ ...prev, currentChapter: nextChapter }));
+      setScreen('game');
+    }
+  };
+
   const handlePlayAgain = () => {
-    const initialProgress = getInitialProgress();
-    setProgress(initialProgress);
     setScreen('game');
+  };
+
+  const handleBackToChapterPicker = () => {
+    setScreen('chapter-picker');
   };
   
   const updateProgress = (updater: (prev: GameProgress) => GameProgress) => {
@@ -76,15 +99,35 @@ function App() {
   return (
     <div className="app">
       {screen === 'loading' && <LoadingScreen onComplete={handleLoadComplete} />}
-      {screen === 'title' && <TitleScreen onStart={handleStartGame} />}
-      {screen === 'game' && (
+      {screen === 'title' && <TitleScreen onStart={handleStartFromTitle} />}
+      {screen === 'chapter-picker' && (
+        <ChapterPicker
+          progress={progress}
+          onSelectChapter={handleChapterSelect}
+        />
+      )}
+      {screen === 'game' && progress.currentChapter === 1 && (
         <GameScene
           progress={progress}
           setProgress={updateProgress}
           onComplete={handleGameComplete}
         />
       )}
-      {screen === 'complete' && <CompleteScreen onPlayAgain={handlePlayAgain} />}
+      {screen === 'game' && progress.currentChapter === 2 && (
+        <Chapter2Scene
+          progress={progress}
+          setProgress={updateProgress}
+          onComplete={handleGameComplete}
+        />
+      )}
+      {screen === 'complete' && (
+        <CompleteScreen
+          chapter={progress.currentChapter}
+          onPlayAgain={handlePlayAgain}
+          onNextChapter={handleNextChapter}
+          onBackToChapterPicker={handleBackToChapterPicker}
+        />
+      )}
     </div>
   );
 }

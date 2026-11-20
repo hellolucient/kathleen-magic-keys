@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { GameProgress, Layout } from '../types';
 import { audioManager } from '../audioManager';
 import { saveProgress, resetProgress } from '../gameState';
+import LookForPreview from './LookForPreview';
 import './GameScene.css';
 
 interface GameSceneProps {
@@ -63,7 +64,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     saveProgress(progress);
     
     // Check if all keys found
-    if (progress.keysFound.length === 5 && !doorGlowStartedRef.current) {
+    if (progress.chapter1.keysFound.length === 5 && !doorGlowStartedRef.current) {
       doorGlowStartedRef.current = true;
       triggerDoorGlow();
       // Door tapped while the 5th key was still flying to the counter
@@ -82,7 +83,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
 
   const startIntro = async () => {
     // Skip intro if progress already exists (after refresh)
-    if (progressRef.current.keysFound.length > 0) {
+    if (progressRef.current.chapter1.keysFound.length > 0) {
       setFairyVisible(true);
       lastInteractionRef.current = Date.now();
       startHintSystem();
@@ -183,7 +184,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       const timeSinceInteraction = Date.now() - lastInteractionRef.current;
       
       // Stop hints if all keys found or unlocking
-      if (currentProgress.keysFound.length === 5 || unlocking) {
+      if (currentProgress.chapter1.keysFound.length === 5 || unlocking) {
         return;
       }
       
@@ -201,7 +202,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
 
   const giveHint = async () => {
     const currentProgress = progressRef.current;
-    const missingKeys = KEY_PUZZLES.filter(key => !currentProgress.keysFound.includes(key));
+    const missingKeys = KEY_PUZZLES.filter(key => !currentProgress.chapter1.keysFound.includes(key));
     
     if (missingKeys.length === 0) return;
     if (fairyText) return; // Skip if fairy is already speaking
@@ -234,7 +235,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
 
   const collectKey = async (keyId: string) => {
     const currentProgress = progressRef.current;
-    if (currentProgress.keysFound.includes(keyId)) return;
+    if (currentProgress.chapter1.keysFound.includes(keyId)) return;
     
     recordInteraction();
     
@@ -254,12 +255,12 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     
     // Update progress with functional update
     setProgress(p => {
-      const newKeysFound = [...p.keysFound, keyId];
-      return { ...p, keysFound: newKeysFound };
+      const newKeysFound = [...p.chapter1.keysFound, keyId];
+      return { ...p, chapter1: { ...p.chapter1, keysFound: newKeysFound } };
     });
     keysInFlightRef.current = Math.max(0, keysInFlightRef.current - 1);
     
-    const newLength = currentProgress.keysFound.length + 1;
+    const newLength = currentProgress.chapter1.keysFound.length + 1;
     
     setFairyCheer(true);
     const foundLineId = `fairy-found-${newLength}`;
@@ -331,7 +332,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   };
 
   const unlockDoor = async () => {
-    if (progressRef.current.keysFound.length < 5 || unlockingRef.current) return;
+    if (progressRef.current.chapter1.keysFound.length < 5 || unlockingRef.current) return;
     unlockingRef.current = true;
     
     // Failsafe: the complete screen always comes, whatever happens to audio
@@ -387,17 +388,17 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     recordInteraction();
     
     const currentProgress = progressRef.current;
-    if (!currentProgress.puzzleStates.teddyWiggled) {
+    if (!currentProgress.chapter1.puzzleStates.teddyWiggled) {
       audioManager.playSound('audio/sfx/wiggle-boing.mp3');
       setProgress(p => ({
         ...p,
-        puzzleStates: { ...p.puzzleStates, teddyWiggled: true }
+        chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, teddyWiggled: true } }
       }));
-    } else if (!currentProgress.puzzleStates.teddyMoved) {
+    } else if (!currentProgress.chapter1.puzzleStates.teddyMoved) {
       audioManager.playSound('audio/sfx/wiggle-boing.mp3');
       setProgress(p => ({
         ...p,
-        puzzleStates: { ...p.puzzleStates, teddyMoved: true }
+        chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, teddyMoved: true } }
       }));
       setTimeout(() => collectKey('key-teddy'), 500);
     }
@@ -405,26 +406,26 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
 
   const handleJewelleryBoxClick = () => {
     const currentProgress = progressRef.current;
-    if (currentProgress.puzzleStates.jewelleryOpen) return;
+    if (currentProgress.chapter1.puzzleStates.jewelleryOpen) return;
     
     recordInteraction();
     audioManager.playSound('audio/sfx/lid-click.mp3');
     setProgress(p => ({
       ...p,
-      puzzleStates: { ...p.puzzleStates, jewelleryOpen: true }
+      chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, jewelleryOpen: true } }
     }));
     setTimeout(() => collectKey('key-jewellery'), 500);
   };
 
   const handleCurtainClick = () => {
     const currentProgress = progressRef.current;
-    if (currentProgress.puzzleStates.curtainOpen) return;
+    if (currentProgress.chapter1.puzzleStates.curtainOpen) return;
     
     recordInteraction();
     audioManager.playSound('audio/sfx/curtain-swish.mp3');
     setProgress(p => ({
       ...p,
-      puzzleStates: { ...p.puzzleStates, curtainOpen: true }
+      chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, curtainOpen: true } }
     }));
     setTimeout(() => collectKey('key-curtain'), 500);
   };
@@ -433,11 +434,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     recordInteraction();
     
     const currentProgress = progressRef.current;
-    if (!currentProgress.puzzleStates.wardrobeOpen) {
+    if (!currentProgress.chapter1.puzzleStates.wardrobeOpen) {
       audioManager.playSound('audio/sfx/tap-pop.mp3');
       setProgress(p => ({
         ...p,
-        puzzleStates: { ...p.puzzleStates, wardrobeOpen: true }
+        chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, wardrobeOpen: true } }
       }));
     }
   };
@@ -445,7 +446,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const handleDressClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     const currentProgress = progressRef.current;
-    if (!currentProgress.puzzleStates.wardrobeOpen) return;
+    if (!currentProgress.chapter1.puzzleStates.wardrobeOpen) return;
     
     recordInteraction();
     audioManager.playSound('audio/sfx/sparkle.mp3');
@@ -454,13 +455,13 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
 
   const handleMirrorClick = () => {
     const currentProgress = progressRef.current;
-    if (currentProgress.puzzleStates.mirrorGlow) return;
+    if (currentProgress.chapter1.puzzleStates.mirrorGlow) return;
     
     recordInteraction();
     audioManager.playSound('audio/sfx/sparkle.mp3');
     setProgress(p => ({
       ...p,
-      puzzleStates: { ...p.puzzleStates, mirrorGlow: true, mirrorSequence: [] }
+      chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, mirrorGlow: true, mirrorSequence: [] } }
     }));
     
     // Demo the sequence
@@ -475,11 +476,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
 
   const handleStarClick = (order: number) => {
     const currentProgress = progressRef.current;
-    if (!currentProgress.puzzleStates.mirrorGlow) return;
+    if (!currentProgress.chapter1.puzzleStates.mirrorGlow) return;
     
     recordInteraction();
     
-    const sequence = currentProgress.puzzleStates.mirrorSequence;
+    const sequence = currentProgress.chapter1.puzzleStates.mirrorSequence;
     
     if (order === sequence.length + 1) {
       // Correct!
@@ -488,7 +489,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       const newSequence = [...sequence, order];
       setProgress(p => ({
         ...p,
-        puzzleStates: { ...p.puzzleStates, mirrorSequence: newSequence }
+        chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, mirrorSequence: newSequence } }
       }));
       
       if (newSequence.length === 3) {
@@ -503,7 +504,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       audioManager.playSpeech('hint-mirror-5');
       setProgress(p => ({
         ...p,
-        puzzleStates: { ...p.puzzleStates, mirrorSequence: [] }
+        chapter1: { ...p.chapter1, puzzleStates: { ...p.chapter1.puzzleStates, mirrorSequence: [] } }
       }));
       
       // Replay demo
@@ -601,14 +602,14 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   const handleDoorClick = async () => {
     recordInteraction();
     
-    const totalKeys = progressRef.current.keysFound.length + keysInFlightRef.current;
+    const totalKeys = progressRef.current.chapter1.keysFound.length + keysInFlightRef.current;
     
     if (totalKeys >= 5) {
       // Remember this tap - if unlocking can't start yet, triggerDoorGlow will handle it
       pendingDoorRef.current = true;
       
       // Try to unlock immediately if ready
-      if (progressRef.current.keysFound.length === 5 && !unlockingRef.current) {
+      if (progressRef.current.chapter1.keysFound.length === 5 && !unlockingRef.current) {
         pendingDoorRef.current = false;
         await unlockDoor();
       }
@@ -666,7 +667,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         <img src="art/bg-bedroom.jpg" alt="Princess's Bedroom" className="game-bg" />
         
         {/* Curtain overlay */}
-        {!progress.puzzleStates.curtainOpen && (
+        {!progress.chapter1.puzzleStates.curtainOpen && (
           <div 
             className="sprite curtain-closed clickable"
             style={getObjectStyle(layout.objects.find(o => o.id === 'curtain-closed'))}
@@ -677,7 +678,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         )}
         
         {/* Key behind curtain */}
-        {progress.puzzleStates.curtainOpen && !progress.keysFound.includes('key-curtain') && (
+        {progress.chapter1.puzzleStates.curtainOpen && !progress.chapter1.keysFound.includes('key-curtain') && (
           <div 
             className={`sprite key key-curtain clickable sparkle ${collectingKey === 'key-curtain' ? 'collecting' : 'float-up'}`}
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-curtain'))}
@@ -692,15 +693,15 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
           className="sprite mirror-hitbox clickable"
           style={{
             ...getObjectStyle(layout.objects.find(o => o.id === 'mirror-glow')),
-            zIndex: progress.puzzleStates.mirrorGlow ? 35 : 25,
+            zIndex: progress.chapter1.puzzleStates.mirrorGlow ? 35 : 25,
           }}
           onClick={handleMirrorClick}
         >
-          {progress.puzzleStates.mirrorGlow && (
+          {progress.chapter1.puzzleStates.mirrorGlow && (
             <>
               <img src="art/sprites/mirror-glow.png" alt="" className="mirror-glow" />
               
-              {!progress.keysFound.includes('key-mirror') && progress.puzzleStates.mirrorSequence.length < 3 && (
+              {!progress.chapter1.keysFound.includes('key-mirror') && progress.chapter1.puzzleStates.mirrorSequence.length < 3 && (
                 <>
                   <div 
                     className="sprite star clickable twinkle"
@@ -753,7 +754,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
                 </>
               )}
               
-              {progress.puzzleStates.mirrorSequence.length === 3 && !progress.keysFound.includes('key-mirror') && (
+              {progress.chapter1.puzzleStates.mirrorSequence.length === 3 && !progress.chapter1.keysFound.includes('key-mirror') && (
                 <div 
                   className={`sprite key key-mirror clickable sparkle ${collectingKey === 'key-mirror' ? 'collecting' : 'float-up'}`}
                   style={{
@@ -779,16 +780,16 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
           onClick={handleJewelleryBoxClick}
         >
           <img 
-            src={progress.puzzleStates.jewelleryOpen 
+            src={progress.chapter1.puzzleStates.jewelleryOpen 
               ? 'art/sprites/jewellery-box-open.png' 
               : 'art/sprites/jewellery-box-closed.png'
             } 
             alt="Jewellery Box" 
-            className={progress.puzzleStates.jewelleryOpen ? 'pop-in' : ''}
+            className={progress.chapter1.puzzleStates.jewelleryOpen ? 'pop-in' : ''}
           />
         </div>
         
-        {progress.puzzleStates.jewelleryOpen && !progress.keysFound.includes('key-jewellery') && (
+        {progress.chapter1.puzzleStates.jewelleryOpen && !progress.chapter1.keysFound.includes('key-jewellery') && (
           <div 
             className={`sprite key key-jewellery clickable sparkle ${collectingKey === 'key-jewellery' ? 'collecting' : 'float-up'}`}
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-jewellery'))}
@@ -817,11 +818,11 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
           style={getObjectStyle(layout.objects.find(o => o.id === 'wardrobe-open'))}
           onClick={handleWardrobeClick}
         >
-          {progress.puzzleStates.wardrobeOpen && (
+          {progress.chapter1.puzzleStates.wardrobeOpen && (
             <>
               <img src="art/sprites/wardrobe-open.png" alt="" className="wardrobe-open scale-in" />
               
-              {!progress.keysFound.includes('key-wardrobe') && (
+              {!progress.chapter1.keysFound.includes('key-wardrobe') && (
                 <div 
                   className="dress-pocket-hitbox clickable"
                   style={{
@@ -853,10 +854,10 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         
         {/* Teddy */}
         <div 
-          className={`sprite teddy clickable ${progress.puzzleStates.teddyWiggled && !progress.puzzleStates.teddyMoved ? 'wiggle' : ''}`}
+          className={`sprite teddy clickable ${progress.chapter1.puzzleStates.teddyWiggled && !progress.chapter1.puzzleStates.teddyMoved ? 'wiggle' : ''}`}
           style={{
             ...getObjectStyle(layout.objects.find(o => o.id === 'teddy')),
-            left: progress.puzzleStates.teddyMoved ? '34%' : '27%',
+            left: progress.chapter1.puzzleStates.teddyMoved ? '34%' : '27%',
             transition: 'left 0.5s ease',
           }}
           onClick={handleTeddyClick}
@@ -864,7 +865,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
           <img src="art/sprites/teddy.png" alt="Teddy Bear" />
         </div>
         
-        {progress.puzzleStates.teddyMoved && !progress.keysFound.includes('key-teddy') && (
+        {progress.chapter1.puzzleStates.teddyMoved && !progress.chapter1.keysFound.includes('key-teddy') && (
           <div 
             className={`sprite key key-teddy clickable sparkle ${collectingKey === 'key-teddy' ? 'collecting' : 'float-up'}`}
             style={getObjectStyle(layout.objects.find(o => o.id === 'key-teddy'))}
@@ -974,7 +975,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
         {/* Speech box: fixed spot away from the action, never on top of Pip */}
         {fairyText && (
           <div className={`speech-bubble ${
-            progress.keysFound.length === 5 || fairyFlyingToDoor || fairyAtDoor ? 'pos-bottom-left' : 'pos-top'
+            progress.chapter1.keysFound.length === 5 || fairyFlyingToDoor || fairyAtDoor ? 'pos-bottom-left' : 'pos-top'
           }`}>
             {fairyText}
           </div>
@@ -982,9 +983,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
 
         {/* Show what to look for while Pip explains */}
         {showKeyPreview && (
-          <div className="look-for-preview">
-            <img src="art/sprites/key.png" alt="A magic key" />
-          </div>
+          <LookForPreview imageSrc="art/sprites/key.png" alt="A magic key" />
         )}
         
         {/* Key counter */}
@@ -993,15 +992,15 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
             {[0, 1, 2, 3, 4].map((i) => (
               <div 
                 key={i} 
-                className={`key-slot ${i < progress.keysFound.length ? 'filled' : ''}`}
+                className={`key-slot ${i < progress.chapter1.keysFound.length ? 'filled' : ''}`}
               >
-                {i < progress.keysFound.length && (
+                {i < progress.chapter1.keysFound.length && (
                   <img src="art/sprites/key.png" alt="Key" className="key-icon" />
                 )}
               </div>
             ))}
           </div>
-          <div className="key-count">{progress.keysFound.length} / 5</div>
+          <div className="key-count">{progress.chapter1.keysFound.length} / 5</div>
         </div>
         
         {/* Mute button */}

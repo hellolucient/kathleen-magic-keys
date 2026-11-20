@@ -8,6 +8,7 @@ class AudioManager {
   private currentSources: AudioBufferSourceNode[] = [];
   private currentLoops: Map<string, AudioBufferSourceNode> = new Map();
   private lines: AudioLines | null = null;
+  private ch2Lines: AudioLines | null = null;
   private currentResolve: ((text: string) => void) | null = null;
   private sharedAudioElement: HTMLAudioElement | null = null;
   private speechToken = 0;
@@ -18,6 +19,7 @@ class AudioManager {
     if (this.context) return;
     this.context = new (window.AudioContext || (window as any).webkitAudioContext)();
     await this.loadAudioLines();
+    await this.loadCh2AudioLines();
   }
 
   async unlock() {
@@ -56,6 +58,15 @@ class AudioManager {
       this.lines = await response.json();
     } catch (error) {
       console.error('Failed to load audio lines:', error);
+    }
+  }
+
+  async loadCh2AudioLines() {
+    try {
+      const response = await fetch('ch2/audio/lines.json');
+      this.ch2Lines = await response.json();
+    } catch (error) {
+      console.error('Failed to load ch2 audio lines:', error);
     }
   }
 
@@ -199,9 +210,10 @@ class AudioManager {
     this.speechToken++;
   }
 
-  getText(lineId: string): string {
-    if (!this.lines) return '';
-    const line = this.lines[lineId];
+  getText(lineId: string, chapter: 'ch1' | 'ch2' = 'ch1'): string {
+    const lines = chapter === 'ch2' ? this.ch2Lines : this.lines;
+    if (!lines) return '';
+    const line = lines[lineId];
     return line ? line.text : '';
   }
 
@@ -229,11 +241,15 @@ class AudioManager {
     return durations[lineId] || 5000;
   }
 
-  async playSpeech(lineId: string): Promise<string> {
-    if (!this.lines) return '';
+  async playSpeech(lineId: string, chapter: 'ch1' | 'ch2' = 'ch1'): Promise<string> {
+    const lines = chapter === 'ch2' ? this.ch2Lines : this.lines;
+    if (!lines) return '';
     
-    const line = this.lines[lineId];
-    if (!line) return '';
+    const line = lines[lineId];
+    if (!line) {
+      console.warn(`Audio line not found: ${lineId} in ${chapter}`);
+      return '';
+    }
 
     // Finish any current speech
     if (this.finishCurrent) {

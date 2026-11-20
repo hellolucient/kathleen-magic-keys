@@ -70,7 +70,7 @@
 
 .complete-buttons {
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
   justify-content: center;
   flex-wrap: wrap;
   margin-bottom: 2rem;
@@ -108,11 +108,20 @@
   background: linear-gradient(135deg, #9966ff 0%, #cc99ff 100%);
   color: white;
   position: relative;
-  opacity: 0.7;
-  cursor: not-allowed;
+}
+
+.next-chapter-button:not(:disabled):hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 30px rgba(153, 102, 255, 0.6);
+}
+
+.next-chapter-button:not(:disabled):active {
+  transform: scale(0.95);
 }
 
 .next-chapter-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
   animation: sparkle 3s ease-in-out infinite;
 }
 
@@ -122,6 +131,30 @@
   margin-top: 0.2rem;
   font-weight: normal;
   font-style: italic;
+}
+
+.back-button {
+  font-family: 'Georgia', serif;
+  font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+  padding: 1rem 2.5rem;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #daa520 0%, #ffd700 100%);
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  font-weight: bold;
+}
+
+.back-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 30px rgba(218, 165, 32, 0.6);
+}
+
+.back-button:active {
+  transform: scale(0.95);
 }
 
 @keyframes sparkle {

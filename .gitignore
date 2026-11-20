@@ -1,2 +1,10 @@
 art/raw/
 *.wav
+
+# Root level test files (tests should be under game/)
+/node_modules/
+/package.json
+/package-lock.json
+/playwright-report/
+/test-results/
+/playwright.config.ts

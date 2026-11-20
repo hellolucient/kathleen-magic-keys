@@ -302,3 +302,12 @@
   0%, 100% { opacity: 0.5;  filter: drop-shadow(0 0 4px var(--hint)); }
   50%      { opacity: 0.8;  filter: drop-shadow(0 0 14px var(--hint)); }
 }
+
+/* Narrator's words: storybook caption */
+.chapter2-scene .speech-bubble.narrator {
+  background: rgba(60, 30, 80, 0.82);
+  color: #fff8e7;
+  font-style: italic;
+  border: 2px solid rgba(255, 215, 120, 0.8);
+  max-width: 45%;
+}

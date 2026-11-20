@@ -48,8 +48,15 @@ function App() {
     setScreen('chapter-picker');
   };
 
+  // Every time a chapter starts, it starts from the beginning
+  const freshChapter = (prev: GameProgress, chapter: ChapterNumber): GameProgress => {
+    const base = getInitialProgress();
+    if (chapter === 1) return { ...prev, currentChapter: 1, chapter1: base.chapter1 };
+    return { ...prev, currentChapter: chapter, chapter2: base.chapter2 };
+  };
+
   const handleChapterSelect = (chapter: ChapterNumber) => {
-    setProgress(prev => ({ ...prev, currentChapter: chapter }));
+    setProgress(prev => freshChapter(prev, chapter));
     setScreen('game');
   };
 
@@ -66,23 +73,23 @@ function App() {
 
   // End of Chapter 1: tapping Pip at the door goes straight into Chapter 2
   const handleFollowToChapter2 = () => {
-    setProgress(prev => ({
+    setProgress(prev => freshChapter({
       ...prev,
       completedChapters: prev.completedChapters.includes(1) ? prev.completedChapters : [...prev.completedChapters, 1],
-      currentChapter: 2,
-    }));
+    }, 2));
     setScreen('game');
   };
 
   const handleNextChapter = () => {
     const nextChapter = (progress.currentChapter + 1) as ChapterNumber;
     if (nextChapter <= 2) {
-      setProgress(prev => ({ ...prev, currentChapter: nextChapter }));
+      setProgress(prev => freshChapter(prev, nextChapter));
       setScreen('game');
     }
   };
 
   const handlePlayAgain = () => {
+    setProgress(prev => freshChapter(prev, prev.currentChapter));
     setScreen('game');
   };
 

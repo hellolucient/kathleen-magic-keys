@@ -171,7 +171,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       return;
     }
     
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 500));
     if (introAbortedRef.current) {
       setFairyText('');
       introRunningRef.current = false;
@@ -267,8 +267,8 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     // Play key-found chime (don't await - let it play alongside)
     audioManager.playSoundEffect('audio/sfx/key-found.mp3');
     
-    // Wait for chime to mostly finish, then small delay before narration
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Short beat for the chime, then straight on
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     // Show fly animation
     keysInFlightRef.current++;
@@ -289,7 +289,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     const foundLineId = `fairy-found-${newLength}`;
     setFairyText(audioManager.getText(foundLineId));
     await audioManager.playSpeech(foundLineId);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 400));
     
     setFairyCheer(false);
     setFairyText('');
@@ -308,7 +308,7 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
     }
     
     // Start fairy flying to door after a brief moment
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 800));
     setFairyCheer(false);
     setFairyFlyingToDoor(true);
     audioManager.playSound('audio/sfx/sparkle.mp3');
@@ -336,8 +336,8 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
       return;
     }
     
-    // Wait a bit more for total 6s (to let 5th-key praise finish)
-    await new Promise(resolve => setTimeout(resolve, 2500));
+    // Short wait so the (now shorter) 5th-key praise can finish
+    await new Promise(resolve => setTimeout(resolve, 700));
     if (unlockingRef.current) return; // door already tapped, don't talk over the finale
     
     setFairyText(audioManager.getText('fairy-door-glow'));

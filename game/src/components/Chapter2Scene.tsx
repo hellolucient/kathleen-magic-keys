@@ -18,6 +18,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
   const [fairyText, setFairyText] = useState('');
   const [showButterflyPreview, setShowButterflyPreview] = useState(false);
   const [fairyVisible, setFairyVisible] = useState(false);
+  const [narratorSpeaking, setNarratorSpeaking] = useState(false);
   const [fairyCheer, setFairyCheer] = useState(false);
   const [muted, setMuted] = useState(false);
   const [draggingButterfly, setDraggingButterfly] = useState<string | null>(null);
@@ -86,7 +87,11 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
       return;
     }
     
+    setNarratorSpeaking(true);
+    setFairyText(audioManager.getText('narr-intro', 'ch2'));
     await audioManager.playSpeech('narr-intro', 'ch2');
+    setNarratorSpeaking(false);
+    setFairyText('');
     if (introAbortedRef.current) {
       setFairyText('');
       introRunningRef.current = false;
@@ -114,7 +119,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
       return;
     }
     
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 500));
     if (introAbortedRef.current) {
       setFairyText('');
       introRunningRef.current = false;
@@ -188,12 +193,14 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
     setBackgroundSolved(true);
     setSneezePuffVisible(false);
     
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 600));
     
+    setNarratorSpeaking(true);
     setFairyText(audioManager.getText('narr-burst', 'ch2'));
     await audioManager.playSpeech('narr-burst', 'ch2');
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 400));
     setFairyText('');
+    setNarratorSpeaking(false);
     
     setPetalRevealed(true);
     
@@ -201,15 +208,17 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
     
     setFairyText(audioManager.getText('fairy-footprints', 'ch2'));
     await audioManager.playSpeech('fairy-footprints', 'ch2');
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 600));
     setFairyText('');
     
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 300));
     
+    setNarratorSpeaking(true);
     setFairyText(audioManager.getText('narr-complete', 'ch2'));
     await audioManager.playSpeech('narr-complete', 'ch2');
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 800));
     setFairyText('');
+    setNarratorSpeaking(false);
     
     await new Promise(resolve => setTimeout(resolve, 1000));
     onComplete();
@@ -301,7 +310,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
       const matchLineId = `fairy-match-${draggingButterfly}`;
       setFairyText(audioManager.getText(matchLineId, 'ch2'));
       await audioManager.playSpeech(matchLineId, 'ch2');
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 400));
       setFairyCheer(false);
       setFairyText('');
     } else {
@@ -495,7 +504,9 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
         )}
         
         {fairyText && (
-          <div className={`speech-bubble ${
+          <div className={`speech-bubble ${narratorSpeaking ? 'narrator' : ''} ${
+            // Footprints and petal sit bottom right at the end, so keep words off them
+            narratorSpeaking || petalRevealed ? 'pos-top-left' :
             progress.chapter2.matchedFlowers.length >= 4 ? 'pos-bottom-right' : 'pos-top-left'
           }`}>
             {fairyText}

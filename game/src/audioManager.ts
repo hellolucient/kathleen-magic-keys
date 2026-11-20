@@ -352,6 +352,12 @@ class AudioManager {
 
     if (this.muted) return line.text;
 
+    // Fast path for automated playthrough tests
+    if (typeof window !== 'undefined' && (window as unknown as { __KMK_FAST_AUDIO?: boolean }).__KMK_FAST_AUDIO) {
+      await new Promise(r => setTimeout(r, 80));
+      return line.text;
+    }
+
     // Use shared audio element (iOS-compatible)
     const audio = this.sharedAudioElement || new Audio();
     const token = ++this.speechToken;

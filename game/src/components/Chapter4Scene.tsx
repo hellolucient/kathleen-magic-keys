@@ -34,9 +34,9 @@ const PARENT_SPOTS: Record<string, { left: string; top: string }> = {
 };
 
 const BABY_HIDE_SPOTS = [
-  { left: '18%', top: '38%' },
-  { left: '55%', top: '42%' },
-  { left: '78%', top: '35%' },
+  { left: '22%', top: '32%' },  // near left bushes, above owl mum
+  { left: '48%', top: '36%' },  // mid clearing
+  { left: '68%', top: '30%' },  // above path, left of deer
 ];
 
 function Chapter4Scene({ progress, setProgress, onComplete }: Chapter4SceneProps) {
@@ -340,6 +340,11 @@ function Chapter4Scene({ progress, setProgress, onComplete }: Chapter4SceneProps
               ? (e) => { e.preventDefault(); void collectLight(); }
               : undefined
           }
+          onClick={
+            lightRevealed && !lightCollected
+              ? () => { void collectLight(); }
+              : undefined
+          }
           style={{ touchAction: 'none' }}
         >
           <img src="ch4/art/sprites/lantern.png" alt="Lantern" />
@@ -407,6 +412,7 @@ function Chapter4Scene({ progress, setProgress, onComplete }: Chapter4SceneProps
               e.preventDefault();
               pathResolveRef.current?.();
             }}
+            onClick={() => pathResolveRef.current?.()}
             style={{ touchAction: 'none' }}
           />
         )}

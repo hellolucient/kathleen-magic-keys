@@ -68,8 +68,8 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   useEffect(() => {
     saveProgress(progress);
     
-    // Check if all keys found
-    if (progress.chapter1.keysFound.length === 5 && !doorGlowStartedRef.current) {
+    // Check if all keys found (>= 5 so batched updates that skip exactly 5 still trigger)
+    if (progress.chapter1.keysFound.length >= 5 && !doorGlowStartedRef.current) {
       doorGlowStartedRef.current = true;
       triggerDoorGlow();
       // Door tapped while the 5th key was still flying to the counter
@@ -258,40 +258,41 @@ function GameScene({ progress, setProgress, onComplete }: GameSceneProps) {
   };
 
   const collectKey = async (keyId: string) => {
-    const currentProgress = progressRef.current;
-    if (currentProgress.chapter1.keysFound.includes(keyId)) return;
-    
+    if (progressRef.current.chapter1.keysFound.includes(keyId)) return;
+
     recordInteraction();
-    
+
     audioManager.playSound('audio/sfx/sparkle.mp3');
-    
-    // Play key-found chime (don't await - let it play alongside)
     audioManager.playSoundEffect('audio/sfx/key-found.mp3');
-    
-    // Short beat for the chime, then straight on
+
     await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // Show fly animation
+    if (progressRef.current.chapter1.keysFound.includes(keyId)) return;
+
     keysInFlightRef.current++;
     setCollectingKey(keyId);
     await new Promise(resolve => setTimeout(resolve, 400));
     setCollectingKey(null);
-    
-    // Update progress with functional update
+
+    const alreadyHad = progressRef.current.chapter1.keysFound.length;
     setProgress(p => {
-      const newKeysFound = [...p.chapter1.keysFound, keyId];
-      return { ...p, chapter1: { ...p.chapter1, keysFound: newKeysFound } };
+      if (p.chapter1.keysFound.includes(keyId)) return p;
+      return {
+        ...p,
+        chapter1: { ...p.chapter1, keysFound: [...p.chapter1.keysFound, keyId] },
+      };
     });
     keysInFlightRef.current = Math.max(0, keysInFlightRef.current - 1);
-    
-    const newLength = currentProgress.chapter1.keysFound.length + 1;
-    
+
+    // Yield so progressRef updates via the effect
+    await new Promise(resolve => setTimeout(resolve, 50));
+    const praiseIndex = Math.min(5, Math.max(alreadyHad + 1, progressRef.current.chapter1.keysFound.length));
+
     setFairyCheer(true);
-    const foundLineId = `fairy-found-${newLength}`;
+    const foundLineId = `fairy-found-${praiseIndex}`;
     setFairyText(audioManager.getText(foundLineId));
     await audioManager.playSpeech(foundLineId);
     await new Promise(resolve => setTimeout(resolve, 400));
-    
+
     setFairyCheer(false);
     setFairyText('');
   };

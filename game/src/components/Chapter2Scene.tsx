@@ -16,20 +16,19 @@ interface Chapter2SceneProps {
 
 const COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
 
-// Neat alternating L/R trail along the path to the river; evenly spaced, slightly smaller into the distance
+// Neat alternating L/R trail along the dirt path toward the river; evenly spaced, smaller into distance
 // [x%, y%, heading deg, scale]
 const FOOTPRINT_TRAIL: [number, number, number, number][] = [
-  [58.5, 92, -5, 1.0],
-  [58.8, 86, 0, 0.96],
-  [59.2, 80, 8, 0.92],
-  [60.0, 74.5, 18, 0.88],
-  [61.5, 69.5, 32, 0.84],
-  [63.5, 65.5, 48, 0.80],
-  [66.2, 62.0, 58, 0.76],
-  [69.2, 59.0, 64, 0.72],
-  [72.5, 56.5, 68, 0.68],
-  [76.0, 54.2, 70, 0.64],
-  [79.5, 52.2, 72, 0.60],
+  [52.0, 88, 8, 1.0],
+  [54.0, 82, 14, 0.95],
+  [56.5, 76, 22, 0.90],
+  [59.5, 71, 32, 0.85],
+  [63.0, 66.5, 42, 0.80],
+  [67.0, 62.5, 52, 0.75],
+  [71.0, 59.0, 58, 0.70],
+  [75.0, 56.0, 62, 0.65],
+  [79.0, 53.5, 66, 0.60],
+  [83.0, 51.5, 68, 0.55],
 ];
 
 function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps) {
@@ -418,24 +417,19 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
       style={{ touchAction: 'none' }}
     >
       <div className="game-container">
+        {/* Base layer: always keep a solid bg underneath so fades never reveal a black void */}
         <img
-          src={
-            backgroundSolved || gardenFullColour
-              ? 'ch2/art/bg-garden-colour-full.jpg'
-              : 'ch2/art/bg-garden-grey.jpg'
-          }
-          alt="Garden"
-          className={`game-bg ${backgroundSolved ? 'fade-in' : ''} ${!gardenFullColour && !backgroundSolved ? 'desat-crossfade' : ''}`}
+          src="ch2/art/bg-garden-grey.jpg"
+          alt=""
+          className="game-bg"
+          aria-hidden
         />
-        {/* Grey layer crossfades in when colour is blown away */}
-        {!gardenFullColour && !backgroundSolved && (
-          <img
-            src="ch2/art/bg-garden-grey.jpg"
-            alt=""
-            className="game-bg grey-overlay-bg"
-            aria-hidden
-          />
-        )}
+        {/* Full-colour layer: visible at open, after sneeze drains, and again when restored */}
+        <img
+          src="ch2/art/bg-garden-colour-full.jpg"
+          alt="Garden"
+          className={`game-bg colour-layer ${gardenFullColour || backgroundSolved ? 'colour-visible' : 'colour-hidden'}`}
+        />
 
         {sneezeGust && (
           <div className="sneeze-gust" aria-hidden>
@@ -547,6 +541,9 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
                 className="path-continue-hit clickable"
                 style={{ touchAction: 'none' }}
                 onPointerDown={() => {
+                  if (pathResolveRef.current) pathResolveRef.current();
+                }}
+                onClick={() => {
                   if (pathResolveRef.current) pathResolveRef.current();
                 }}
               />

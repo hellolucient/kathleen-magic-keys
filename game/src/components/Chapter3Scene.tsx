@@ -346,11 +346,12 @@ function Chapter3Scene({ progress, setProgress, onComplete }: Chapter3SceneProps
         {/* Gem floats IN the river under the bridge — ~5% wide, soft glow + bob */}
         {gemRevealed && !gemCollected && (
           <div
-            className="purple-gem in-river fade-in sparkle clickable"
+            className="purple-gem in-river sparkle clickable"
             onPointerDown={(e) => {
               e.preventDefault();
               void collectGem();
             }}
+            onClick={() => { void collectGem(); }}
             style={{ touchAction: 'none' }}
           >
             <img src="ch3/art/sprites/purple-gem.png" alt="Purple Dragon Gem" />
@@ -364,6 +365,7 @@ function Chapter3Scene({ progress, setProgress, onComplete }: Chapter3SceneProps
               e.preventDefault();
               pathResolveRef.current?.();
             }}
+            onClick={() => pathResolveRef.current?.()}
             style={{ touchAction: 'none' }}
           />
         )}

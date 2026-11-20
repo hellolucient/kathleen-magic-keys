@@ -315,43 +315,7 @@
   100% { transform: scale(1); opacity: 1; }
 }
 
-/* Treasure bar with slots */
-.chapter4-scene .treasure-bar {
-  position: absolute;
-  top: 2%;
-  left: 3%;
-  display: flex;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 6px 10px;
-  border-radius: 15px;
-  border: 3px solid #8b4513;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  z-index: 90;
-}
-
-.chapter4-scene .treasure-slot {
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: rgba(240, 240, 240, 0.5);
-  border: 2px dashed rgba(139, 69, 19, 0.3);
-}
-
-.chapter4-scene .treasure-slot.filled {
-  background: rgba(255, 250, 220, 0.8);
-  border: 2px solid rgba(218, 165, 32, 0.6);
-}
-
-.chapter4-scene .treasure-slot img {
-  max-width: 90%;
-  max-height: 90%;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
+/* Legacy treasure-bar rules removed — TreasureBar.gold-frames owns styling */
 
 /* Firefly counter */
 .chapter4-scene .firefly-counter {

@@ -1,0 +1,433 @@
+.chapter5-scene {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.chapter5-scene .game-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.chapter5-scene .game-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.chapter5-scene .sprite {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.chapter5-scene .sprite img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.chapter5-scene .clickable {
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+
+/* Rainbow */
+.chapter5-scene .rainbow {
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: 60%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 45%,
+    rgba(255, 100, 100, 0.3) 50%,
+    rgba(255, 180, 100, 0.3) 55%,
+    rgba(255, 240, 100, 0.3) 60%,
+    rgba(150, 255, 150, 0.3) 65%,
+    rgba(100, 180, 255, 0.3) 70%,
+    rgba(180, 100, 255, 0.3) 75%,
+    transparent 80%
+  );
+  border-radius: 50% 50% 0 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-50%) scale(0.9); }
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+.chapter5-scene .fade-in {
+  animation: fadeIn 1.5s ease-in;
+}
+
+/* Hide-and-seek clouds */
+.chapter5-scene .cloud-hiding-spot {
+  position: absolute;
+  width: 18%;
+  height: 18%;
+  z-index: 20;
+}
+
+.chapter5-scene .smudge-peeking {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  animation: peek-wiggle 2s ease-in-out infinite;
+}
+
+.chapter5-scene .smudge-peeking img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 10px rgba(180, 100, 255, 0.4));
+}
+
+@keyframes peek-wiggle {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-5px) rotate(1deg); }
+}
+
+.chapter5-scene .cloud-hiding-spot.has-smudge .smudge-peeking {
+  animation: peek-wiggle 2s ease-in-out infinite, sparkle-hint 3s ease-in-out 2s infinite;
+}
+
+@keyframes sparkle-hint {
+  0%, 100% { filter: drop-shadow(0 4px 10px rgba(180, 100, 255, 0.4)); }
+  50% { filter: drop-shadow(0 0 20px rgba(255, 220, 100, 0.9)); }
+}
+
+/* Smudge sitting */
+.chapter5-scene .smudge-sitting {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  transform: translate(-50%, -50%);
+  width: 16%;
+  height: auto;
+  z-index: 30;
+}
+
+.chapter5-scene .smudge-sitting img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3));
+}
+
+.chapter5-scene .crown-on-head {
+  position: absolute;
+  top: -25%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: auto;
+  animation: crown-appear 0.8s ease-out;
+}
+
+.chapter5-scene .crown-on-head img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 0 15px rgba(255, 220, 100, 0.8));
+}
+
+@keyframes crown-appear {
+  0% { transform: translateX(-50%) scale(0.5) rotate(-10deg); opacity: 0; }
+  60% { transform: translateX(-50%) scale(1.1) rotate(5deg); }
+  100% { transform: translateX(-50%) scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Flying Smudge */
+.chapter5-scene .smudge-flying-across {
+  position: absolute;
+  left: -20%;
+  top: 30%;
+  width: 18%;
+  height: auto;
+  z-index: 40;
+  animation: fly-across 4s linear forwards;
+}
+
+.chapter5-scene .smudge-flying-across img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 4px 12px rgba(180, 100, 255, 0.5));
+}
+
+@keyframes fly-across {
+  0% { left: -20%; top: 30%; }
+  100% { left: 110%; top: 20%; }
+}
+
+.chapter5-scene .pip-riding {
+  position: absolute;
+  top: 10%;
+  right: 20%;
+  width: 40%;
+  height: auto;
+}
+
+/* Crown assembly */
+.chapter5-scene .crown-assembly {
+  position: absolute;
+  left: 50%;
+  top: 35%;
+  transform: translate(-50%, -50%);
+  width: 16%;
+  height: auto;
+  z-index: 25;
+}
+
+.chapter5-scene .crown-base {
+  position: relative;
+  width: 100%;
+  padding-bottom: 75%;
+}
+
+.chapter5-scene .crown-empty-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 80%;
+  border: 4px dashed rgba(218, 165, 32, 0.6);
+  border-radius: 50%;
+  animation: circle-pulse 2s ease-in-out infinite;
+}
+
+@keyframes circle-pulse {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+}
+
+.chapter5-scene .crown-piece-placed {
+  position: absolute;
+  width: 40%;
+  height: auto;
+  animation: piece-drop 0.5s ease-out;
+}
+
+.chapter5-scene .crown-piece-placed img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+}
+
+.chapter5-scene .crown-piece-0 { top: 10%; left: 50%; transform: translateX(-50%); }
+.chapter5-scene .crown-piece-1 { top: 45%; left: 10%; }
+.chapter5-scene .crown-piece-2 { top: 45%; right: 10%; }
+
+@keyframes piece-drop {
+  0% { transform: translateY(-100px) scale(1.2); opacity: 0; }
+  60% { transform: translateY(10px) scale(1); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Treasure tray */
+.chapter5-scene .treasure-tray {
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 12px 20px;
+  border-radius: 20px;
+  border: 3px solid #8b4513;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 50;
+}
+
+.chapter5-scene .treasure-piece {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 250, 240, 0.8);
+  border-radius: 15px;
+  border: 2px solid #d4af37;
+  transition: transform 0.2s;
+}
+
+.chapter5-scene .treasure-piece.clickable {
+  cursor: grab;
+}
+
+.chapter5-scene .treasure-piece.clickable:hover {
+  transform: scale(1.05);
+}
+
+.chapter5-scene .treasure-piece.dragging {
+  position: absolute;
+  z-index: 100;
+  cursor: grabbing;
+}
+
+.chapter5-scene .treasure-piece img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Fairy */
+.chapter5-scene .fairy {
+  position: absolute;
+  right: 8%;
+  top: 15%;
+  width: 11%;
+  height: auto;
+  z-index: 60;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.chapter5-scene .float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Speech bubble */
+.chapter5-scene .speech-bubble {
+  position: absolute;
+  left: 3%;
+  top: 18%;
+  width: max-content;
+  max-width: 36%;
+  padding: 1.2rem 1.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-size: 1.3rem;
+  line-height: 1.5;
+  color: #333;
+  z-index: 100;
+  pointer-events: none;
+  animation: pop-in-anim 0.3s ease;
+  text-align: center;
+  font-family: 'Georgia', serif;
+}
+
+@keyframes pop-in-anim {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Treasure bar */
+.chapter5-scene .treasure-bar {
+  position: absolute;
+  top: 2%;
+  left: 3%;
+  display: flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 12px;
+  border-radius: 15px;
+  border: 3px solid #8b4513;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 90;
+}
+
+.chapter5-scene .treasure-icon {
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chapter5-scene .treasure-icon img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Mute button */
+.chapter5-scene .mute-button {
+  position: absolute;
+  bottom: 2%;
+  right: 2%;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 3px solid #8b4513;
+  background: rgba(255, 255, 255, 0.95);
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.chapter5-scene .mute-button:hover {
+  transform: scale(1.1);
+}
+
+.chapter5-scene .mute-button:active {
+  transform: scale(0.95);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .chapter5-scene .speech-bubble {
+    max-width: 45%;
+    font-size: 1.1rem;
+    padding: 1rem;
+  }
+  
+  .chapter5-scene .treasure-bar {
+    padding: 6px 10px;
+  }
+  
+  .chapter5-scene .treasure-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .chapter5-scene .treasure-tray {
+    padding: 10px 15px;
+    gap: 10px;
+  }
+  
+  .chapter5-scene .treasure-piece {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .chapter5-scene .mute-button {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+}

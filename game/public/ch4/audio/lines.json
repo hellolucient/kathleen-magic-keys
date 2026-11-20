@@ -1,0 +1,140 @@
+{
+  "narr-title": {
+    "text": "Chapter Four: The Twinkle Forest.",
+    "voice": "en-GB-SoniaNeural",
+    "speaker": "Narrator",
+    "file": "ch4/audio/narr-title.mp3"
+  },
+  "narr-intro": {
+    "text": "Princess Kathleen and Pip walked into the Twinkle Forest. It was getting dark, and the fireflies were all mixed up.",
+    "voice": "en-GB-SoniaNeural",
+    "speaker": "Narrator",
+    "file": "ch4/audio/narr-intro.mp3"
+  },
+  "fairy-intro": {
+    "text": "Let's catch the fireflies in our lantern, so we can see the way. Tap each one, and we'll count together!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/fairy-intro.mp3"
+  },
+  "fairy-ten": {
+    "text": "Ten fireflies! Our lantern is glowing!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/fairy-ten.mp3"
+  },
+  "fairy-animals": {
+    "text": "Oh no, three baby animals are lost! Can you take each baby to its mummy?",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/fairy-animals.mp3"
+  },
+  "fairy-match-owl": {
+    "text": "The baby owl found its mummy! Hoo hoo!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/fairy-match-owl.mp3"
+  },
+  "fairy-match-rabbit": {
+    "text": "The bunny is home with its mummy!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/fairy-match-rabbit.mp3"
+  },
+  "fairy-match-deer": {
+    "text": "The little fawn found its mummy deer!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/fairy-match-deer.mp3"
+  },
+  "fairy-wrong": {
+    "text": "Hmm, that's not its mummy. Try another one!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/fairy-wrong.mp3"
+  },
+  "narr-cry": {
+    "text": "Then, from far away, they heard a sound. Someone was crying... high up in a cave on Cloud Mountain.",
+    "voice": "en-GB-SoniaNeural",
+    "speaker": "Narrator",
+    "file": "ch4/audio/narr-cry.mp3"
+  },
+  "fairy-light": {
+    "text": "Let's take a firefly light with us. Tap the lantern, Kathleen!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/fairy-light.mp3"
+  },
+  "fairy-light-got": {
+    "text": "A magic Firefly Light! Now let's find out who is crying.",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/fairy-light-got.mp3"
+  },
+  "narr-complete": {
+    "text": "So Princess Kathleen, Pip and their little light set off for Cloud Mountain... To be continued!",
+    "voice": "en-GB-SoniaNeural",
+    "speaker": "Narrator",
+    "file": "ch4/audio/narr-complete.mp3"
+  },
+  "count-1": {
+    "text": "1!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/count-1.mp3"
+  },
+  "count-2": {
+    "text": "2!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/count-2.mp3"
+  },
+  "count-3": {
+    "text": "3!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/count-3.mp3"
+  },
+  "count-4": {
+    "text": "4!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/count-4.mp3"
+  },
+  "count-5": {
+    "text": "5!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/count-5.mp3"
+  },
+  "count-6": {
+    "text": "6!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/count-6.mp3"
+  },
+  "count-7": {
+    "text": "7!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/count-7.mp3"
+  },
+  "count-8": {
+    "text": "8!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/count-8.mp3"
+  },
+  "count-9": {
+    "text": "9!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/count-9.mp3"
+  },
+  "count-10": {
+    "text": "10!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch4/audio/count-10.mp3"
+  }
+}

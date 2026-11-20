@@ -25,6 +25,7 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [butterflyFlapping, setButterflyFlapping] = useState<Record<string, boolean>>({});
   const [petalRevealed, setPetalRevealed] = useState(false);
+  const [petalCollected, setPetalCollected] = useState(false);
   const [backgroundSolved, setBackgroundSolved] = useState(false);
   const [sneezePuffVisible, setSneezePuffVisible] = useState(true);
   
@@ -181,6 +182,29 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
     introAbortedRef.current = true;
   };
 
+  const collectPetal = async () => {
+    if (petalCollected) return;
+    
+    recordInteraction();
+    setPetalCollected(true);
+    audioManager.playSound('audio/sfx/sparkle.mp3');
+    
+    setProgress(p => ({
+      ...p,
+      treasures: { ...p.treasures, petal: true },
+    }));
+    
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    setFairyText(audioManager.getText('narr-complete', 'ch2'));
+    await audioManager.playSpeech('narr-complete', 'ch2');
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setFairyText('');
+    
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    onComplete();
+  };
+
   const triggerCompletion = async () => {
     await new Promise(resolve => setTimeout(resolve, 500));
     
@@ -204,15 +228,15 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
     await new Promise(resolve => setTimeout(resolve, 1500));
     setFairyText('');
     
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Auto-collect after 25 seconds if not tapped
+    const autoCollectTimer = setTimeout(() => {
+      if (!petalCollected) {
+        collectPetal();
+      }
+    }, 25000);
     
-    setFairyText(audioManager.getText('narr-complete', 'ch2'));
-    await audioManager.playSpeech('narr-complete', 'ch2');
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setFairyText('');
-    
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    onComplete();
+    // Store timer ref for cleanup
+    return () => clearTimeout(autoCollectTimer);
   };
 
   const handleButterflyStart = (e: React.MouseEvent | React.TouchEvent, color: string) => {
@@ -470,12 +494,16 @@ function Chapter2Scene({ progress, setProgress, onComplete }: Chapter2SceneProps
               <img src="ch2/art/sprites/footprints.png" alt="Dragon footprints" />
             </div>
             
-            <div
-              className="sprite rainbow-petal fade-in sparkle"
-              style={getObjectStyle(layout.objects.find(o => o.id === 'rainbow-petal'))}
-            >
-              <img src="ch2/art/sprites/rainbow-petal.png" alt="Rainbow petal" />
-            </div>
+            {!petalCollected && (
+              <div
+                className="sprite rainbow-petal fade-in sparkle clickable"
+                style={getObjectStyle(layout.objects.find(o => o.id === 'rainbow-petal'))}
+                onClick={collectPetal}
+                onTouchStart={(e) => { e.preventDefault(); collectPetal(); }}
+              >
+                <img src="ch2/art/sprites/rainbow-petal.png" alt="Rainbow petal" />
+              </div>
+            )}
           </>
         )}
         

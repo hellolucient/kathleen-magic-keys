@@ -14,7 +14,17 @@ export function loadProgress(): GameProgress | null {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
-      return JSON.parse(data);
+      const saved = JSON.parse(data);
+      // Merge with defaults to handle new fields
+      const defaults = getInitialProgress();
+      return {
+        ...defaults,
+        ...saved,
+        treasures: { ...defaults.treasures, ...saved.treasures },
+        chapter3: { ...defaults.chapter3, ...saved.chapter3 },
+        chapter4: { ...defaults.chapter4, ...saved.chapter4 },
+        chapter5: { ...defaults.chapter5, ...saved.chapter5 },
+      };
     }
   } catch (error) {
     console.error('Failed to load progress:', error);
@@ -34,6 +44,11 @@ export function getInitialProgress(): GameProgress {
   return {
     currentChapter: 1,
     completedChapters: [],
+    treasures: {
+      petal: false,
+      gem: false,
+      light: false,
+    },
     chapter1: {
       keysFound: [],
       puzzleStates: {
@@ -49,6 +64,18 @@ export function getInitialProgress(): GameProgress {
     chapter2: {
       matchedFlowers: [],
       wrongAttempts: 0,
+    },
+    chapter3: {
+      round: 0,
+      completedRounds: [],
+    },
+    chapter4: {
+      firefliesCaught: 0,
+      matchedAnimals: [],
+    },
+    chapter5: {
+      timesFound: 0,
+      crownPieces: [],
     },
   };
 }

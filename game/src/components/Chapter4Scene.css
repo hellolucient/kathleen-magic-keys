@@ -1,0 +1,377 @@
+.chapter4-scene {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.chapter4-scene .game-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.chapter4-scene .game-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.chapter4-scene .darkness-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 20, 0.7);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.chapter4-scene .sprite {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.chapter4-scene .sprite img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.chapter4-scene .clickable {
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+
+/* Fireflies */
+.chapter4-scene .firefly {
+  position: absolute;
+  width: 4%;
+  height: auto;
+  z-index: 10;
+  transition: none;
+  animation: firefly-glow 2s ease-in-out infinite;
+}
+
+.chapter4-scene .firefly img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 0 10px rgba(255, 220, 100, 0.8));
+}
+
+@keyframes firefly-glow {
+  0%, 100% { 
+    filter: brightness(1) drop-shadow(0 0 8px rgba(255, 220, 100, 0.6));
+    transform: scale(1);
+  }
+  50% { 
+    filter: brightness(1.5) drop-shadow(0 0 15px rgba(255, 220, 100, 1));
+    transform: scale(1.1);
+  }
+}
+
+/* Lantern */
+.chapter4-scene .lantern {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12%;
+  height: auto;
+  z-index: 15;
+}
+
+.chapter4-scene .lantern img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.chapter4-scene .lantern-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150%;
+  height: 150%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255, 220, 100, 0.6) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.chapter4-scene .lantern.glowing img {
+  filter: brightness(1.3) drop-shadow(0 0 20px rgba(255, 220, 100, 0.9));
+}
+
+.chapter4-scene .lantern.clickable {
+  animation: sparkle-pulse 2s ease-in-out infinite;
+}
+
+@keyframes sparkle-pulse {
+  0%, 100% { 
+    transform: translateX(-50%) scale(1);
+  }
+  50% { 
+    transform: translateX(-50%) scale(1.05);
+    filter: brightness(1.3);
+  }
+}
+
+/* Number display */
+.chapter4-scene .number-display {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 4rem;
+  font-weight: bold;
+  font-family: 'Georgia', serif;
+  color: #fff;
+  text-shadow: 
+    0 0 20px rgba(255, 220, 100, 1),
+    0 0 40px rgba(255, 220, 100, 0.8),
+    0 4px 10px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  animation: number-pop 0.6s ease-out;
+  pointer-events: none;
+}
+
+@keyframes number-pop {
+  0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
+  50% { transform: translateX(-50%) scale(1.2); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+/* Animals */
+.chapter4-scene .parent-animal,
+.chapter4-scene .baby-animal {
+  position: absolute;
+  width: 12%;
+  height: auto;
+  z-index: 20;
+}
+
+.chapter4-scene .parent-animal img,
+.chapter4-scene .baby-animal img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.4));
+}
+
+.chapter4-scene .parent-deer {
+  width: 14%;
+}
+
+.chapter4-scene .baby-animal.clickable {
+  cursor: grab;
+  transition: transform 0.2s;
+}
+
+.chapter4-scene .baby-animal.clickable:hover {
+  transform: scale(1.05);
+}
+
+.chapter4-scene .baby-animal.dragging {
+  z-index: 100;
+  cursor: grabbing;
+}
+
+.chapter4-scene .baby-animal.matched {
+  animation: snuggle-in 0.6s ease-out;
+}
+
+@keyframes snuggle-in {
+  0% { transform: scale(1.2); opacity: 0.8; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Cave glow */
+.chapter4-scene .cave-glow {
+  position: absolute;
+  top: 8%;
+  right: 12%;
+  width: 15%;
+  height: 15%;
+  background: radial-gradient(circle, rgba(180, 100, 255, 0.7) 0%, transparent 70%);
+  animation: cave-pulse 2s ease-in-out 3;
+  pointer-events: none;
+  z-index: 5;
+}
+
+@keyframes cave-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Fairy */
+.chapter4-scene .fairy {
+  position: absolute;
+  right: 8%;
+  top: 15%;
+  width: 11%;
+  height: auto;
+  z-index: 60;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.chapter4-scene .float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Speech bubble */
+.chapter4-scene .speech-bubble {
+  position: absolute;
+  left: 3%;
+  top: 18%;
+  width: max-content;
+  max-width: 36%;
+  padding: 1.2rem 1.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-size: 1.3rem;
+  line-height: 1.5;
+  color: #333;
+  z-index: 100;
+  pointer-events: none;
+  animation: pop-in-anim 0.3s ease;
+  text-align: center;
+  font-family: 'Georgia', serif;
+}
+
+@keyframes pop-in-anim {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Treasure bar */
+.chapter4-scene .treasure-bar {
+  position: absolute;
+  top: 2%;
+  left: 3%;
+  display: flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 12px;
+  border-radius: 15px;
+  border: 3px solid #8b4513;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 90;
+}
+
+.chapter4-scene .treasure-icon {
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chapter4-scene .treasure-icon img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Firefly counter */
+.chapter4-scene .firefly-counter {
+  position: absolute;
+  top: 2%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: 3px solid #8b4513;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  font-family: 'Georgia', serif;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #8b4513;
+  z-index: 90;
+}
+
+/* Mute button */
+.chapter4-scene .mute-button {
+  position: absolute;
+  bottom: 2%;
+  right: 2%;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 3px solid #8b4513;
+  background: rgba(255, 255, 255, 0.95);
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.chapter4-scene .mute-button:hover {
+  transform: scale(1.1);
+}
+
+.chapter4-scene .mute-button:active {
+  transform: scale(0.95);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .chapter4-scene .speech-bubble {
+    max-width: 45%;
+    font-size: 1.1rem;
+    padding: 1rem;
+  }
+  
+  .chapter4-scene .treasure-bar {
+    padding: 6px 10px;
+  }
+  
+  .chapter4-scene .treasure-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .chapter4-scene .firefly-counter {
+    padding: 8px 15px;
+    font-size: 1rem;
+  }
+  
+  .chapter4-scene .mute-button {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+  
+  .chapter4-scene .number-display {
+    font-size: 3rem;
+  }
+}

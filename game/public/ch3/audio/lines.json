@@ -1,0 +1,68 @@
+{
+  "narr-title": {
+    "text": "Chapter Three: The Singing River.",
+    "voice": "en-GB-SoniaNeural",
+    "speaker": "Narrator",
+    "file": "ch3/audio/narr-title.mp3"
+  },
+  "narr-intro": {
+    "text": "The dragon footprints led Princess Kathleen and Pip to a sparkling river. Three little frogs sat on the lily pads, singing.",
+    "voice": "en-GB-SoniaNeural",
+    "speaker": "Narrator",
+    "file": "ch3/audio/narr-intro.mp3"
+  },
+  "fairy-intro": {
+    "text": "Listen, Kathleen! The frogs are singing a song. Can you sing it back?",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch3/audio/fairy-intro.mp3"
+  },
+  "fairy-howto": {
+    "text": "Watch the flowers light up, then tap them in the same order!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch3/audio/fairy-howto.mp3"
+  },
+  "fairy-good-1": {
+    "text": "Ribbit! You got it!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch3/audio/fairy-good-1.mp3"
+  },
+  "fairy-good-2": {
+    "text": "Perfect! The frogs love it!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch3/audio/fairy-good-2.mp3"
+  },
+  "fairy-good-3": {
+    "text": "Wow, you remembered them all!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch3/audio/fairy-good-3.mp3"
+  },
+  "fairy-tryagain": {
+    "text": "Oops! Let's listen one more time.",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch3/audio/fairy-tryagain.mp3"
+  },
+  "fairy-gem": {
+    "text": "Look! Something purple is floating in the water. Tap it, Kathleen!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch3/audio/fairy-gem.mp3"
+  },
+  "fairy-gem-got": {
+    "text": "A Purple Dragon Gem! Just like the little dragon's purple scales. Let's keep it safe!",
+    "voice": "en-GB-MaisieNeural",
+    "speaker": "Pip",
+    "file": "ch3/audio/fairy-gem-got.mp3"
+  },
+  "narr-complete": {
+    "text": "The frogs croaked goodbye. Far away, in the Twinkle Forest, tiny lights began to glow... To be continued!",
+    "voice": "en-GB-SoniaNeural",
+    "speaker": "Narrator",
+    "file": "ch3/audio/narr-complete.mp3"
+  }
+}

@@ -58,6 +58,11 @@ export type ChapterNumber = 1 | 2 | 3 | 4 | 5;
 export interface GameProgress {
   currentChapter: ChapterNumber;
   completedChapters: ChapterNumber[];
+  treasures: {
+    petal: boolean;
+    gem: boolean;
+    light: boolean;
+  };
   chapter1: {
     keysFound: string[];
     puzzleStates: {
@@ -73,5 +78,17 @@ export interface GameProgress {
   chapter2: {
     matchedFlowers: string[];
     wrongAttempts: number;
+  };
+  chapter3: {
+    round: number;
+    completedRounds: number[];
+  };
+  chapter4: {
+    firefliesCaught: number;
+    matchedAnimals: string[];
+  };
+  chapter5: {
+    timesFound: number;
+    crownPieces: string[];
   };
 }

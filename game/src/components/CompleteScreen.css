@@ -172,3 +172,19 @@
     gap: 1rem;
   }
 }
+
+.ending-message {
+  text-align: center;
+  padding: 20px;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  border: 3px solid #d4af37;
+}
+
+.ending-message p {
+  margin: 8px 0;
+  font-size: 1.1rem;
+  color: #8b4513;
+  font-family: 'Georgia', serif;
+}

@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { audioManager } from '../audioManager';
 import type { ChapterNumber } from '../types';
 import './CompleteScreen.css';
 
@@ -16,32 +15,33 @@ function CompleteScreen({ chapter, onPlayAgain, onNextChapter, onBackToChapterPi
   }, [chapter]);
 
   const playCompleteNarration = async () => {
-    if (chapter === 1) {
-      await audioManager.playSpeech('narr-complete');
-    } else if (chapter === 2) {
-      await audioManager.playSpeech('narr-complete', 'ch2');
-    }
+    // Don't play narration here - it's already played in the chapter scenes
   };
 
   const getImageSrc = () => {
     if (chapter === 1) return 'art/complete.jpg';
     if (chapter === 2) return 'ch2/art/complete-ch2.jpg';
+    if (chapter === 3) return 'ch3/art/raw/bg-river.jpg';
+    if (chapter === 4) return 'ch4/art/raw/bg-forest.jpg';
+    if (chapter === 5) return 'ch5/art/raw/bg-clouds.jpg';
     return 'art/complete.jpg';
   };
 
   const getTitle = () => {
-    if (chapter === 1) return 'Chapter 1 Complete!';
-    if (chapter === 2) return 'Chapter 2 Complete!';
+    if (chapter === 5) return 'The End of Book One!';
     return `Chapter ${chapter} Complete!`;
   };
 
   const getMessage = () => {
     if (chapter === 1) return 'Princess Kathleen found all five magic keys!';
     if (chapter === 2) return 'The garden is full of colour again!';
+    if (chapter === 3) return 'The frogs loved your song!';
+    if (chapter === 4) return 'The baby animals found their mummies!';
+    if (chapter === 5) return 'Smudge has a friend forever! 💜';
     return 'Well done, Princess Kathleen!';
   };
 
-  const hasNextChapter = chapter < 2;
+  const hasNextChapter = chapter < 5;
 
   return (
     <div className="complete-screen">
@@ -56,15 +56,16 @@ function CompleteScreen({ chapter, onPlayAgain, onNextChapter, onBackToChapterPi
             <button className="play-again-button" onClick={onPlayAgain}>
               Play Again
             </button>
-            {hasNextChapter ? (
+            {hasNextChapter && (
               <button className="next-chapter-button" onClick={onNextChapter}>
                 Next Chapter ✨
               </button>
-            ) : (
-              <button className="next-chapter-button" disabled>
-                Next Chapter
-                <span className="coming-soon">Coming Soon ✨</span>
-              </button>
+            )}
+            {chapter === 5 && (
+              <div className="ending-message">
+                <p>✨ Thank you for playing! ✨</p>
+                <p>Smudge will be back for more adventures!</p>
+              </div>
             )}
             <button className="back-button" onClick={onBackToChapterPicker}>
               Chapter Picker

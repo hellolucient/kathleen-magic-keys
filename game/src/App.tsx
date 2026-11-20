@@ -7,6 +7,9 @@ import TitleScreen from './components/TitleScreen';
 import ChapterPicker from './components/ChapterPicker';
 import GameScene from './components/GameScene';
 import Chapter2Scene from './components/Chapter2Scene';
+import Chapter3Scene from './components/Chapter3Scene';
+import Chapter4Scene from './components/Chapter4Scene';
+import Chapter5Scene from './components/Chapter5Scene';
 import CompleteScreen from './components/CompleteScreen';
 import './App.css';
 
@@ -76,7 +79,7 @@ function App() {
 
   const handleNextChapter = () => {
     const nextChapter = (progress.currentChapter + 1) as ChapterNumber;
-    if (nextChapter <= 2) {
+    if (nextChapter <= 5) {
       setProgress(prev => ({ ...prev, currentChapter: nextChapter }));
       setScreen('game');
     }
@@ -125,6 +128,27 @@ function App() {
       )}
       {screen === 'game' && progress.currentChapter === 2 && (
         <Chapter2Scene
+          progress={progress}
+          setProgress={updateProgress}
+          onComplete={handleGameComplete}
+        />
+      )}
+      {screen === 'game' && progress.currentChapter === 3 && (
+        <Chapter3Scene
+          progress={progress}
+          setProgress={updateProgress}
+          onComplete={handleGameComplete}
+        />
+      )}
+      {screen === 'game' && progress.currentChapter === 4 && (
+        <Chapter4Scene
+          progress={progress}
+          setProgress={updateProgress}
+          onComplete={handleGameComplete}
+        />
+      )}
+      {screen === 'game' && progress.currentChapter === 5 && (
+        <Chapter5Scene
           progress={progress}
           setProgress={updateProgress}
           onComplete={handleGameComplete}
